@@ -34,7 +34,7 @@ TYPED_TEST_P(avx512_sort, test_arrsizes)
             sortedarr = arr;
             /* Sort with std::sort for comparison */
             std::sort(sortedarr.begin(), sortedarr.end());
-            avx512_qsort<TypeParam>(arr.data(), arr.size());
+            avx512_qsort<TypeParam>(arr.data(),NULL, arr.size());
             ASSERT_EQ(sortedarr, arr);
             arr.clear();
             sortedarr.clear();

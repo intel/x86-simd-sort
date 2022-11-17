@@ -15,10 +15,10 @@ LD_FLAGS	= -L /usr/local/lib -l $(GTEST_LIB) -l pthread
 all : test bench
 
 $(TESTDIR)/%.o : $(TESTDIR)/%.cpp $(SRCS)
-		$(CXX) -march=icelake-client -O3 $(CXXFLAGS) -c $< -o $@
+		$(CXX) -march=icelake-client -O3 $(CXXFLAGS) -l $(GTEST_LIB) -c $< -o $@
 
 test: $(TESTDIR)/main.cpp $(TESTOBJS) $(SRCS)
-		$(CXX) tests/main.cpp $(TESTOBJS) $(CXXFLAGS) $(LD_FLAGS) -o testexe
+		$(CXX) tests/main.cpp $(TESTOBJS) $(CXXFLAGS) $(LD_FLAGS) -o testexe 
 
 bench: $(BENCHDIR)/main.cpp $(SRCS)
 		$(CXX) $(BENCHDIR)/main.cpp $(CXXFLAGS) -march=icelake-client -O3 -o benchexe
