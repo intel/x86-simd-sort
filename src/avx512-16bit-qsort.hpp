@@ -64,25 +64,33 @@ struct zmm_vector<float16> {
 
     static opmask_t ge(zmm_t x, zmm_t y)
     {
-	zmm_t sign_x = _mm512_and_si512(x, _mm512_set1_epi16(0x8000));
-	zmm_t sign_y = _mm512_and_si512(y, _mm512_set1_epi16(0x8000));
-	zmm_t exp_x = _mm512_and_si512(x, _mm512_set1_epi16(0x7c00));
-	zmm_t exp_y = _mm512_and_si512(y, _mm512_set1_epi16(0x7c00));
-	zmm_t mant_x = _mm512_and_si512(x, _mm512_set1_epi16(0x3ff));
-	zmm_t mant_y = _mm512_and_si512(y, _mm512_set1_epi16(0x3ff));
+        zmm_t sign_x = _mm512_and_si512(x, _mm512_set1_epi16(0x8000));
+        zmm_t sign_y = _mm512_and_si512(y, _mm512_set1_epi16(0x8000));
+        zmm_t exp_x = _mm512_and_si512(x, _mm512_set1_epi16(0x7c00));
+        zmm_t exp_y = _mm512_and_si512(y, _mm512_set1_epi16(0x7c00));
+        zmm_t mant_x = _mm512_and_si512(x, _mm512_set1_epi16(0x3ff));
+        zmm_t mant_y = _mm512_and_si512(y, _mm512_set1_epi16(0x3ff));
 
-	__mmask32 mask_ge = _mm512_cmp_epu16_mask(sign_x, sign_y, _MM_CMPINT_LT); // only greater than
-	__mmask32 sign_eq = _mm512_cmpeq_epu16_mask(sign_x, sign_y);
-	__mmask32 neg = _mm512_mask_cmpeq_epu16_mask(sign_eq, sign_x, _mm512_set1_epi16(0x8000)); // both numbers are -ve
+        __mmask32 mask_ge = _mm512_cmp_epu16_mask(
+                sign_x, sign_y, _MM_CMPINT_LT); // only greater than
+        __mmask32 sign_eq = _mm512_cmpeq_epu16_mask(sign_x, sign_y);
+        __mmask32 neg = _mm512_mask_cmpeq_epu16_mask(
+                sign_eq,
+                sign_x,
+                _mm512_set1_epi16(0x8000)); // both numbers are -ve
 
-	// compare exponents only if signs are equal:
-	mask_ge = mask_ge | _mm512_mask_cmp_epu16_mask(sign_eq, exp_x, exp_y, _MM_CMPINT_NLE);
-	// get mask for elements for which both sign and exponents are equal:
-	__mmask32 exp_eq = _mm512_mask_cmpeq_epu16_mask(sign_eq, exp_x, exp_y);
+        // compare exponents only if signs are equal:
+        mask_ge = mask_ge
+                | _mm512_mask_cmp_epu16_mask(
+                          sign_eq, exp_x, exp_y, _MM_CMPINT_NLE);
+        // get mask for elements for which both sign and exponents are equal:
+        __mmask32 exp_eq = _mm512_mask_cmpeq_epu16_mask(sign_eq, exp_x, exp_y);
 
-	// compare mantissa for elements for which both sign and expponent are equal:
-	mask_ge = mask_ge | _mm512_mask_cmp_epu16_mask(exp_eq, mant_x, mant_y, _MM_CMPINT_NLT);
-	return _kxor_mask32(mask_ge, neg);
+        // compare mantissa for elements for which both sign and expponent are equal:
+        mask_ge = mask_ge
+                | _mm512_mask_cmp_epu16_mask(
+                          exp_eq, mant_x, mant_y, _MM_CMPINT_NLT);
+        return _kxor_mask32(mask_ge, neg);
     }
     static zmm_t loadu(void const *mem)
     {
@@ -549,8 +557,8 @@ X86_SIMD_SORT_FINLINE void sort_128_16bit(type_t *arr, int32_t N)
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_FINLINE type_t get_pivot_16bit(type_t *arr,
-                                   const int64_t left,
-                                   const int64_t right)
+                                             const int64_t left,
+                                             const int64_t right)
 {
     // median of 32
     int64_t size = (right - left) / 32;
@@ -598,26 +606,22 @@ bool comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
     uint16_t expa = a & 0x7c00, expb = b & 0x7c00;
     uint16_t manta = a & 0x3ff, mantb = b & 0x3ff;
     if (signa != signb) {
-	// opposite signs
-	return a > b;
+        // opposite signs
+        return a > b;
     }
     else if (signa > 0) {
-    	// both -ve
-	if (expa != expb) {
-	    return expa > expb;
-	}
-	else {
-	    return manta > mantb;
-	}
+        // both -ve
+        if (expa != expb) { return expa > expb; }
+        else {
+            return manta > mantb;
+        }
     }
     else {
-	// both +ve
-	if (expa != expb) {
-	    return expa < expb;
-	}
-	else {
-	    return manta < mantb;
-	}
+        // both +ve
+        if (expa != expb) { return expa < expb; }
+        else {
+            return manta < mantb;
+        }
     }
 
     //return npy_half_to_float(a) < npy_half_to_float(b);
@@ -653,7 +657,8 @@ qsort_16bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
         qsort_16bit_<vtype>(arr, pivot_index, right, max_iters - 1);
 }
 
-X86_SIMD_SORT_FINLINE int64_t replace_nan_with_inf(uint16_t *arr, int64_t arrsize)
+X86_SIMD_SORT_FINLINE int64_t replace_nan_with_inf(uint16_t *arr,
+                                                   int64_t arrsize)
 {
     int64_t nan_count = 0;
     __mmask16 loadmask = 0xFFFF;

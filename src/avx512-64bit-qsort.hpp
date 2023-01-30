@@ -719,8 +719,8 @@ X86_SIMD_SORT_FINLINE void sort_128_64bit(type_t *arr, int32_t N)
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_FINLINE type_t get_pivot_64bit(type_t *arr,
-                                   const int64_t left,
-                                   const int64_t right)
+                                             const int64_t left,
+                                             const int64_t right)
 {
     // median of 8
     int64_t size = (right - left) / 8;
