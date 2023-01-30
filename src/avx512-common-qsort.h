@@ -41,6 +41,8 @@
 
 #define X86_SIMD_SORT_INFINITY std::numeric_limits<double>::infinity()
 #define X86_SIMD_SORT_INFINITYF std::numeric_limits<float>::infinity()
+#define X86_SIMD_SORT_INFINITYH 0x7c00
+#define X86_SIMD_SORT_NEGINFINITYH 0xfc00
 #define X86_SIMD_SORT_MAX_UINT16 std::numeric_limits<uint16_t>::max()
 #define X86_SIMD_SORT_MAX_INT16 std::numeric_limits<int16_t>::max()
 #define X86_SIMD_SORT_MIN_INT16 std::numeric_limits<int16_t>::min()
@@ -56,16 +58,17 @@
 #define ZMM_MAX_FLOAT _mm512_set1_ps(X86_SIMD_SORT_INFINITYF)
 #define ZMM_MAX_UINT _mm512_set1_epi32(X86_SIMD_SORT_MAX_UINT32)
 #define ZMM_MAX_INT _mm512_set1_epi32(X86_SIMD_SORT_MAX_INT32)
+#define YMM_MAX_HALF _mm256_set1_epi16(X86_SIMD_SORT_INFINITYH)
 #define ZMM_MAX_UINT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_UINT16)
 #define ZMM_MAX_INT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_INT16)
 #define SHUFFLE_MASK(a, b, c, d) (a << 6) | (b << 4) | (c << 2) | d
 
 #ifdef _MSC_VER
-#define X86_SIMD_SORT_FORCEINLINE static __forceinline
+#define X86_SIMD_SORT_FINLINE static __forceinline
 #elif defined(__GNUC__)
-#define X86_SIMD_SORT_FORCEINLINE static inline //__attribute__((always_inline))
+#define X86_SIMD_SORT_FINLINE static inline //__attribute__((always_inline))
 #else
-#define X86_SIMD_SORT_FORCEINLINE static
+#define X86_SIMD_SORT_FINLINE static
 #endif
 
 template <typename type>
@@ -73,6 +76,12 @@ struct zmm_vector;
 
 template <typename T>
 void avx512_qsort(T *arr, int64_t arrsize);
+
+template <typename vtype, typename T = typename vtype::type_t>
+bool comparison_func(const T &a, const T &b)
+{
+    return a < b;
+}
 
 /*
  * COEX == Compare and Exchange two registers by swapping min and max values
@@ -134,9 +143,11 @@ static inline int64_t partition_avx512(type_t *arr,
 {
     /* make array length divisible by vtype::numlanes , shortening the array */
     for (int32_t i = (right - left) % vtype::numlanes; i > 0; --i) {
-        *smallest = std::min(*smallest, arr[left]);
-        *biggest = std::max(*biggest, arr[left]);
-        if (arr[left] > pivot) { std::swap(arr[left], arr[--right]); }
+        *smallest = std::min(*smallest, arr[left], comparison_func<vtype>);
+        *biggest = std::max(*biggest, arr[left], comparison_func<vtype>);
+        if (!comparison_func<vtype>(arr[left], pivot)) {
+            std::swap(arr[left], arr[--right]);
+        }
         else {
             ++left;
         }
