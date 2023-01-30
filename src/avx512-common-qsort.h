@@ -33,7 +33,6 @@
  *
  */
 
-#include "simd/simd.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
