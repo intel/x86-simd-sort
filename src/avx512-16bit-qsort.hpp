@@ -64,12 +64,12 @@ struct zmm_vector<float16> {
 
     static opmask_t ge(zmm_t x, zmm_t y)
     {
-	zmm_t sign_x = _mm512_and_si512(x, _mm512_set1_epi16(0x8000));	
-	zmm_t sign_y = _mm512_and_si512(y, _mm512_set1_epi16(0x8000));	
-	zmm_t exp_x = _mm512_and_si512(x, _mm512_set1_epi16(0x7c00));	
-	zmm_t exp_y = _mm512_and_si512(y, _mm512_set1_epi16(0x7c00));	
-	zmm_t mant_x = _mm512_and_si512(x, _mm512_set1_epi16(0x3ff));	
-	zmm_t mant_y = _mm512_and_si512(y, _mm512_set1_epi16(0x3ff));	
+	zmm_t sign_x = _mm512_and_si512(x, _mm512_set1_epi16(0x8000));
+	zmm_t sign_y = _mm512_and_si512(y, _mm512_set1_epi16(0x8000));
+	zmm_t exp_x = _mm512_and_si512(x, _mm512_set1_epi16(0x7c00));
+	zmm_t exp_y = _mm512_and_si512(y, _mm512_set1_epi16(0x7c00));
+	zmm_t mant_x = _mm512_and_si512(x, _mm512_set1_epi16(0x3ff));
+	zmm_t mant_y = _mm512_and_si512(y, _mm512_set1_epi16(0x3ff));
 
 	__mmask32 mask_ge = _mm512_cmp_epu16_mask(sign_x, sign_y, _MM_CMPINT_LT); // only greater than
 	__mmask32 sign_eq = _mm512_cmpeq_epu16_mask(sign_x, sign_y);
@@ -595,8 +595,8 @@ template <>
 bool comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
 {
     uint16_t signa = a & 0x8000, signb = b & 0x8000;
-    uint16_t expa = a & 0x7c00, expb = b & 0x7c00; 
-    uint16_t manta = a & 0x3ff, mantb = b & 0x3ff; 
+    uint16_t expa = a & 0x7c00, expb = b & 0x7c00;
+    uint16_t manta = a & 0x3ff, mantb = b & 0x3ff;
     if (signa != signb) {
 	// opposite signs
 	return a > b;
@@ -605,7 +605,7 @@ bool comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
     	// both -ve
 	if (expa != expb) {
 	    return expa > expb;
-	}	
+	}
 	else {
 	    return manta > mantb;
 	}
@@ -614,12 +614,12 @@ bool comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
 	// both +ve
 	if (expa != expb) {
 	    return expa < expb;
-	}	
+	}
 	else {
 	    return manta < mantb;
 	}
     }
-    
+
     //return npy_half_to_float(a) < npy_half_to_float(b);
 }
 
