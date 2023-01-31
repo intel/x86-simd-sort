@@ -374,7 +374,7 @@ struct zmm_vector<uint16_t> {
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FINLINE zmm_t sort_zmm_16bit(zmm_t zmm)
+X86_SIMD_SORT_INLINE zmm_t sort_zmm_16bit(zmm_t zmm)
 {
     // Level 1
     zmm = cmp_merge<vtype>(
@@ -434,7 +434,7 @@ X86_SIMD_SORT_FINLINE zmm_t sort_zmm_16bit(zmm_t zmm)
 
 // Assumes zmm is bitonic and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FINLINE zmm_t bitonic_merge_zmm_16bit(zmm_t zmm)
+X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_16bit(zmm_t zmm)
 {
     // 1) half_cleaner[32]: compare 1-17, 2-18, 3-19 etc ..
     zmm = cmp_merge<vtype>(
@@ -460,7 +460,7 @@ X86_SIMD_SORT_FINLINE zmm_t bitonic_merge_zmm_16bit(zmm_t zmm)
 
 // Assumes zmm1 and zmm2 are sorted and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FINLINE void bitonic_merge_two_zmm_16bit(zmm_t &zmm1, zmm_t &zmm2)
+X86_SIMD_SORT_INLINE void bitonic_merge_two_zmm_16bit(zmm_t &zmm1, zmm_t &zmm2)
 {
     // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
     zmm2 = vtype::permutexvar(vtype::get_network(4), zmm2);
@@ -474,7 +474,7 @@ X86_SIMD_SORT_FINLINE void bitonic_merge_two_zmm_16bit(zmm_t &zmm1, zmm_t &zmm2)
 // Assumes [zmm0, zmm1] and [zmm2, zmm3] are sorted and performs a recursive
 // half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FINLINE void bitonic_merge_four_zmm_16bit(zmm_t *zmm)
+X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_16bit(zmm_t *zmm)
 {
     zmm_t zmm2r = vtype::permutexvar(vtype::get_network(4), zmm[2]);
     zmm_t zmm3r = vtype::permutexvar(vtype::get_network(4), zmm[3]);
@@ -495,7 +495,7 @@ X86_SIMD_SORT_FINLINE void bitonic_merge_four_zmm_16bit(zmm_t *zmm)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_FINLINE void sort_32_16bit(type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_32_16bit(type_t *arr, int32_t N)
 {
     typename vtype::opmask_t load_mask = ((0x1ull << N) - 0x1ull) & 0xFFFFFFFF;
     typename vtype::zmm_t zmm
@@ -504,7 +504,7 @@ X86_SIMD_SORT_FINLINE void sort_32_16bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_FINLINE void sort_64_16bit(type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_64_16bit(type_t *arr, int32_t N)
 {
     if (N <= 32) {
         sort_32_16bit<vtype>(arr, N);
@@ -523,7 +523,7 @@ X86_SIMD_SORT_FINLINE void sort_64_16bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_FINLINE void sort_128_16bit(type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_128_16bit(type_t *arr, int32_t N)
 {
     if (N <= 64) {
         sort_64_16bit<vtype>(arr, N);
@@ -556,9 +556,9 @@ X86_SIMD_SORT_FINLINE void sort_128_16bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_FINLINE type_t get_pivot_16bit(type_t *arr,
-                                             const int64_t left,
-                                             const int64_t right)
+X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
+                                            const int64_t left,
+                                            const int64_t right)
 {
     // median of 32
     int64_t size = (right - left) / 32;
@@ -657,8 +657,8 @@ qsort_16bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
         qsort_16bit_<vtype>(arr, pivot_index, right, max_iters - 1);
 }
 
-X86_SIMD_SORT_FINLINE int64_t replace_nan_with_inf(uint16_t *arr,
-                                                   int64_t arrsize)
+X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(uint16_t *arr,
+                                                  int64_t arrsize)
 {
     int64_t nan_count = 0;
     __mmask16 loadmask = 0xFFFF;
@@ -676,7 +676,7 @@ X86_SIMD_SORT_FINLINE int64_t replace_nan_with_inf(uint16_t *arr,
     return nan_count;
 }
 
-X86_SIMD_SORT_FINLINE void
+X86_SIMD_SORT_INLINE void
 replace_inf_with_nan(uint16_t *arr, int64_t arrsize, int64_t nan_count)
 {
     for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {

@@ -64,10 +64,20 @@
 #define SHUFFLE_MASK(a, b, c, d) (a << 6) | (b << 4) | (c << 2) | d
 
 #ifdef _MSC_VER
+#define X86_SIMD_SORT_INLINE static inline
 #define X86_SIMD_SORT_FINLINE static __forceinline
+#elif defined(__CYGWIN__)
+/*
+ * Force inline in cygwin to work around a compiler bug. See
+ * https://github.com/numpy/numpy/pull/22315#issuecomment-1267757584
+ */
+#define X86_SIMD_SORT_INLINE static __attribute__((always_inline))
+#define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
 #elif defined(__GNUC__)
-#define X86_SIMD_SORT_FINLINE static inline //__attribute__((always_inline))
+#define X86_SIMD_SORT_INLINE static inline
+#define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
 #else
+#define X86_SIMD_SORT_INLINE static
 #define X86_SIMD_SORT_FINLINE static
 #endif
 
