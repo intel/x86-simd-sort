@@ -24,6 +24,7 @@ template <>
 struct zmm_vector<int64_t> {
     using type_t = int64_t;
     using zmm_t = __m512i;
+    using ymm_t = __m512i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
@@ -129,6 +130,7 @@ template <>
 struct zmm_vector<uint64_t> {
     using type_t = uint64_t;
     using zmm_t = __m512i;
+    using ymm_t = __m512i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
@@ -234,6 +236,7 @@ template <>
 struct zmm_vector<double> {
     using type_t = double;
     using zmm_t = __m512d;
+    using ymm_t = __m512d;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
@@ -339,7 +342,7 @@ struct zmm_vector<double> {
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FORCEINLINE zmm_t sort_zmm_64bit(zmm_t zmm)
+X86_SIMD_SORT_INLINE zmm_t sort_zmm_64bit(zmm_t zmm)
 {
 
     const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
@@ -393,7 +396,7 @@ X86_SIMD_SORT_FORCEINLINE zmm_t sort_zmm_64bit(zmm_t key_zmm,index_t &index_zmm)
 }
 // Assumes zmm is bitonic and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FORCEINLINE zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
+X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
 {
 
     // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
@@ -439,8 +442,7 @@ X86_SIMD_SORT_FORCEINLINE zmm_t bitonic_merge_zmm_64bit(zmm_t key_zmm,zmm_vector
 }
 // Assumes zmm1 and zmm2 are sorted and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FORCEINLINE void bitonic_merge_two_zmm_64bit(zmm_t &zmm1,
-                                                           zmm_t &zmm2)
+X86_SIMD_SORT_INLINE void bitonic_merge_two_zmm_64bit(zmm_t &zmm1, zmm_t &zmm2)
 {
     const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
     // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
@@ -478,7 +480,7 @@ X86_SIMD_SORT_FORCEINLINE void bitonic_merge_two_zmm_64bit(zmm_t &key_zmm1,
 // Assumes [zmm0, zmm1] and [zmm2, zmm3] are sorted and performs a recursive
 // half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FORCEINLINE void bitonic_merge_four_zmm_64bit(zmm_t *zmm)
+X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_64bit(zmm_t *zmm)
 {
     const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
     // 1) First step of a merging network
@@ -548,7 +550,7 @@ X86_SIMD_SORT_FORCEINLINE void bitonic_merge_four_zmm_64bit(zmm_t *key_zmm,index
     index_zmm[3]=index_zmm3;
 }
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FORCEINLINE void bitonic_merge_eight_zmm_64bit(zmm_t *zmm)
+X86_SIMD_SORT_INLINE void bitonic_merge_eight_zmm_64bit(zmm_t *zmm)
 {
     const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
     zmm_t zmm4r = vtype::permutexvar(rev_index, zmm[4]);
@@ -654,7 +656,7 @@ X86_SIMD_SORT_FORCEINLINE void bitonic_merge_eight_zmm_64bit(zmm_t *key_zmm,inde
 
 }
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_FORCEINLINE void bitonic_merge_sixteen_zmm_64bit(zmm_t *zmm)
+X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_zmm_64bit(zmm_t *zmm)
 {
     const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
     zmm_t zmm8r = vtype::permutexvar(rev_index, zmm[8]);
@@ -1328,8 +1330,7 @@ qsort_64bit_(type_t *keys,uint64_t *indexes,  int64_t left, int64_t right, int64
         qsort_64bit_<vtype>(keys,indexes, pivot_index, right, max_iters - 1);
 }
 
-X86_SIMD_SORT_FORCEINLINE int64_t replace_nan_with_inf(double *arr,
-                                                       int64_t arrsize)
+X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(double *arr, int64_t arrsize)
 {
     int64_t nan_count = 0;
     __mmask8 loadmask = 0xFF;
@@ -1345,7 +1346,7 @@ X86_SIMD_SORT_FORCEINLINE int64_t replace_nan_with_inf(double *arr,
     return nan_count;
 }
 
-X86_SIMD_SORT_FORCEINLINE void
+X86_SIMD_SORT_INLINE void
 replace_inf_with_nan(double *arr, int64_t arrsize, int64_t nan_count)
 {
     for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
@@ -1359,7 +1360,7 @@ inline void avx512_qsort<int64_t>(int64_t *keys, uint64_t *indexes, int64_t arrs
 {
     if (arrsize > 1) {
         qsort_64bit_<zmm_vector<int64_t>, int64_t>(
-                keys,indexes, 0, arrsize - 1, 2 * (63 - __builtin_clzll(arrsize)));
+                keys,indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
 
@@ -1368,7 +1369,7 @@ inline void avx512_qsort<uint64_t>(uint64_t *keys,uint64_t *indexes, int64_t arr
 {
     if (arrsize > 1) {
         qsort_64bit_<zmm_vector<uint64_t>, uint64_t>(
-                keys,indexes, 0, arrsize - 1, 2 * (63 - __builtin_clzll(arrsize)));
+                keys,indexes, 0, arrsize - 1,2 * (int64_t)log2(arrsize));
     }
 }
 
@@ -1378,7 +1379,7 @@ inline void avx512_qsort<double>(double *keys,uint64_t *indexes, int64_t arrsize
     if (arrsize > 1) {
         int64_t nan_count = replace_nan_with_inf(keys, arrsize);
         qsort_64bit_<zmm_vector<double>, double>(
-                keys,indexes, 0, arrsize - 1, 2 * (63 - __builtin_clzll(arrsize)));
+                keys,indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(keys, arrsize, nan_count);
     }
 }

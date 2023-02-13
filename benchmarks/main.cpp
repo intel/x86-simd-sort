@@ -12,6 +12,33 @@
 #include <typeinfo>
 #include <vector>
 
+template <typename T1,
+          typename T2,
+          typename T3,
+          typename T4,
+          typename T5,
+          typename T6,
+          typename T7>
+void printLine(const char fill, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7)
+{
+    std::cout << std::left << std::setw(3) << std::setfill(fill) << " | ";
+    std::cout << std::left << std::setw(15) << std::setfill(fill) << t1
+              << " | ";
+    std::cout << std::left << std::setw(13) << std::setfill(fill) << t2
+              << " | ";
+    std::cout << std::left << std::setw(13) << std::setfill(fill) << t3
+              << " | ";
+    std::cout << std::left << std::setw(13) << std::setfill(fill) << t4
+              << " | ";
+    std::cout << std::left << std::setw(13) << std::setfill(fill) << t5
+              << " | ";
+    std::cout << std::left << std::setw(13) << std::setfill(fill) << t6
+              << " | ";
+    std::cout << std::left << std::setw(13) << std::setfill(fill) << t7
+              << " | ";
+    std::cout << std::endl;
+}
+
 template <typename T>
 void run_bench(const std::string datatype)
 {
@@ -43,10 +70,14 @@ void run_bench(const std::string datatype)
             return;
         }
         auto out = bench_sort(arr, 20, 10);
-        std::cout << datatype << "," << typeid(T).name() << "," << sizeof(T)
-                  << "," << size << "," << std::get<0>(out) << ","
-                  << std::get<1>(out) << ","
-                  << (float)std::get<1>(out) / std::get<0>(out) << std::endl;
+        printLine(' ',
+                  datatype,
+                  typeid(T).name(),
+                  sizeof(T),
+                  size,
+                  std::get<0>(out),
+                  std::get<1>(out),
+                  (float)std::get<1>(out) / std::get<0>(out));
     }
     std::cout << std::setprecision(ss);
 }
@@ -69,13 +100,19 @@ void bench_all(const std::string datatype)
 
 int main(/*int argc, char *argv[]*/)
 {
-    std::cout
-            << "Array type,typeid name, dtype size, array size,avx512 sort,std "
-               "sort,avx-512 speed up"
-            << std::endl;
+    printLine(' ',
+              "array type",
+              "typeid name",
+              "dtype size",
+              "array size",
+              "avx512 sort",
+              "std sort",
+              "speed up");
+    printLine('-', "", "", "", "", "", "", "");
     bench_all("uniform random");
     bench_all("reverse");
     bench_all("ordered");
     bench_all("limitedrange");
+    printLine('-', "", "", "", "", "", "", "");
     return 0;
 }
