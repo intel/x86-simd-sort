@@ -34,7 +34,7 @@ TYPED_TEST_P(avx512_sort, test_arrsizes)
             sortedarr = arr;
             /* Sort with std::sort for comparison */
             std::sort(sortedarr.begin(), sortedarr.end());
-            avx512_qsort<TypeParam>(arr.data(),NULL, arr.size());
+            avx512_qsort<TypeParam>(arr.data(), NULL, arr.size());
             ASSERT_EQ(sortedarr, arr);
             arr.clear();
             sortedarr.clear();
@@ -56,3 +56,47 @@ using Types = testing::Types<uint16_t,
                              uint64_t,
                              int64_t>;
 INSTANTIATE_TYPED_TEST_SUITE_P(TestPrefix, avx512_sort, Types);
+
+struct sorted_t {
+    uint64_t key;
+    uint64_t value;
+};
+
+bool compare(sorted_t a, sorted_t b)
+{
+    return a.key == b.key ? a.value < b.value : a.key < b.key;
+}
+TEST(TestKeyValueSort, KeyValueSort)
+{
+    std::vector<int64_t> keysizes;
+    for (int64_t ii = 0; ii < 1024; ++ii) {
+        keysizes.push_back((uint64_t)ii);
+    }
+    std::vector<uint64_t> keys;
+    std::vector<uint64_t> values;
+    std::vector<sorted_t> sortedarr;
+
+    for (size_t ii = 0; ii < keysizes.size(); ++ii) {
+        /* Random array */
+        keys = get_uniform_rand_array_key(keysizes[ii]);
+        //keys = get_uniform_rand_array<uint64_t>(keysizes[ii]);
+        values = get_uniform_rand_array<uint64_t>(keysizes[ii]);
+        for (size_t i = 0; i < keys.size(); i++) {
+            sorted_t tmp_s;
+            tmp_s.key = keys[i];
+            tmp_s.value = values[i];
+            sortedarr.emplace_back(tmp_s);
+        }
+        /* Sort with std::sort for comparison */
+        std::sort(sortedarr.begin(), sortedarr.end(), compare);
+        avx512_qsort<uint64_t>(keys.data(), values.data(), keys.size());
+        //ASSERT_EQ(sortedarr, arr);
+        for (size_t i = 0; i < keys.size(); i++) {
+            ASSERT_EQ(keys[i], sortedarr[i].key);
+            ASSERT_EQ(values[i], sortedarr[i].value);
+        }
+        keys.clear();
+        values.clear();
+        sortedarr.clear();
+    }
+}
