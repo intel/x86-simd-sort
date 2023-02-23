@@ -49,7 +49,7 @@ std::tuple<uint64_t, uint64_t> bench_sort(const std::vector<T> arr,
     uint64_t start(0), end(0);
     for (uint64_t ii = 0; ii < iters; ++ii) {
         start = cycles_start();
-        avx512_qsort<T>(arr_bckup.data(), NULL, arr_bckup.size());
+        avx512_qsort<T>(arr_bckup.data(), arr_bckup.size());
         end = cycles_end();
         runtimes1.emplace_back(end - start);
         arr_bckup = arr;

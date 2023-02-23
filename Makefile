@@ -1,5 +1,9 @@
-CXX ? = g++ SRCDIR =./ src TESTDIR =./ tests BENCHDIR =./ benchmarks UTILS
-        =./ utils SRCS = $(wildcard $(SRCDIR)/*.hpp)
+CXX		?= g++
+SRCDIR		= ./src
+TESTDIR		= ./tests
+BENCHDIR	= ./benchmarks
+UTILS		= ./utils
+SRCS		= $(wildcard $(SRCDIR)/*.hpp)
 TESTS		= $(wildcard $(TESTDIR)/*.cpp)
 TESTOBJS	= $(patsubst $(TESTDIR)/%.cpp,$(TESTDIR)/%.o,$(TESTS))
 TESTOBJS	:= $(filter-out $(TESTDIR)/main.o ,$(TESTOBJS))

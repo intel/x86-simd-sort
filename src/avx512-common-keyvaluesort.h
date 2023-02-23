@@ -6,8 +6,8 @@
  *          Serge Sans Paille <serge.guelton@telecom-bretagne.eu>
  * ****************************************************************/
 
-#ifndef AVX512_QSORT_COMMON
-#define AVX512_QSORT_COMMON
+#ifndef AVX512_QSORT_COMMON_KV
+#define AVX512_QSORT_COMMON_KV
 
 /*
  * Quicksort using AVX-512. The ideas and code are based on these two research
@@ -82,69 +82,90 @@
 #endif
 
 template <typename type>
-struct zmm_vector;
+struct zmm_kv_vector;
 
 template <typename T>
-void avx512_qsort(T *arr, int64_t arrsize);
+inline void avx512_qsort_kv(T *keys, uint64_t *indexes, int64_t arrsize);
 
-template <typename vtype, typename T = typename vtype::type_t>
-bool comparison_func(const T &a, const T &b)
-{
-    return a < b;
-}
-
-/*
- * COEX == Compare and Exchange two registers by swapping min and max values
- */
-template <typename vtype, typename mm_t>
-static void COEX(mm_t &a, mm_t &b)
-{
-    mm_t temp = a;
-    a = vtype::min(a, b);
-    b = vtype::max(temp, b);
-}
+using index_t = __m512i;
+//using index_type = zmm_kv_vector<uint64_t>;
 
 template <typename vtype,
-          typename zmm_t = typename vtype::zmm_t,
-          typename opmask_t = typename vtype::opmask_t>
-static inline zmm_t cmp_merge(zmm_t in1, zmm_t in2, opmask_t mask)
+          typename mm_t,
+          typename index_type = zmm_kv_vector<uint64_t>>
+static void COEX(mm_t &key1, mm_t &key2, index_t &index1, index_t &index2)
 {
-    zmm_t min = vtype::min(in2, in1);
-    zmm_t max = vtype::max(in2, in1);
-    return vtype::mask_mov(min, mask, max); // 0 -> min, 1 -> max
-}
+    //COEX(key1,key2);
+    mm_t key_t1 = vtype::min(key1, key2);
+    mm_t key_t2 = vtype::max(key1, key2);
 
+    index_t index_t1
+            = index_type::mask_mov(index2, vtype::eq(key_t1, key1), index1);
+    index_t index_t2
+            = index_type::mask_mov(index1, vtype::eq(key_t1, key1), index2);
+
+    key1 = key_t1;
+    key2 = key_t2;
+    index1 = index_t1;
+    index2 = index_t2;
+}
+template <typename vtype,
+          typename zmm_t = typename vtype::zmm_t,
+          typename opmask_t = typename vtype::opmask_t,
+          typename index_type = zmm_kv_vector<uint64_t>>
+static inline zmm_t cmp_merge(zmm_t in1,
+                              zmm_t in2,
+                              index_t &indexes1,
+                              index_t indexes2,
+                              opmask_t mask)
+{
+    zmm_t tmp_keys = cmp_merge<vtype>(in1, in2, mask);
+    indexes1 = index_type::mask_mov(
+            indexes2, vtype::eq(tmp_keys, in1), indexes1);
+    return tmp_keys; // 0 -> min, 1 -> max
+}
 /*
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
-template <typename vtype, typename type_t, typename zmm_t>
-static inline int32_t partition_vec(type_t *arr,
+template <typename vtype,
+          typename type_t,
+          typename zmm_t,
+          typename index_type = zmm_kv_vector<uint64_t>>
+static inline int32_t partition_vec(type_t *keys,
+                                    uint64_t *indexes,
                                     int64_t left,
                                     int64_t right,
-                                    const zmm_t curr_vec,
+                                    const zmm_t keys_vec,
+                                    const index_t indexes_vec,
                                     const zmm_t pivot_vec,
                                     zmm_t *smallest_vec,
                                     zmm_t *biggest_vec)
 {
     /* which elements are larger than the pivot */
-    typename vtype::opmask_t gt_mask = vtype::ge(curr_vec, pivot_vec);
+    typename vtype::opmask_t gt_mask = vtype::ge(keys_vec, pivot_vec);
     int32_t amount_gt_pivot = _mm_popcnt_u32((int32_t)gt_mask);
     vtype::mask_compressstoreu(
-            arr + left, vtype::knot_opmask(gt_mask), curr_vec);
+            keys + left, vtype::knot_opmask(gt_mask), keys_vec);
     vtype::mask_compressstoreu(
-            arr + right - amount_gt_pivot, gt_mask, curr_vec);
-    *smallest_vec = vtype::min(curr_vec, *smallest_vec);
-    *biggest_vec = vtype::max(curr_vec, *biggest_vec);
+            keys + right - amount_gt_pivot, gt_mask, keys_vec);
+    index_type::mask_compressstoreu(
+            indexes + left, index_type::knot_opmask(gt_mask), indexes_vec);
+    index_type::mask_compressstoreu(
+            indexes + right - amount_gt_pivot, gt_mask, indexes_vec);
+    *smallest_vec = vtype::min(keys_vec, *smallest_vec);
+    *biggest_vec = vtype::max(keys_vec, *biggest_vec);
     return amount_gt_pivot;
 }
-
 /*
  * Parition an array based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
-template <typename vtype, typename type_t>
-static inline int64_t partition_avx512(type_t *arr,
+template <typename vtype,
+          typename type_t,
+          typename index_type = zmm_kv_vector<uint64_t>>
+static inline int64_t partition_avx512(type_t *keys,
+                                       uint64_t *indexes,
                                        int64_t left,
                                        int64_t right,
                                        type_t pivot,
@@ -153,10 +174,12 @@ static inline int64_t partition_avx512(type_t *arr,
 {
     /* make array length divisible by vtype::numlanes , shortening the array */
     for (int32_t i = (right - left) % vtype::numlanes; i > 0; --i) {
-        *smallest = std::min(*smallest, arr[left], comparison_func<vtype>);
-        *biggest = std::max(*biggest, arr[left], comparison_func<vtype>);
-        if (!comparison_func<vtype>(arr[left], pivot)) {
-            std::swap(arr[left], arr[--right]);
+        *smallest = std::min(*smallest, keys[left]);
+        *biggest = std::max(*biggest, keys[left]);
+        if (keys[left] > pivot) {
+            right--;
+            std::swap(keys[left], keys[right]);
+            std::swap(indexes[left], indexes[right]);
         }
         else {
             ++left;
@@ -172,22 +195,33 @@ static inline int64_t partition_avx512(type_t *arr,
     zmm_t max_vec = vtype::set1(*biggest);
 
     if (right - left == vtype::numlanes) {
-        zmm_t vec = vtype::loadu(arr + left);
-        int32_t amount_gt_pivot = partition_vec<vtype>(arr,
-                                                       left,
-                                                       left + vtype::numlanes,
-                                                       vec,
-                                                       pivot_vec,
-                                                       &min_vec,
-                                                       &max_vec);
+        zmm_t keys_vec = vtype::loadu(keys + left);
+        int32_t amount_gt_pivot;
+
+        index_t indexes_vec = index_type::loadu(indexes + left);
+        amount_gt_pivot = partition_vec<vtype>(keys,
+                                               indexes,
+                                               left,
+                                               left + vtype::numlanes,
+                                               keys_vec,
+                                               indexes_vec,
+                                               pivot_vec,
+                                               &min_vec,
+                                               &max_vec);
+
         *smallest = vtype::reducemin(min_vec);
         *biggest = vtype::reducemax(max_vec);
         return left + (vtype::numlanes - amount_gt_pivot);
     }
 
     // first and last vtype::numlanes values are partitioned at the end
-    zmm_t vec_left = vtype::loadu(arr + left);
-    zmm_t vec_right = vtype::loadu(arr + (right - vtype::numlanes));
+    zmm_t keys_vec_left = vtype::loadu(keys + left);
+    zmm_t keys_vec_right = vtype::loadu(keys + (right - vtype::numlanes));
+    index_t indexes_vec_left;
+    index_t indexes_vec_right;
+    indexes_vec_left = index_type::loadu(indexes + left);
+    indexes_vec_right = index_type::loadu(indexes + (right - vtype::numlanes));
+
     // store points of the vectors
     int64_t r_store = right - vtype::numlanes;
     int64_t l_store = left;
@@ -195,7 +229,8 @@ static inline int64_t partition_avx512(type_t *arr,
     left += vtype::numlanes;
     right -= vtype::numlanes;
     while (right - left != 0) {
-        zmm_t curr_vec;
+        zmm_t keys_vec;
+        index_t indexes_vec;
         /*
          * if fewer elements are stored on the right side of the array,
          * then next elements are loaded from the right side,
@@ -203,39 +238,48 @@ static inline int64_t partition_avx512(type_t *arr,
          */
         if ((r_store + vtype::numlanes) - right < left - l_store) {
             right -= vtype::numlanes;
-            curr_vec = vtype::loadu(arr + right);
+            keys_vec = vtype::loadu(keys + right);
+            indexes_vec = index_type::loadu(indexes + right);
         }
         else {
-            curr_vec = vtype::loadu(arr + left);
+            keys_vec = vtype::loadu(keys + left);
+            indexes_vec = index_type::loadu(indexes + left);
             left += vtype::numlanes;
         }
         // partition the current vector and save it on both sides of the array
-        int32_t amount_gt_pivot
-                = partition_vec<vtype>(arr,
-                                       l_store,
-                                       r_store + vtype::numlanes,
-                                       curr_vec,
-                                       pivot_vec,
-                                       &min_vec,
-                                       &max_vec);
-        ;
+        int32_t amount_gt_pivot;
+
+        amount_gt_pivot = partition_vec<vtype>(keys,
+                                               indexes,
+                                               l_store,
+                                               r_store + vtype::numlanes,
+                                               keys_vec,
+                                               indexes_vec,
+                                               pivot_vec,
+                                               &min_vec,
+                                               &max_vec);
         r_store -= amount_gt_pivot;
         l_store += (vtype::numlanes - amount_gt_pivot);
     }
 
     /* partition and save vec_left and vec_right */
-    int32_t amount_gt_pivot = partition_vec<vtype>(arr,
-                                                   l_store,
-                                                   r_store + vtype::numlanes,
-                                                   vec_left,
-                                                   pivot_vec,
-                                                   &min_vec,
-                                                   &max_vec);
+    int32_t amount_gt_pivot;
+    amount_gt_pivot = partition_vec<vtype>(keys,
+                                           indexes,
+                                           l_store,
+                                           r_store + vtype::numlanes,
+                                           keys_vec_left,
+                                           indexes_vec_left,
+                                           pivot_vec,
+                                           &min_vec,
+                                           &max_vec);
     l_store += (vtype::numlanes - amount_gt_pivot);
-    amount_gt_pivot = partition_vec<vtype>(arr,
+    amount_gt_pivot = partition_vec<vtype>(keys,
+                                           indexes,
                                            l_store,
                                            l_store + vtype::numlanes,
-                                           vec_right,
+                                           keys_vec_right,
+                                           indexes_vec_right,
                                            pivot_vec,
                                            &min_vec,
                                            &max_vec);
@@ -244,4 +288,4 @@ static inline int64_t partition_avx512(type_t *arr,
     *biggest = vtype::reducemax(max_vec);
     return l_store;
 }
-#endif // AVX512_QSORT_COMMON
+#endif // AVX512_QSORT_COMMON_KV
