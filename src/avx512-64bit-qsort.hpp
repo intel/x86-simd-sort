@@ -371,7 +371,6 @@ X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
             zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
     return zmm;
 }
-
 // Assumes zmm1 and zmm2 are sorted and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 X86_SIMD_SORT_INLINE void bitonic_merge_two_zmm_64bit(zmm_t &zmm1, zmm_t &zmm2)
@@ -385,7 +384,6 @@ X86_SIMD_SORT_INLINE void bitonic_merge_two_zmm_64bit(zmm_t &zmm1, zmm_t &zmm2)
     zmm1 = bitonic_merge_zmm_64bit<vtype>(zmm3);
     zmm2 = bitonic_merge_zmm_64bit<vtype>(zmm4);
 }
-
 // Assumes [zmm0, zmm1] and [zmm2, zmm3] are sorted and performs a recursive
 // half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
@@ -409,7 +407,6 @@ X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_64bit(zmm_t *zmm)
     zmm[2] = bitonic_merge_zmm_64bit<vtype>(zmm2);
     zmm[3] = bitonic_merge_zmm_64bit<vtype>(zmm3);
 }
-
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 X86_SIMD_SORT_INLINE void bitonic_merge_eight_zmm_64bit(zmm_t *zmm)
 {
@@ -443,7 +440,6 @@ X86_SIMD_SORT_INLINE void bitonic_merge_eight_zmm_64bit(zmm_t *zmm)
     zmm[6] = bitonic_merge_zmm_64bit<vtype>(zmm_t7);
     zmm[7] = bitonic_merge_zmm_64bit<vtype>(zmm_t8);
 }
-
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_zmm_64bit(zmm_t *zmm)
 {

@@ -35,7 +35,11 @@ TYPED_TEST_P(avx512_sort, test_arrsizes)
             sortedarr = arr;
             /* Sort with std::sort for comparison */
             std::sort(sortedarr.begin(), sortedarr.end());
+<<<<<<< HEAD
             avx512_qsort<TypeParam>(arr.data(), arr.size());
+=======
+            avx512_qsort<TypeParam>(arr.data(), NULL, arr.size());
+>>>>>>> 8873ea16fd047997ae2bf766b85c98125077a74a
             ASSERT_EQ(sortedarr, arr);
             arr.clear();
             sortedarr.clear();
@@ -90,7 +94,11 @@ TEST(TestKeyValueSort, KeyValueSort)
         }
         /* Sort with std::sort for comparison */
         std::sort(sortedarr.begin(), sortedarr.end(), compare);
+<<<<<<< HEAD
         avx512_qsort_kv<uint64_t>(keys.data(), values.data(), keys.size());
+=======
+        avx512_qsort<uint64_t>(keys.data(), values.data(), keys.size());
+>>>>>>> 8873ea16fd047997ae2bf766b85c98125077a74a
         //ASSERT_EQ(sortedarr, arr);
         for (size_t i = 0; i < keys.size(); i++) {
             ASSERT_EQ(keys[i], sortedarr[i].key);
