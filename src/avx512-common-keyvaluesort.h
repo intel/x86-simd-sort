@@ -33,66 +33,17 @@
  *
  */
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <immintrin.h>
-#include <limits>
-
-#define X86_SIMD_SORT_INFINITY std::numeric_limits<double>::infinity()
-#define X86_SIMD_SORT_INFINITYF std::numeric_limits<float>::infinity()
-#define X86_SIMD_SORT_INFINITYH 0x7c00
-#define X86_SIMD_SORT_NEGINFINITYH 0xfc00
-#define X86_SIMD_SORT_MAX_UINT16 std::numeric_limits<uint16_t>::max()
-#define X86_SIMD_SORT_MAX_INT16 std::numeric_limits<int16_t>::max()
-#define X86_SIMD_SORT_MIN_INT16 std::numeric_limits<int16_t>::min()
-#define X86_SIMD_SORT_MAX_UINT32 std::numeric_limits<uint32_t>::max()
-#define X86_SIMD_SORT_MAX_INT32 std::numeric_limits<int32_t>::max()
-#define X86_SIMD_SORT_MIN_INT32 std::numeric_limits<int32_t>::min()
-#define X86_SIMD_SORT_MAX_UINT64 std::numeric_limits<uint64_t>::max()
-#define X86_SIMD_SORT_MAX_INT64 std::numeric_limits<int64_t>::max()
-#define X86_SIMD_SORT_MIN_INT64 std::numeric_limits<int64_t>::min()
-#define ZMM_MAX_DOUBLE _mm512_set1_pd(X86_SIMD_SORT_INFINITY)
-#define ZMM_MAX_UINT64 _mm512_set1_epi64(X86_SIMD_SORT_MAX_UINT64)
-#define ZMM_MAX_INT64 _mm512_set1_epi64(X86_SIMD_SORT_MAX_INT64)
-#define ZMM_MAX_FLOAT _mm512_set1_ps(X86_SIMD_SORT_INFINITYF)
-#define ZMM_MAX_UINT _mm512_set1_epi32(X86_SIMD_SORT_MAX_UINT32)
-#define ZMM_MAX_INT _mm512_set1_epi32(X86_SIMD_SORT_MAX_INT32)
-#define YMM_MAX_HALF _mm256_set1_epi16(X86_SIMD_SORT_INFINITYH)
-#define ZMM_MAX_UINT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_UINT16)
-#define ZMM_MAX_INT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_INT16)
-#define SHUFFLE_MASK(a, b, c, d) (a << 6) | (b << 4) | (c << 2) | d
-
-#ifdef _MSC_VER
-#define X86_SIMD_SORT_INLINE static inline
-#define X86_SIMD_SORT_FINLINE static __forceinline
-#elif defined(__CYGWIN__)
-/*
- * Force inline in cygwin to work around a compiler bug. See
- * https://github.com/numpy/numpy/pull/22315#issuecomment-1267757584
- */
-#define X86_SIMD_SORT_INLINE static __attribute__((always_inline))
-#define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
-#elif defined(__GNUC__)
-#define X86_SIMD_SORT_INLINE static inline
-#define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
-#else
-#define X86_SIMD_SORT_INLINE static
-#define X86_SIMD_SORT_FINLINE static
-#endif
-
-template <typename type>
-struct zmm_kv_vector;
+#include "avx512-64bit-common.h"
 
 template <typename T>
-inline void avx512_qsort_kv(T *keys, uint64_t *indexes, int64_t arrsize);
+void avx512_qsort_kv(T *keys, uint64_t *indexes, int64_t arrsize);
 
 using index_t = __m512i;
-//using index_type = zmm_kv_vector<uint64_t>;
+//using index_type = zmm_vector<uint64_t>;
 
 template <typename vtype,
           typename mm_t,
-          typename index_type = zmm_kv_vector<uint64_t>>
+          typename index_type = zmm_vector<uint64_t>>
 static void COEX(mm_t &key1, mm_t &key2, index_t &index1, index_t &index2)
 {
     //COEX(key1,key2);
@@ -112,7 +63,7 @@ static void COEX(mm_t &key1, mm_t &key2, index_t &index1, index_t &index2)
 template <typename vtype,
           typename zmm_t = typename vtype::zmm_t,
           typename opmask_t = typename vtype::opmask_t,
-          typename index_type = zmm_kv_vector<uint64_t>>
+          typename index_type = zmm_vector<uint64_t>>
 static inline zmm_t cmp_merge(zmm_t in1,
                               zmm_t in2,
                               index_t &indexes1,
@@ -131,7 +82,7 @@ static inline zmm_t cmp_merge(zmm_t in1,
 template <typename vtype,
           typename type_t,
           typename zmm_t,
-          typename index_type = zmm_kv_vector<uint64_t>>
+          typename index_type = zmm_vector<uint64_t>>
 static inline int32_t partition_vec(type_t *keys,
                                     uint64_t *indexes,
                                     int64_t left,
@@ -163,7 +114,7 @@ static inline int32_t partition_vec(type_t *keys,
  */
 template <typename vtype,
           typename type_t,
-          typename index_type = zmm_kv_vector<uint64_t>>
+          typename index_type = zmm_vector<uint64_t>>
 static inline int64_t partition_avx512(type_t *keys,
                                        uint64_t *indexes,
                                        int64_t left,

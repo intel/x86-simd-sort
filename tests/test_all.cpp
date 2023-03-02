@@ -58,40 +58,48 @@ using Types = testing::Types<uint16_t,
                              int64_t>;
 INSTANTIATE_TYPED_TEST_SUITE_P(TestPrefix, avx512_sort, Types);
 
+template <typename K, typename V = uint64_t>
 struct sorted_t {
-    uint64_t key;
-    uint64_t value;
+    K key;
+    K value;
 };
-
-bool compare(sorted_t a, sorted_t b)
+template <typename K, typename V = uint64_t>
+bool compare(sorted_t<K, V> a, sorted_t<K, V> b)
 {
     return a.key == b.key ? a.value < b.value : a.key < b.key;
 }
-TEST(TestKeyValueSort, KeyValueSort)
+
+template <typename K>
+class TestKeyValueSort : public ::testing::Test {
+};
+
+TYPED_TEST_SUITE_P(TestKeyValueSort);
+
+TYPED_TEST_P(TestKeyValueSort, KeyValueSort)
 {
     std::vector<int64_t> keysizes;
     for (int64_t ii = 0; ii < 1024; ++ii) {
-        keysizes.push_back((uint64_t)ii);
+        keysizes.push_back((TypeParam)ii);
     }
-    std::vector<uint64_t> keys;
+    std::vector<TypeParam> keys;
     std::vector<uint64_t> values;
-    std::vector<sorted_t> sortedarr;
+    std::vector<sorted_t<TypeParam, uint64_t>> sortedarr;
 
     for (size_t ii = 0; ii < keysizes.size(); ++ii) {
         /* Random array */
-        keys = get_uniform_rand_array_key(keysizes[ii]);
-        //keys = get_uniform_rand_array<uint64_t>(keysizes[ii]);
+        keys = get_uniform_rand_array_key<TypeParam>(keysizes[ii]);
         values = get_uniform_rand_array<uint64_t>(keysizes[ii]);
         for (size_t i = 0; i < keys.size(); i++) {
-            sorted_t tmp_s;
+            sorted_t<TypeParam, uint64_t> tmp_s;
             tmp_s.key = keys[i];
             tmp_s.value = values[i];
             sortedarr.emplace_back(tmp_s);
         }
         /* Sort with std::sort for comparison */
-        std::sort(sortedarr.begin(), sortedarr.end(), compare);
-        avx512_qsort_kv<uint64_t>(keys.data(), values.data(), keys.size());
-        //ASSERT_EQ(sortedarr, arr);
+        std::sort(sortedarr.begin(),
+                  sortedarr.end(),
+                  compare<TypeParam, uint64_t>);
+        avx512_qsort_kv<TypeParam>(keys.data(), values.data(), keys.size());
         for (size_t i = 0; i < keys.size(); i++) {
             ASSERT_EQ(keys[i], sortedarr[i].key);
             ASSERT_EQ(values[i], sortedarr[i].value);
@@ -101,3 +109,8 @@ TEST(TestKeyValueSort, KeyValueSort)
         sortedarr.clear();
     }
 }
+
+REGISTER_TYPED_TEST_SUITE_P(TestKeyValueSort, KeyValueSort);
+
+using TypesKv = testing::Types<double, uint64_t, int64_t>;
+INSTANTIATE_TYPED_TEST_SUITE_P(TestPrefixKv, TestKeyValueSort, TypesKv);
