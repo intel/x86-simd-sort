@@ -16,32 +16,6 @@
  */
 // ZMM                  7, 6, 5, 4, 3, 2, 1, 0
 
-/*
- * Assumes zmm is random and performs a full sorting network defined in
- * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
- */
-template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_INLINE zmm_t sort_zmm_64bit(zmm_t zmm)
-{
-    const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
-    zmm = cmp_merge<vtype>(
-            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
-    zmm = cmp_merge<vtype>(
-            zmm,
-            vtype::permutexvar(_mm512_set_epi64(NETWORK_64BIT_1), zmm),
-            0xCC);
-    zmm = cmp_merge<vtype>(
-            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
-    zmm = cmp_merge<vtype>(zmm, vtype::permutexvar(rev_index, zmm), 0xF0);
-    zmm = cmp_merge<vtype>(
-            zmm,
-            vtype::permutexvar(_mm512_set_epi64(NETWORK_64BIT_3), zmm),
-            0xCC);
-    zmm = cmp_merge<vtype>(
-            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
-    return zmm;
-}
-
 // Assumes zmm is bitonic and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
@@ -402,28 +376,6 @@ X86_SIMD_SORT_INLINE void sort_128_64bit(type_t *arr, int32_t N)
     vtype::mask_storeu(arr + 104, load_mask6, zmm[13]);
     vtype::mask_storeu(arr + 112, load_mask7, zmm[14]);
     vtype::mask_storeu(arr + 120, load_mask8, zmm[15]);
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right)
-{
-    // median of 8
-    int64_t size = (right - left) / 8;
-    using zmm_t = typename vtype::zmm_t;
-    __m512i rand_index = _mm512_set_epi64(left + size,
-                                          left + 2 * size,
-                                          left + 3 * size,
-                                          left + 4 * size,
-                                          left + 5 * size,
-                                          left + 6 * size,
-                                          left + 7 * size,
-                                          left + 8 * size);
-    zmm_t rand_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
-    // pivot will never be a nan, since there are no nan's!
-    zmm_t sort = sort_zmm_64bit<vtype>(rand_vec);
-    return ((type_t *)&sort)[4];
 }
 
 template <typename vtype, typename type_t>

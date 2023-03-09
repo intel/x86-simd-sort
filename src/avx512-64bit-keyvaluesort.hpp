@@ -775,36 +775,6 @@ sort_128_64bit(type_t *keys, uint64_t *indexes, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *keys,
-                                            uint64_t *indexes,
-                                            const int64_t left,
-                                            const int64_t right)
-{
-    // median of 8
-    int64_t size = (right - left) / 8;
-    using zmm_t = typename vtype::zmm_t;
-    using index_type = zmm_vector<uint64_t>::zmm_t;
-    __m512i rand_index = _mm512_set_epi64(left + size,
-                                          left + 2 * size,
-                                          left + 3 * size,
-                                          left + 4 * size,
-                                          left + 5 * size,
-                                          left + 6 * size,
-                                          left + 7 * size,
-                                          left + 8 * size);
-    zmm_t key_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, keys);
-
-    index_type index_vec;
-    zmm_t sort;
-    index_vec = zmm_vector<uint64_t>::template i64gather<sizeof(uint64_t)>(
-            rand_index, indexes);
-    sort = sort_zmm_64bit<vtype>(key_vec, index_vec);
-    // pivot will never be a nan, since there are no nan's!
-
-    return ((type_t *)&sort)[4];
-}
-
-template <typename vtype, typename type_t>
 void heapify(type_t *keys, uint64_t *indexes, int64_t idx, int64_t size)
 {
     int64_t i = idx;
@@ -862,7 +832,7 @@ void qsort_64bit_(type_t *keys,
         return;
     }
 
-    type_t pivot = get_pivot_64bit<vtype>(keys, indexes, left, right);
+    type_t pivot = get_pivot_64bit<vtype>(keys, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
     int64_t pivot_index = partition_avx512<vtype>(

@@ -347,5 +347,52 @@ replace_inf_with_nan(double *arr, int64_t arrsize, int64_t nan_count)
         nan_count -= 1;
     }
 }
+/*
+ * Assumes zmm is random and performs a full sorting network defined in
+ * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
+ */
+template <typename vtype, typename zmm_t = typename vtype::zmm_t>
+X86_SIMD_SORT_INLINE zmm_t sort_zmm_64bit(zmm_t zmm)
+{
+    const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
+    zmm = cmp_merge<vtype>(
+            zmm,
+            vtype::permutexvar(_mm512_set_epi64(NETWORK_64BIT_1), zmm),
+            0xCC);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
+    zmm = cmp_merge<vtype>(zmm, vtype::permutexvar(rev_index, zmm), 0xF0);
+    zmm = cmp_merge<vtype>(
+            zmm,
+            vtype::permutexvar(_mm512_set_epi64(NETWORK_64BIT_3), zmm),
+            0xCC);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
+    return zmm;
+}
+
+template <typename vtype, typename type_t>
+X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
+                                            const int64_t left,
+                                            const int64_t right)
+{
+    // median of 8
+    int64_t size = (right - left) / 8;
+    using zmm_t = typename vtype::zmm_t;
+    __m512i rand_index = _mm512_set_epi64(left + size,
+                                          left + 2 * size,
+                                          left + 3 * size,
+                                          left + 4 * size,
+                                          left + 5 * size,
+                                          left + 6 * size,
+                                          left + 7 * size,
+                                          left + 8 * size);
+    zmm_t rand_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
+    // pivot will never be a nan, since there are no nan's!
+    zmm_t sort = sort_zmm_64bit<vtype>(rand_vec);
+    return ((type_t *)&sort)[4];
+}
 
 #endif
