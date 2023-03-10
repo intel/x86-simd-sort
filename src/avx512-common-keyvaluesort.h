@@ -2,8 +2,8 @@
  * Copyright (C) 2022 Intel Corporation
  * Copyright (C) 2021 Serge Sans Paille
  * SPDX-License-Identifier: BSD-3-Clause
- * Authors: Raghuveer Devulapalli <raghuveer.devulapalli@intel.com>
- *          Serge Sans Paille <serge.guelton@telecom-bretagne.eu>
+ * Authors: Liu Zhuan <zhuan.liu@intel.com>
+ *          Tang Xi <xi.tang@intel.com>
  * ****************************************************************/
 
 #ifndef AVX512_QSORT_COMMON_KV
@@ -39,14 +39,12 @@ template <typename T>
 void avx512_qsort_kv(T *keys, uint64_t *indexes, int64_t arrsize);
 
 using index_t = __m512i;
-//using index_type = zmm_vector<uint64_t>;
 
 template <typename vtype,
           typename mm_t,
           typename index_type = zmm_vector<uint64_t>>
 static void COEX(mm_t &key1, mm_t &key2, index_t &index1, index_t &index2)
 {
-    //COEX(key1,key2);
     mm_t key_t1 = vtype::min(key1, key2);
     mm_t key_t2 = vtype::max(key1, key2);
 

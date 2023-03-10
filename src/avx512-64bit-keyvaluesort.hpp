@@ -1,7 +1,8 @@
 /*******************************************************************
  * Copyright (C) 2022 Intel Corporation
  * SPDX-License-Identifier: BSD-3-Clause
- * Authors: Raghuveer Devulapalli <raghuveer.devulapalli@intel.com>
+ * Authors: Liu Zhuan <zhuan.liu@intel.com>
+ *          Tang Xi <xi.tang@intel.com>
  * ****************************************************************/
 
 #ifndef AVX512_QSORT_64BIT_KV

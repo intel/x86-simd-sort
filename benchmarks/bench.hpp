@@ -79,6 +79,7 @@ std::tuple<uint64_t, uint64_t> bench_sort(const std::vector<T> arr,
             / lastfew;
     return std::make_tuple(avx_sort, std_sort);
 }
+
 template <typename K, typename V = uint64_t>
 std::tuple<uint64_t, uint64_t>
 bench_sort_kv(const std::vector<K> keys,

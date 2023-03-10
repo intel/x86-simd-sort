@@ -36,7 +36,6 @@ static std::vector<T> get_uniform_rand_array(
     std::mt19937 gen(rd());
     std::uniform_real_distribution<T> dis(min, max);
     std::vector<T> arr;
-    //std::cout<<dis(gen)<<std::endl;
     for (int64_t ii = 0; ii < arrsize; ++ii) {
         arr.emplace_back(dis(gen));
     }
