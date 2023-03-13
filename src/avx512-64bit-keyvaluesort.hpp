@@ -803,11 +803,6 @@ void heap_sort(type_t *keys, uint64_t *indexes, int64_t size)
     }
 }
 
-template <typename T>
-struct sortkv_t {
-    T key;
-    uint64_t value;
-};
 template <typename vtype, typename type_t>
 void qsort_64bit_(type_t *keys,
                   uint64_t *indexes,
