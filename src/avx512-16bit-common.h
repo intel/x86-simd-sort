@@ -4,8 +4,8 @@
  * Authors: Raghuveer Devulapalli <raghuveer.devulapalli@intel.com>
  * ****************************************************************/
 
-#ifndef AVX512FP16_QSORT_COMMON
-#define AVX512FP16_QSORT_COMMON
+#ifndef AVX512_16BIT_COMMON
+#define AVX512_16BIT_COMMON
 
 #include "avx512-common-qsort.h"
 
@@ -289,4 +289,4 @@ qsort_16bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
         qsort_16bit_<vtype>(arr, pivot_index, right, max_iters - 1);
 }
 
-#endif // AVX512FP16_QSORT_COMMON
+#endif // AVX512_16BIT_COMMON
