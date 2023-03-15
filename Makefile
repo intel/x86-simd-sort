@@ -26,7 +26,8 @@ bench: $(BENCHDIR)/main.cpp $(SRCS) $(UTILS)/cpuinfo.o
 		$(CXX) $(BENCHDIR)/main.cpp $(CXXFLAGS) $(UTILS)/cpuinfo.o $(MARCHFLAG) -o benchexe
 
 meson:
-	meson setup builddir && cd builddir && ninja
+	meson setup --warnlevel 0 --buildtype release builddir
+	cd builddir && ninja
 
 clean:
-	rm -rf $(TESTDIR)/*.o testexe benchexe builddir
+	rm -rf $(TESTDIR)/*.o $(UTILS)/*.o testexe benchexe builddir
