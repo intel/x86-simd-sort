@@ -38,6 +38,7 @@
 #include <cstdint>
 #include <immintrin.h>
 #include <limits>
+#include <cstring>
 
 #define X86_SIMD_SORT_INFINITY std::numeric_limits<double>::infinity()
 #define X86_SIMD_SORT_INFINITYF std::numeric_limits<float>::infinity()
@@ -58,6 +59,7 @@
 #define ZMM_MAX_FLOAT _mm512_set1_ps(X86_SIMD_SORT_INFINITYF)
 #define ZMM_MAX_UINT _mm512_set1_epi32(X86_SIMD_SORT_MAX_UINT32)
 #define ZMM_MAX_INT _mm512_set1_epi32(X86_SIMD_SORT_MAX_INT32)
+#define ZMM_MAX_HALF _mm512_set1_epi16(X86_SIMD_SORT_INFINITYH)
 #define YMM_MAX_HALF _mm256_set1_epi16(X86_SIMD_SORT_INFINITYH)
 #define ZMM_MAX_UINT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_UINT16)
 #define ZMM_MAX_INT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_INT16)
