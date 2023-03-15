@@ -7,8 +7,8 @@ SRCS		= $(wildcard $(SRCDIR)/*.hpp)
 TESTS		= $(wildcard $(TESTDIR)/*.cpp)
 TESTOBJS	= $(patsubst $(TESTDIR)/%.cpp,$(TESTDIR)/%.o,$(TESTS))
 CXXFLAGS	+= -I$(SRCDIR) -I$(UTILS)
-GTESTCFLAGS	= `pkg-config --cflags gtest`
-GTESTLDFLAGS	= `pkg-config --libs gtest`
+GTESTCFLAGS	= `pkg-config --cflags gtest_main`
+GTESTLDFLAGS	= `pkg-config --libs gtest_main`
 MARCHFLAG	= -march=sapphirerapids -O3
 
 all : test bench
@@ -26,8 +26,8 @@ bench: $(BENCHDIR)/main.cpp $(SRCS) $(UTILS)/cpuinfo.o
 		$(CXX) $(BENCHDIR)/main.cpp $(CXXFLAGS) $(UTILS)/cpuinfo.o $(MARCHFLAG) -o benchexe
 
 meson:
-	meson setup --warnlevel 0 --buildtype release builddir
+	meson setup --warnlevel 0 --buildtype plain builddir
 	cd builddir && ninja
 
 clean:
-	rm -rf $(TESTDIR)/*.o $(UTILS)/*.o testexe benchexe builddir
+	$(RM) -rf $(TESTDIR)/*.o $(UTILS)/*.o testexe benchexe builddir
