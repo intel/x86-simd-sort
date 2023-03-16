@@ -9,6 +9,12 @@
 
 #include "avx512-16bit-common.h"
 
+typedef union
+{
+    _Float16 f_;
+    uint16_t i_;
+} Fp16Bits;
+
 template <>
 struct zmm_vector<_Float16> {
     using type_t = _Float16;
@@ -23,15 +29,15 @@ struct zmm_vector<_Float16> {
     }
     static type_t type_max()
     {
-        _Float16 val;
-        memset(&val, X86_SIMD_SORT_INFINITYH, 2);
-        return val;
+        Fp16Bits val;
+        val.i_ = X86_SIMD_SORT_INFINITYH;
+        return val.f_;
     }
     static type_t type_min()
     {
-        _Float16 val;
-        memset(&val, -X86_SIMD_SORT_INFINITYH, 2);
-        return val;
+        Fp16Bits val;
+        val.i_ = X86_SIMD_SORT_NEGINFINITYH;
+        return val.f_;
     }
     static zmm_t zmm_max()
     {
@@ -134,7 +140,7 @@ X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(_Float16 *arr,
 X86_SIMD_SORT_INLINE void
 replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
 {
-    memset(arr + arrsize - nan_count, 0xFFFF, nan_count*2);
+    memset(arr + arrsize - nan_count, 0xFF, nan_count*2);
 }
 
 template <>
