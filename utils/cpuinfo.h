@@ -9,3 +9,5 @@
 int cpu_has_avx512_vbmi2();
 
 int cpu_has_avx512bw();
+
+int cpu_has_avx512fp16();

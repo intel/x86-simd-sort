@@ -29,6 +29,13 @@ int cpu_has_avx512bw()
     return (ebx >> 30) & 0x1;
 }
 
+int cpu_has_avx512fp16()
+{
+    uint32_t eax(0), ebx(0), ecx(0), edx(0);
+    cpuid(0x07, &eax, &ebx, &ecx, &edx);
+    return (edx >> 23) & 0x1;
+}
+
 // TODO:
 //int check_os_supports_avx512()
 //{
