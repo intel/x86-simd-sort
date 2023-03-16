@@ -89,6 +89,8 @@ struct zmm_vector;
 template <typename T>
 void avx512_qsort(T *arr, int64_t arrsize);
 
+void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize);
+
 template <typename vtype, typename T = typename vtype::type_t>
 bool comparison_func(const T &a, const T &b)
 {
