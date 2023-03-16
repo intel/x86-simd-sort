@@ -3,8 +3,8 @@
  * * SPDX-License-Identifier: BSD-3-Clause
  * *******************************************/
 
-#include <stdint.h>
 #include <cpuid.h>
+#include <stdint.h>
 
 int cpu_has_avx512_vbmi2();
 

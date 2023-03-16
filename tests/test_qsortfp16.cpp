@@ -3,11 +3,11 @@
  * * SPDX-License-Identifier: BSD-3-Clause
  * *******************************************/
 
-#include <gtest/gtest.h>
-#include <vector>
 #include "avx512fp16-16bit-qsort.hpp"
 #include "cpuinfo.h"
 #include "rand_array.h"
+#include <gtest/gtest.h>
+#include <vector>
 
 TEST(avx512_qsort_float16, test_arrsizes)
 {
@@ -49,26 +49,20 @@ TEST(avx512_qsort_float16, test_special_floats)
         for (size_t jj = 0; jj < arrsize; ++jj) {
             temp.f_ = (float)rand() / (float)(RAND_MAX);
             switch (rand() % 10) {
-                case 0:
-                    temp.i_ = 0xFFFF;
-                    break;
-                case 1:
-                    temp.i_ = X86_SIMD_SORT_INFINITYH;
-                    break;
-                case 2:
-                    temp.i_ = X86_SIMD_SORT_NEGINFINITYH;
-                    break;
-                default:
-                    break;
+                case 0: temp.i_ = 0xFFFF; break;
+                case 1: temp.i_ = X86_SIMD_SORT_INFINITYH; break;
+                case 2: temp.i_ = X86_SIMD_SORT_NEGINFINITYH; break;
+                default: break;
             }
             arr.push_back(temp.f_);
             sortedarr.push_back(temp.f_);
         }
         /* Cannot use std::sort because it treats NAN differently */
-        avx512_qsort_fp16(reinterpret_cast<uint16_t*>(sortedarr.data()), sortedarr.size());
+        avx512_qsort_fp16(reinterpret_cast<uint16_t *>(sortedarr.data()),
+                          sortedarr.size());
         avx512_qsort<_Float16>(arr.data(), arr.size());
         // Cannot rely on ASSERT_EQ since it returns false if there are NAN's
-        if (memcmp(arr.data(), sortedarr.data(), arrsize*2) != 0)  {
+        if (memcmp(arr.data(), sortedarr.data(), arrsize * 2) != 0) {
             ASSERT_EQ(sortedarr, arr);
         }
         arr.clear();

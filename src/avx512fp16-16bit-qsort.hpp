@@ -9,8 +9,7 @@
 
 #include "avx512-16bit-common.h"
 
-typedef union
-{
+typedef union {
     _Float16 f_;
     uint16_t i_;
 } Fp16Bits;
@@ -74,8 +73,8 @@ struct zmm_vector<_Float16> {
     }
     static zmm_t mask_mov(zmm_t x, opmask_t mask, zmm_t y)
     {
-        return _mm512_castsi512_ph(
-                _mm512_mask_mov_epi16(_mm512_castph_si512(x), mask, _mm512_castph_si512(y)));
+        return _mm512_castsi512_ph(_mm512_mask_mov_epi16(
+                _mm512_castph_si512(x), mask, _mm512_castph_si512(y)));
     }
     static void mask_storeu(void *mem, opmask_t mask, zmm_t x)
     {
@@ -104,8 +103,10 @@ struct zmm_vector<_Float16> {
     template <uint8_t mask>
     static zmm_t shuffle(zmm_t zmm)
     {
-        __m512i temp = _mm512_shufflehi_epi16(_mm512_castph_si512(zmm), (_MM_PERM_ENUM)mask);
-        return _mm512_castsi512_ph(_mm512_shufflelo_epi16(temp, (_MM_PERM_ENUM)mask));
+        __m512i temp = _mm512_shufflehi_epi16(_mm512_castph_si512(zmm),
+                                              (_MM_PERM_ENUM)mask);
+        return _mm512_castsi512_ph(
+                _mm512_shufflelo_epi16(temp, (_MM_PERM_ENUM)mask));
     }
     static void storeu(void *mem, zmm_t x)
     {
@@ -123,7 +124,7 @@ X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(_Float16 *arr,
         if (arrsize < 32) {
             loadmask = (0x00000001 << arrsize) - 0x00000001;
             in_zmm = _mm512_castsi512_ph(
-                                _mm512_maskz_loadu_epi16(loadmask, arr));
+                    _mm512_maskz_loadu_epi16(loadmask, arr));
         }
         else {
             in_zmm = _mm512_loadu_ph(arr);
@@ -140,7 +141,7 @@ X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(_Float16 *arr,
 X86_SIMD_SORT_INLINE void
 replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
 {
-    memset(arr + arrsize - nan_count, 0xFF, nan_count*2);
+    memset(arr + arrsize - nan_count, 0xFF, nan_count * 2);
 }
 
 template <>

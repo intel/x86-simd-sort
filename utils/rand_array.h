@@ -43,14 +43,14 @@ static std::vector<T> get_uniform_rand_array(
 }
 
 template <typename T>
-static std::vector<T> get_uniform_rand_array_with_uniquevalues(
-        int64_t arrsize,
-        T max = std::numeric_limits<T>::max(),
-        T min = std::numeric_limits<T>::min())
+static std::vector<T>
+get_uniform_rand_array_with_uniquevalues(int64_t arrsize,
+                                         T max = std::numeric_limits<T>::max(),
+                                         T min = std::numeric_limits<T>::min())
 {
     std::vector<T> arr = get_uniform_rand_array<T>(arrsize, max, min);
-    typename std::vector<T>::iterator ip =
-        std::unique(arr.begin(), arr.begin() + arrsize);
+    typename std::vector<T>::iterator ip
+            = std::unique(arr.begin(), arr.begin() + arrsize);
     arr.resize(std::distance(arr.begin(), ip));
     return arr;
 }

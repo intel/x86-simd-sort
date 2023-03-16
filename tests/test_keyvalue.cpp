@@ -38,8 +38,8 @@ TYPED_TEST_P(TestKeyValueSort, KeyValueSort)
 
     for (size_t ii = 0; ii < keysizes.size(); ++ii) {
         /* Random array */
-        keys =
-            get_uniform_rand_array_with_uniquevalues<TypeParam>(keysizes[ii]);
+        keys = get_uniform_rand_array_with_uniquevalues<TypeParam>(
+                keysizes[ii]);
         values = get_uniform_rand_array<uint64_t>(keysizes[ii]);
         for (size_t i = 0; i < keys.size(); i++) {
             sorted_t<TypeParam, uint64_t> tmp_s;
