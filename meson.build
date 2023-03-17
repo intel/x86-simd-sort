@@ -15,10 +15,3 @@ testexe = executable('testexe',
                      dependencies : gtest_dep,
                      link_whole : [libtests, libcpuinfo]
                     )
-
-benchexe = executable('benchexe', 'benchmarks/main.cpp',
-                      include_directories : [src, utils, bench],
-                      cpp_args : [ '-O3', '-march=icelake-client' ],
-                      dependencies : [],
-                      link_whole : [libcpuinfo],
-                     )

@@ -11,7 +11,7 @@ GTESTCFLAGS	= `pkg-config --cflags gtest_main`
 GTESTLDFLAGS	= `pkg-config --libs gtest_main`
 MARCHFLAG	= -march=sapphirerapids -O3
 
-all : test bench
+all : test
 
 $(UTILS)/cpuinfo.o : $(UTILS)/cpuinfo.cpp
 		$(CXX) $(CXXFLAGS) -c $(UTILS)/cpuinfo.cpp -o $(UTILS)/cpuinfo.o
@@ -21,9 +21,6 @@ $(TESTDIR)/%.o : $(TESTDIR)/%.cpp $(SRCS)
 
 test: $(TESTOBJS) $(UTILS)/cpuinfo.o $(SRCS)
 		$(CXX) $(TESTOBJS) $(UTILS)/cpuinfo.o $(MARCHFLAG) $(CXXFLAGS) -lgtest_main $(GTESTLDFLAGS) -o testexe
-
-bench: $(BENCHDIR)/main.cpp $(SRCS) $(UTILS)/cpuinfo.o
-		$(CXX) $(BENCHDIR)/main.cpp $(CXXFLAGS) $(UTILS)/cpuinfo.o $(MARCHFLAG) -o benchexe
 
 meson:
 	meson setup --warnlevel 0 --buildtype plain builddir
