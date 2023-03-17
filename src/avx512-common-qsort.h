@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <immintrin.h>
 #include <limits>
 
@@ -58,6 +59,7 @@
 #define ZMM_MAX_FLOAT _mm512_set1_ps(X86_SIMD_SORT_INFINITYF)
 #define ZMM_MAX_UINT _mm512_set1_epi32(X86_SIMD_SORT_MAX_UINT32)
 #define ZMM_MAX_INT _mm512_set1_epi32(X86_SIMD_SORT_MAX_INT32)
+#define ZMM_MAX_HALF _mm512_set1_epi16(X86_SIMD_SORT_INFINITYH)
 #define YMM_MAX_HALF _mm256_set1_epi16(X86_SIMD_SORT_INFINITYH)
 #define ZMM_MAX_UINT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_UINT16)
 #define ZMM_MAX_INT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_INT16)
@@ -86,6 +88,8 @@ struct zmm_vector;
 
 template <typename T>
 void avx512_qsort(T *arr, int64_t arrsize);
+
+void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize);
 
 template <typename vtype, typename T = typename vtype::type_t>
 bool comparison_func(const T &a, const T &b)
