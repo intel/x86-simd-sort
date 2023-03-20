@@ -71,5 +71,3 @@ BENCHMARK(avx512_qsort<uint16_t>)->Arg(10000)->Arg(1000000);
 BENCHMARK(stdsort<uint16_t>)->Arg(10000)->Arg(1000000);
 BENCHMARK(avx512_qsort<int16_t>)->Arg(10000)->Arg(1000000);
 BENCHMARK(stdsort<int16_t>)->Arg(10000)->Arg(10000000);
-// Run the benchmark
-BENCHMARK_MAIN();

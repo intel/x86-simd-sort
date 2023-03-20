@@ -10,6 +10,7 @@ gtest_dep = dependency('gtest_main', required : true)
 gbench_dep = dependency('benchmark', required : true)
 subdir('utils')
 subdir('tests')
+subdir('benchmarks')
 
 testexe = executable('testexe',
                      include_directories : [src, utils],
@@ -17,9 +18,8 @@ testexe = executable('testexe',
                      link_whole : [libtests, libcpuinfo]
                     )
 
-benchexe = executable('benchexe', 'benchmarks/bench_qsort.cpp',
+benchexe = executable('benchexe', 'benchmarks/main.cpp',
                       include_directories : [src, utils, bench],
-                      cpp_args : [ '-O3', '-march=icelake-client' ],
                       dependencies : [gbench_dep],
-                      link_whole : [libcpuinfo],
+                      link_whole : [libbench, libcpuinfo],
                      )
