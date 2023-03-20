@@ -1,0 +1,36 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  
+jobs:
+  test-fedora:
+    name: fedora
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Setup Podman
+        run: |
+          sudo apt update
+          sudo apt-get -y install podman
+          podman pull fedora:latest
+      - name: Get source
+        uses: actions/checkout@v3
+        with:
+          path: 'x86-simd-sort'
+      - name: Create container and build
+        run: |
+          {
+              echo 'FROM fedora:latest'
+              echo 'RUN dnf -y update'
+              echo 'RUN dnf -y install gcc-c++ gtest-devel meson'
+              echo 'RUN dnf clean all'
+              echo 'COPY x86-simd-sort x86-simd-sort'
+              echo 'WORKDIR /x86-simd-sort'
+              echo 'RUN meson setup builddir'
+              echo 'WORKDIR /x86-simd-sort/builddir'
+              echo 'RUN ninja' 
+          } > podmanfile
+          podman build --tag fedoralatest -f ./podmanfile
