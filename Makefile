@@ -5,11 +5,15 @@ BENCHDIR	= ./benchmarks
 UTILS		= ./utils
 SRCS		= $(wildcard $(SRCDIR)/*.hpp)
 TESTS		= $(wildcard $(TESTDIR)/*.cpp)
+BENCHS		= $(wildcard $(BENCHDIR)/*.cpp)
 TESTOBJS	= $(patsubst $(TESTDIR)/%.cpp,$(TESTDIR)/%.o,$(TESTS))
+BENCHOBJS	= $(patsubst $(BENCHDIR)/%.cpp,$(BENCHDIR)/%.o,$(BENCHS))
+BENCHOBJS	:= $(filter-out $(BENCHDIR)/main.o ,$(BENCHOBJS))
 CXXFLAGS	+= -I$(SRCDIR) -I$(UTILS)
 GTESTCFLAGS	= `pkg-config --cflags gtest_main`
 GTESTLDFLAGS	= `pkg-config --libs gtest_main`
-GBENCHFLAGS	= `pkg-config --cflags --libs benchmark`
+GBENCHCFLAGS	= `pkg-config --cflags benchmark`
+GBENCHLDFLAGS	= `pkg-config --libs benchmark`
 MARCHFLAG	= -march=sapphirerapids -O3
 
 all : test bench
@@ -23,8 +27,11 @@ $(TESTDIR)/%.o : $(TESTDIR)/%.cpp $(SRCS)
 test: $(TESTOBJS) $(UTILS)/cpuinfo.o $(SRCS)
 	$(CXX) $(TESTOBJS) $(UTILS)/cpuinfo.o $(MARCHFLAG) $(CXXFLAGS) -lgtest_main $(GTESTLDFLAGS) -o testexe
 
-bench: $(SRCS) $(UTILS)/cpuinfo.o
-	$(CXX) $(MARCHFLAG) $(CXXFLAGS) $(GBENCHFLAGS) $(UTILS)/cpuinfo.o -o benchexe
+$(BENCHDIR)/%.o : $(BENCHDIR)/%.cpp $(SRCS)
+	$(CXX) $(CXXFLAGS) $(MARCHFLAG) $(GBENCHCFLAGS) -c $< -o $@
+
+bench: $(BENCHOBJS) $(UTILS)/cpuinfo.o
+	$(CXX) $(BENCHDIR)/main.cpp $(BENCHOBJS) $(MARCHFLAG) $(CXXFLAGS) $(GBENCHLDFLAGS) $(UTILS)/cpuinfo.o -o benchexe
 
 meson:
 	meson setup --warnlevel 0 --buildtype plain builddir
