@@ -1,4 +1,4 @@
-name: C/C++ CI ubuntu-latest
+name: ubuntu-latest
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  BasicBuildAndTest:
 
     runs-on: ubuntu-latest
 

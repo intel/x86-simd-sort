@@ -1,4 +1,4 @@
-name: build NumPy on ubuntu-latest
+name: NumPy
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  NumPyMultiarrayTests:
 
     runs-on: ubuntu-latest
 
