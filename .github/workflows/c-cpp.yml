@@ -44,7 +44,6 @@ jobs:
     - name: Run test suite on Intel SDE
       run: sde -spr -- ./builddir/testexe
 
-jobs:
   compare-benchmarks-with-main:
 
     runs-on: ubuntu-latest
