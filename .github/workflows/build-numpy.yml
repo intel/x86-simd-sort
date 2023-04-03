@@ -1,4 +1,4 @@
-name: Build NumPy main branch
+name: NumPy
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   - cron: '0 5 * * *'
 
 jobs:
-  NumPy-multiarray-tests:
+  NumPyMultiarrayTests:
 
     runs-on: ubuntu-latest
 
