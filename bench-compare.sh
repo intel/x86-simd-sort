@@ -27,7 +27,9 @@ cd builddir-${branch}
 ninja
 echo "Fetching and build main .."
 cd ..
-git checkout main
+git remote add upstream https://github.com/intel/x86-simd-sort.git
+git fetch upstream
+git checkout upstream/main
 meson setup --warnlevel 0 --buildtype plain builddir-main
 cd builddir-main
 ninja
