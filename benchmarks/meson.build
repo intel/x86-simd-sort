@@ -9,7 +9,7 @@ if cpp.has_argument('-march=icelake-client')
     )
 endif
 
-if cpp.has_argument('-march=sapphirerapids')
+if cancompilefp16
   libbench += static_library('bench_qsortfp16',
     files('bench_qsortfp16.cpp', ),
     dependencies: gbench_dep,

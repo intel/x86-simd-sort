@@ -8,6 +8,16 @@ utils = include_directories('utils')
 tests = include_directories('tests')
 gtest_dep = dependency('gtest_main', required : true)
 gbench_dep = dependency('benchmark', required : true)
+
+fp16code = '''#include<immintrin.h>
+int main() { 
+  __mm512h temp = _mm512_set1_ph(1.0f);
+  __mm512h var2 = _mm512_min_ph(temp, temp);
+  return 0;
+}
+'''
+cancompilefp16 = cpp.compiles(fp16code, args:'-march=sapphirerapids')
+
 subdir('utils')
 subdir('tests')
 subdir('benchmarks')
@@ -23,3 +33,11 @@ benchexe = executable('benchexe', 'benchmarks/main.cpp',
                       dependencies : [gbench_dep],
                       link_whole : [libbench, libcpuinfo],
                      )
+
+summary({
+  'Can compile AVX-512 FP16 ISA': cancompilefp16,
+  },
+  section: 'Configuration',
+  bool_yn: true
+  )
+
