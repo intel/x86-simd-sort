@@ -1,4 +1,4 @@
-name: ubuntu-latest
+name: Tests and benchmarks
 
 on:
   push:
@@ -44,3 +44,41 @@ jobs:
     - name: Run test suite on Intel SDE
       run: sde -spr -- ./builddir/testexe
 
+  compare-benchmarks-with-main:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        path: x86-simd-sort
+
+    - name: Specify branch name
+      working-directory: ${{ github.workspace }}/x86-simd-sort
+      run: git switch -c pr-branch
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install g++-12 libgtest-dev meson curl git cmake
+
+    - name: Install google benchmarks
+      run: |
+        git clone https://github.com/google/benchmark.git
+        cd benchmark
+        pip3 install -r requirements.txt
+        cmake -E make_directory "build"
+        cmake -E chdir "build" cmake -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on -DCMAKE_BUILD_TYPE=Release ../
+        sudo cmake --build "build" --config Release --target install
+
+    - name: Run bench-compare
+      working-directory: ${{ github.workspace }}/x86-simd-sort
+      env:
+        CXX: g++-12
+        GBENCH: ${{ github.workspace }}/benchmark
+      run: bash -x bench-compare.sh
