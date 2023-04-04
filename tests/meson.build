@@ -18,7 +18,7 @@ if cpp.has_argument('-march=icelake-client')
     )
 endif
 
-if cpp.has_argument('-march=sapphirerapids')
+if cancompilefp16
   libtests += static_library('tests_qsortfp16',
     files('test_qsortfp16.cpp', ),
     dependencies: gtest_dep,
