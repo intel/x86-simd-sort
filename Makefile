@@ -38,4 +38,4 @@ meson:
 	cd builddir && ninja
 
 clean:
-	$(RM) -rf $(TESTDIR)/*.o $(UTILS)/*.o testexe benchexe builddir
+	$(RM) -rf $(TESTDIR)/*.o $(BENCHDIR)/*.o $(UTILS)/*.o testexe benchexe builddir
