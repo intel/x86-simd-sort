@@ -145,6 +145,17 @@ replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
 }
 
 template <>
+void avx512_qselect(_Float16 *arr, int64_t k, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        int64_t nan_count = replace_nan_with_inf(arr, arrsize);
+        qselect_16bit_<zmm_vector<_Float16>, _Float16>(
+                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        replace_inf_with_nan(arr, arrsize, nan_count);
+    }
+}
+
+template <>
 void avx512_qsort(_Float16 *arr, int64_t arrsize)
 {
     if (arrsize > 1) {

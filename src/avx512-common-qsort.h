@@ -88,8 +88,22 @@ struct zmm_vector;
 
 template <typename T>
 void avx512_qsort(T *arr, int64_t arrsize);
-
 void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize);
+
+template <typename T>
+void avx512_qselect(T *arr, int64_t k, int64_t arrsize);
+void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize);
+
+template <typename T>
+void avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize) {
+    avx512_qselect<T>(arr, k, arrsize);
+    avx512_qsort<T>(arr, k);
+}
+inline void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize)
+{
+    avx512_qselect_fp16(arr, k, arrsize);
+    avx512_qsort_fp16(arr, k);
+}
 
 template <typename vtype, typename T = typename vtype::type_t>
 bool comparison_func(const T &a, const T &b)
