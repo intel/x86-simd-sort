@@ -3,13 +3,7 @@
  * * SPDX-License-Identifier: BSD-3-Clause
  * *******************************************/
 
-#include "avx512-16bit-qsort.hpp"
-#include "avx512-32bit-qsort.hpp"
-#include "avx512-64bit-qsort.hpp"
-#include "cpuinfo.h"
-#include "rand_array.h"
-#include <gtest/gtest.h>
-#include <vector>
+#include "test-qsort-common.h"
 
 template <typename T>
 class avx512_sort : public ::testing::Test {
@@ -46,13 +40,3 @@ TYPED_TEST_P(avx512_sort, test_arrsizes)
 }
 
 REGISTER_TYPED_TEST_SUITE_P(avx512_sort, test_arrsizes);
-
-using Types = testing::Types<uint16_t,
-                             int16_t,
-                             float,
-                             double,
-                             uint32_t,
-                             int32_t,
-                             uint64_t,
-                             int64_t>;
-INSTANTIATE_TYPED_TEST_SUITE_P(TestPrefix, avx512_sort, Types);
