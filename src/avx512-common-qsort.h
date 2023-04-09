@@ -131,8 +131,8 @@ static inline zmm_t cmp_merge(zmm_t in1, zmm_t in2, opmask_t mask)
     return vtype::mask_mov(min, mask, max); // 0 -> min, 1 -> max
 }
 /*
- * Parition one ZMM register based on the pivot and returns the index of the
- * last element that is less than equal to the pivot.
+ * Parition one ZMM register based on the pivot and returns the
+ * number of elements that are greater than or equal to the pivot.
  */
 template <typename vtype, typename type_t, typename zmm_t>
 static inline int32_t partition_vec(type_t *arr,
@@ -143,20 +143,20 @@ static inline int32_t partition_vec(type_t *arr,
                                     zmm_t *smallest_vec,
                                     zmm_t *biggest_vec)
 {
-    /* which elements are larger than the pivot */
-    typename vtype::opmask_t gt_mask = vtype::ge(curr_vec, pivot_vec);
-    int32_t amount_gt_pivot = _mm_popcnt_u32((int32_t)gt_mask);
+    /* which elements are larger than or equal to the pivot */
+    typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
+    int32_t amount_ge_pivot = _mm_popcnt_u32((int32_t)ge_mask);
     vtype::mask_compressstoreu(
-            arr + left, vtype::knot_opmask(gt_mask), curr_vec);
+            arr + left, vtype::knot_opmask(ge_mask), curr_vec);
     vtype::mask_compressstoreu(
-            arr + right - amount_gt_pivot, gt_mask, curr_vec);
+            arr + right - amount_ge_pivot, ge_mask, curr_vec);
     *smallest_vec = vtype::min(curr_vec, *smallest_vec);
     *biggest_vec = vtype::max(curr_vec, *biggest_vec);
-    return amount_gt_pivot;
+    return amount_ge_pivot;
 }
 /*
  * Parition an array based on the pivot and returns the index of the
- * last element that is less than equal to the pivot.
+ * first element that is greater than or equal to the pivot.
  */
 template <typename vtype, typename type_t>
 static inline int64_t partition_avx512(type_t *arr,
@@ -188,7 +188,7 @@ static inline int64_t partition_avx512(type_t *arr,
 
     if (right - left == vtype::numlanes) {
         zmm_t vec = vtype::loadu(arr + left);
-        int32_t amount_gt_pivot = partition_vec<vtype>(arr,
+        int32_t amount_ge_pivot = partition_vec<vtype>(arr,
                                                        left,
                                                        left + vtype::numlanes,
                                                        vec,
@@ -197,7 +197,7 @@ static inline int64_t partition_avx512(type_t *arr,
                                                        &max_vec);
         *smallest = vtype::reducemin(min_vec);
         *biggest = vtype::reducemax(max_vec);
-        return left + (vtype::numlanes - amount_gt_pivot);
+        return left + (vtype::numlanes - amount_ge_pivot);
     }
 
     // first and last vtype::numlanes values are partitioned at the end
@@ -225,7 +225,7 @@ static inline int64_t partition_avx512(type_t *arr,
             left += vtype::numlanes;
         }
         // partition the current vector and save it on both sides of the array
-        int32_t amount_gt_pivot
+        int32_t amount_ge_pivot
                 = partition_vec<vtype>(arr,
                                        l_store,
                                        r_store + vtype::numlanes,
@@ -234,27 +234,27 @@ static inline int64_t partition_avx512(type_t *arr,
                                        &min_vec,
                                        &max_vec);
         ;
-        r_store -= amount_gt_pivot;
-        l_store += (vtype::numlanes - amount_gt_pivot);
+        r_store -= amount_ge_pivot;
+        l_store += (vtype::numlanes - amount_ge_pivot);
     }
 
     /* partition and save vec_left and vec_right */
-    int32_t amount_gt_pivot = partition_vec<vtype>(arr,
+    int32_t amount_ge_pivot = partition_vec<vtype>(arr,
                                                    l_store,
                                                    r_store + vtype::numlanes,
                                                    vec_left,
                                                    pivot_vec,
                                                    &min_vec,
                                                    &max_vec);
-    l_store += (vtype::numlanes - amount_gt_pivot);
-    amount_gt_pivot = partition_vec<vtype>(arr,
+    l_store += (vtype::numlanes - amount_ge_pivot);
+    amount_ge_pivot = partition_vec<vtype>(arr,
                                            l_store,
                                            l_store + vtype::numlanes,
                                            vec_right,
                                            pivot_vec,
                                            &min_vec,
                                            &max_vec);
-    l_store += (vtype::numlanes - amount_gt_pivot);
+    l_store += (vtype::numlanes - amount_ge_pivot);
     *smallest = vtype::reducemin(min_vec);
     *biggest = vtype::reducemax(max_vec);
     return l_store;
