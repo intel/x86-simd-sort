@@ -403,7 +403,7 @@ qsort_64bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
 
 template <typename vtype, typename type_t>
 static void
-qselect_64bit_(type_t *arr, int64_t k,
+qselect_64bit_(type_t *arr, int64_t pos,
                int64_t left, int64_t right,
                int64_t max_iters)
 {
@@ -427,10 +427,10 @@ qselect_64bit_(type_t *arr, int64_t k,
     type_t biggest = vtype::type_min();
     int64_t pivot_index = partition_avx512<vtype>(
             arr, left, right + 1, pivot, &smallest, &biggest);
-    if ((pivot != smallest) && (k <= pivot_index))
-        qselect_64bit_<vtype>(arr, k, left, pivot_index - 1, max_iters - 1);
-    else if ((pivot != biggest) && (k > pivot_index))
-        qselect_64bit_<vtype>(arr, k, pivot_index, right, max_iters - 1);
+    if ((pivot != smallest) && (pos < pivot_index))
+        qselect_64bit_<vtype>(arr, pos, left, pivot_index - 1, max_iters - 1);
+    else if ((pivot != biggest) && (pos >= pivot_index))
+        qselect_64bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
 template <>
@@ -438,7 +438,7 @@ void avx512_qselect<int64_t>(int64_t *arr, int64_t k, int64_t arrsize)
 {
     if (arrsize > 1) {
         qselect_64bit_<zmm_vector<int64_t>, int64_t>(
-            arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
 

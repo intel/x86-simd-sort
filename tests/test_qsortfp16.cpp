@@ -95,8 +95,17 @@ TEST(avx512_qselect_float16, test_arrsizes)
             std::sort(sortedarr.begin(), sortedarr.end());
             for (size_t k = 0; k < arr.size(); ++k) {
                 psortedarr = arr;
-                avx512_qselect<_Float16>(psortedarr.data(), k+1, psortedarr.size());
+                avx512_qselect<_Float16>(psortedarr.data(), k, psortedarr.size());
+                /* index k is correct */
                 ASSERT_EQ(sortedarr[k], psortedarr[k]);
+                /* Check left partition */
+                for (size_t jj = 0; jj < k; jj++) {
+                    ASSERT_LE(psortedarr[jj], psortedarr[k]);
+                }
+                /* Check right partition */
+                for (size_t jj = k+1; jj < arr.size(); jj++) {
+                    ASSERT_GE(psortedarr[jj], psortedarr[k]);
+                }
                 psortedarr.clear();
             }
             arr.clear();

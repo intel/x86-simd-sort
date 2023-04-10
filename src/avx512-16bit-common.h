@@ -261,38 +261,6 @@ X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
 
 template <typename vtype, typename type_t>
 static void
-qselect_16bit_(type_t *arr, int64_t k,
-               int64_t left, int64_t right, 
-               int64_t max_iters)
-{
-    /*
-     * Resort to std::sort if quicksort isnt making any progress
-     */
-    if (max_iters <= 0) {
-        std::sort(arr + left, arr + right + 1, comparison_func<vtype>);
-        return;
-    }
-    /*
-     * Base case: use bitonic networks to sort arrays <= 128
-     */
-    if (right + 1 - left <= 128) {
-        sort_128_16bit<vtype>(arr + left, (int32_t)(right + 1 - left));
-        return;
-    }
-
-    type_t pivot = get_pivot_16bit<vtype>(arr, left, right);
-    type_t smallest = vtype::type_max();
-    type_t biggest = vtype::type_min();
-    int64_t pivot_index = partition_avx512<vtype>(
-            arr, left, right + 1, pivot, &smallest, &biggest);
-    if ((pivot != smallest) && (k <= pivot_index))
-        qselect_16bit_<vtype>(arr, k, left, pivot_index - 1, max_iters - 1);
-    else if ((pivot != biggest) && (k > pivot_index))
-        qselect_16bit_<vtype>(arr, k, pivot_index, right, max_iters - 1);
-}
-
-template <typename vtype, typename type_t>
-static void
 qsort_16bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
 {
     /*
@@ -319,6 +287,38 @@ qsort_16bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
         qsort_16bit_<vtype>(arr, left, pivot_index - 1, max_iters - 1);
     if (pivot != biggest)
         qsort_16bit_<vtype>(arr, pivot_index, right, max_iters - 1);
+}
+
+template <typename vtype, typename type_t>
+static void
+qselect_16bit_(type_t *arr, int64_t pos,
+               int64_t left, int64_t right,
+               int64_t max_iters)
+{
+    /*
+     * Resort to std::sort if quicksort isnt making any progress
+     */
+    if (max_iters <= 0) {
+        std::sort(arr + left, arr + right + 1, comparison_func<vtype>);
+        return;
+    }
+    /*
+     * Base case: use bitonic networks to sort arrays <= 128
+     */
+    if (right + 1 - left <= 128) {
+        sort_128_16bit<vtype>(arr + left, (int32_t)(right + 1 - left));
+        return;
+    }
+
+    type_t pivot = get_pivot_16bit<vtype>(arr, left, right);
+    type_t smallest = vtype::type_max();
+    type_t biggest = vtype::type_min();
+    int64_t pivot_index = partition_avx512<vtype>(
+            arr, left, right + 1, pivot, &smallest, &biggest);
+    if ((pivot != smallest) && (pos < pivot_index))
+        qselect_16bit_<vtype>(arr, pos, left, pivot_index - 1, max_iters - 1);
+    else if ((pivot != biggest) && (pos >= pivot_index))
+        qselect_16bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
 #endif // AVX512_16BIT_COMMON

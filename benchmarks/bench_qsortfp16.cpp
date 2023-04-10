@@ -78,7 +78,7 @@ static void avx512_qselect(benchmark::State& state) {
         arr_bkp = arr;
 
         /* Choose random index to make sorted */
-        int k = get_uniform_rand_array<int64_t>(1, ARRSIZE, 1).front();
+        int k = get_uniform_rand_array<int64_t>(1, ARRSIZE - 1, 0).front();
 
         /* call avx512 quickselect */
         for (auto _ : state) {
@@ -110,7 +110,7 @@ static void stdnthelement(benchmark::State& state) {
         arr_bkp = arr;
 
         /* Choose random index to sort until */
-        int k = get_uniform_rand_array<int64_t>(1, ARRSIZE, 1).front();
+        int k = get_uniform_rand_array<int64_t>(1, ARRSIZE - 1, 0).front();
 
         /* call std::nth_element */
         for (auto _ : state) {
