@@ -60,8 +60,8 @@ template <typename vtype1,
           typename vtype2,
           typename zmm_t = typename vtype1::zmm_t,
           typename index_type = typename vtype2::zmm_t>
-X86_SIMD_SORT_INLINE zmm_t
-bitonic_merge_zmm_64bit(zmm_t key_zmm, index_type &index_zmm)
+X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_64bit(zmm_t key_zmm,
+                                                   index_type &index_zmm)
 {
 
     // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
@@ -129,10 +129,8 @@ X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_64bit(zmm_t *key_zmm,
     // 1) First step of a merging network
     zmm_t key_zmm2r = vtype1::permutexvar(rev_index, key_zmm[2]);
     zmm_t key_zmm3r = vtype1::permutexvar(rev_index, key_zmm[3]);
-    index_type index_zmm2r
-            = vtype2::permutexvar(rev_index, index_zmm[2]);
-    index_type index_zmm3r
-            = vtype2::permutexvar(rev_index, index_zmm[3]);
+    index_type index_zmm2r = vtype2::permutexvar(rev_index, index_zmm[2]);
+    index_type index_zmm3r = vtype2::permutexvar(rev_index, index_zmm[3]);
 
     zmm_t key_zmm_t1 = vtype1::min(key_zmm[0], key_zmm3r);
     zmm_t key_zmm_t2 = vtype1::min(key_zmm[1], key_zmm2r);
@@ -151,10 +149,8 @@ X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_64bit(zmm_t *key_zmm,
     // 2) Recursive half clearer: 16
     zmm_t key_zmm_t3 = vtype1::permutexvar(rev_index, key_zmm_m2);
     zmm_t key_zmm_t4 = vtype1::permutexvar(rev_index, key_zmm_m1);
-    index_type index_zmm_t3
-            = vtype2::permutexvar(rev_index, index_zmm_m2);
-    index_type index_zmm_t4
-            = vtype2::permutexvar(rev_index, index_zmm_m1);
+    index_type index_zmm_t3 = vtype2::permutexvar(rev_index, index_zmm_m2);
+    index_type index_zmm_t4 = vtype2::permutexvar(rev_index, index_zmm_m1);
 
     zmm_t key_zmm0 = vtype1::min(key_zmm_t1, key_zmm_t2);
     zmm_t key_zmm1 = vtype1::max(key_zmm_t1, key_zmm_t2);
@@ -193,14 +189,10 @@ X86_SIMD_SORT_INLINE void bitonic_merge_eight_zmm_64bit(zmm_t *key_zmm,
     zmm_t key_zmm5r = vtype1::permutexvar(rev_index, key_zmm[5]);
     zmm_t key_zmm6r = vtype1::permutexvar(rev_index, key_zmm[6]);
     zmm_t key_zmm7r = vtype1::permutexvar(rev_index, key_zmm[7]);
-    index_type index_zmm4r
-            = vtype2::permutexvar(rev_index, index_zmm[4]);
-    index_type index_zmm5r
-            = vtype2::permutexvar(rev_index, index_zmm[5]);
-    index_type index_zmm6r
-            = vtype2::permutexvar(rev_index, index_zmm[6]);
-    index_type index_zmm7r
-            = vtype2::permutexvar(rev_index, index_zmm[7]);
+    index_type index_zmm4r = vtype2::permutexvar(rev_index, index_zmm[4]);
+    index_type index_zmm5r = vtype2::permutexvar(rev_index, index_zmm[5]);
+    index_type index_zmm6r = vtype2::permutexvar(rev_index, index_zmm[6]);
+    index_type index_zmm7r = vtype2::permutexvar(rev_index, index_zmm[7]);
 
     zmm_t key_zmm_t1 = vtype1::min(key_zmm[0], key_zmm7r);
     zmm_t key_zmm_t2 = vtype1::min(key_zmm[1], key_zmm6r);
@@ -233,31 +225,35 @@ X86_SIMD_SORT_INLINE void bitonic_merge_eight_zmm_64bit(zmm_t *key_zmm,
     zmm_t key_zmm_t6 = vtype1::permutexvar(rev_index, key_zmm_m3);
     zmm_t key_zmm_t7 = vtype1::permutexvar(rev_index, key_zmm_m2);
     zmm_t key_zmm_t8 = vtype1::permutexvar(rev_index, key_zmm_m1);
-    index_type index_zmm_t5
-            = vtype2::permutexvar(rev_index, index_zmm_m4);
-    index_type index_zmm_t6
-            = vtype2::permutexvar(rev_index, index_zmm_m3);
-    index_type index_zmm_t7
-            = vtype2::permutexvar(rev_index, index_zmm_m2);
-    index_type index_zmm_t8
-            = vtype2::permutexvar(rev_index, index_zmm_m1);
+    index_type index_zmm_t5 = vtype2::permutexvar(rev_index, index_zmm_m4);
+    index_type index_zmm_t6 = vtype2::permutexvar(rev_index, index_zmm_m3);
+    index_type index_zmm_t7 = vtype2::permutexvar(rev_index, index_zmm_m2);
+    index_type index_zmm_t8 = vtype2::permutexvar(rev_index, index_zmm_m1);
 
-    COEX<vtype1,vtype2>(key_zmm_t1, key_zmm_t3, index_zmm_t1, index_zmm_t3);
-    COEX<vtype1,vtype2>(key_zmm_t2, key_zmm_t4, index_zmm_t2, index_zmm_t4);
-    COEX<vtype1,vtype2>(key_zmm_t5, key_zmm_t7, index_zmm_t5, index_zmm_t7);
-    COEX<vtype1,vtype2>(key_zmm_t6, key_zmm_t8, index_zmm_t6, index_zmm_t8);
-    COEX<vtype1,vtype2>(key_zmm_t1, key_zmm_t2, index_zmm_t1, index_zmm_t2);
-    COEX<vtype1,vtype2>(key_zmm_t3, key_zmm_t4, index_zmm_t3, index_zmm_t4);
-    COEX<vtype1,vtype2>(key_zmm_t5, key_zmm_t6, index_zmm_t5, index_zmm_t6);
-    COEX<vtype1,vtype2>(key_zmm_t7, key_zmm_t8, index_zmm_t7, index_zmm_t8);
-    key_zmm[0] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t1, index_zmm_t1);
-    key_zmm[1] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t2, index_zmm_t2);
-    key_zmm[2] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t3, index_zmm_t3);
-    key_zmm[3] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t4, index_zmm_t4);
-    key_zmm[4] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t5, index_zmm_t5);
-    key_zmm[5] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t6, index_zmm_t6);
-    key_zmm[6] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t7, index_zmm_t7);
-    key_zmm[7] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t8, index_zmm_t8);
+    COEX<vtype1, vtype2>(key_zmm_t1, key_zmm_t3, index_zmm_t1, index_zmm_t3);
+    COEX<vtype1, vtype2>(key_zmm_t2, key_zmm_t4, index_zmm_t2, index_zmm_t4);
+    COEX<vtype1, vtype2>(key_zmm_t5, key_zmm_t7, index_zmm_t5, index_zmm_t7);
+    COEX<vtype1, vtype2>(key_zmm_t6, key_zmm_t8, index_zmm_t6, index_zmm_t8);
+    COEX<vtype1, vtype2>(key_zmm_t1, key_zmm_t2, index_zmm_t1, index_zmm_t2);
+    COEX<vtype1, vtype2>(key_zmm_t3, key_zmm_t4, index_zmm_t3, index_zmm_t4);
+    COEX<vtype1, vtype2>(key_zmm_t5, key_zmm_t6, index_zmm_t5, index_zmm_t6);
+    COEX<vtype1, vtype2>(key_zmm_t7, key_zmm_t8, index_zmm_t7, index_zmm_t8);
+    key_zmm[0]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t1, index_zmm_t1);
+    key_zmm[1]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t2, index_zmm_t2);
+    key_zmm[2]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t3, index_zmm_t3);
+    key_zmm[3]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t4, index_zmm_t4);
+    key_zmm[4]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t5, index_zmm_t5);
+    key_zmm[5]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t6, index_zmm_t6);
+    key_zmm[6]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t7, index_zmm_t7);
+    key_zmm[7]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t8, index_zmm_t8);
 
     index_zmm[0] = index_zmm_t1;
     index_zmm[1] = index_zmm_t2;
@@ -286,22 +282,14 @@ X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_zmm_64bit(zmm_t *key_zmm,
     zmm_t key_zmm14r = vtype1::permutexvar(rev_index, key_zmm[14]);
     zmm_t key_zmm15r = vtype1::permutexvar(rev_index, key_zmm[15]);
 
-    index_type index_zmm8r
-            = vtype2::permutexvar(rev_index, index_zmm[8]);
-    index_type index_zmm9r
-            = vtype2::permutexvar(rev_index, index_zmm[9]);
-    index_type index_zmm10r
-            = vtype2::permutexvar(rev_index, index_zmm[10]);
-    index_type index_zmm11r
-            = vtype2::permutexvar(rev_index, index_zmm[11]);
-    index_type index_zmm12r
-            = vtype2::permutexvar(rev_index, index_zmm[12]);
-    index_type index_zmm13r
-            = vtype2::permutexvar(rev_index, index_zmm[13]);
-    index_type index_zmm14r
-            = vtype2::permutexvar(rev_index, index_zmm[14]);
-    index_type index_zmm15r
-            = vtype2::permutexvar(rev_index, index_zmm[15]);
+    index_type index_zmm8r = vtype2::permutexvar(rev_index, index_zmm[8]);
+    index_type index_zmm9r = vtype2::permutexvar(rev_index, index_zmm[9]);
+    index_type index_zmm10r = vtype2::permutexvar(rev_index, index_zmm[10]);
+    index_type index_zmm11r = vtype2::permutexvar(rev_index, index_zmm[11]);
+    index_type index_zmm12r = vtype2::permutexvar(rev_index, index_zmm[12]);
+    index_type index_zmm13r = vtype2::permutexvar(rev_index, index_zmm[13]);
+    index_type index_zmm14r = vtype2::permutexvar(rev_index, index_zmm[14]);
+    index_type index_zmm15r = vtype2::permutexvar(rev_index, index_zmm[15]);
 
     zmm_t key_zmm_t1 = vtype1::min(key_zmm[0], key_zmm15r);
     zmm_t key_zmm_t2 = vtype1::min(key_zmm[1], key_zmm14r);
@@ -363,66 +351,83 @@ X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_zmm_64bit(zmm_t *key_zmm,
     zmm_t key_zmm_t14 = vtype1::permutexvar(rev_index, key_zmm_m3);
     zmm_t key_zmm_t15 = vtype1::permutexvar(rev_index, key_zmm_m2);
     zmm_t key_zmm_t16 = vtype1::permutexvar(rev_index, key_zmm_m1);
-    index_type index_zmm_t9
-            = vtype2::permutexvar(rev_index, index_zmm_m8);
-    index_type index_zmm_t10
-            = vtype2::permutexvar(rev_index, index_zmm_m7);
-    index_type index_zmm_t11
-            = vtype2::permutexvar(rev_index, index_zmm_m6);
-    index_type index_zmm_t12
-            = vtype2::permutexvar(rev_index, index_zmm_m5);
-    index_type index_zmm_t13
-            = vtype2::permutexvar(rev_index, index_zmm_m4);
-    index_type index_zmm_t14
-            = vtype2::permutexvar(rev_index, index_zmm_m3);
-    index_type index_zmm_t15
-            = vtype2::permutexvar(rev_index, index_zmm_m2);
-    index_type index_zmm_t16
-            = vtype2::permutexvar(rev_index, index_zmm_m1);
+    index_type index_zmm_t9 = vtype2::permutexvar(rev_index, index_zmm_m8);
+    index_type index_zmm_t10 = vtype2::permutexvar(rev_index, index_zmm_m7);
+    index_type index_zmm_t11 = vtype2::permutexvar(rev_index, index_zmm_m6);
+    index_type index_zmm_t12 = vtype2::permutexvar(rev_index, index_zmm_m5);
+    index_type index_zmm_t13 = vtype2::permutexvar(rev_index, index_zmm_m4);
+    index_type index_zmm_t14 = vtype2::permutexvar(rev_index, index_zmm_m3);
+    index_type index_zmm_t15 = vtype2::permutexvar(rev_index, index_zmm_m2);
+    index_type index_zmm_t16 = vtype2::permutexvar(rev_index, index_zmm_m1);
 
-    COEX<vtype1,vtype2>(key_zmm_t1, key_zmm_t5, index_zmm_t1, index_zmm_t5);
-    COEX<vtype1,vtype2>(key_zmm_t2, key_zmm_t6, index_zmm_t2, index_zmm_t6);
-    COEX<vtype1,vtype2>(key_zmm_t3, key_zmm_t7, index_zmm_t3, index_zmm_t7);
-    COEX<vtype1,vtype2>(key_zmm_t4, key_zmm_t8, index_zmm_t4, index_zmm_t8);
-    COEX<vtype1,vtype2>(key_zmm_t9, key_zmm_t13, index_zmm_t9, index_zmm_t13);
-    COEX<vtype1,vtype2>(key_zmm_t10, key_zmm_t14, index_zmm_t10, index_zmm_t14);
-    COEX<vtype1,vtype2>(key_zmm_t11, key_zmm_t15, index_zmm_t11, index_zmm_t15);
-    COEX<vtype1,vtype2>(key_zmm_t12, key_zmm_t16, index_zmm_t12, index_zmm_t16);
+    COEX<vtype1, vtype2>(key_zmm_t1, key_zmm_t5, index_zmm_t1, index_zmm_t5);
+    COEX<vtype1, vtype2>(key_zmm_t2, key_zmm_t6, index_zmm_t2, index_zmm_t6);
+    COEX<vtype1, vtype2>(key_zmm_t3, key_zmm_t7, index_zmm_t3, index_zmm_t7);
+    COEX<vtype1, vtype2>(key_zmm_t4, key_zmm_t8, index_zmm_t4, index_zmm_t8);
+    COEX<vtype1, vtype2>(key_zmm_t9, key_zmm_t13, index_zmm_t9, index_zmm_t13);
+    COEX<vtype1, vtype2>(
+            key_zmm_t10, key_zmm_t14, index_zmm_t10, index_zmm_t14);
+    COEX<vtype1, vtype2>(
+            key_zmm_t11, key_zmm_t15, index_zmm_t11, index_zmm_t15);
+    COEX<vtype1, vtype2>(
+            key_zmm_t12, key_zmm_t16, index_zmm_t12, index_zmm_t16);
 
-    COEX<vtype1,vtype2>(key_zmm_t1, key_zmm_t3, index_zmm_t1, index_zmm_t3);
-    COEX<vtype1,vtype2>(key_zmm_t2, key_zmm_t4, index_zmm_t2, index_zmm_t4);
-    COEX<vtype1,vtype2>(key_zmm_t5, key_zmm_t7, index_zmm_t5, index_zmm_t7);
-    COEX<vtype1,vtype2>(key_zmm_t6, key_zmm_t8, index_zmm_t6, index_zmm_t8);
-    COEX<vtype1,vtype2>(key_zmm_t9, key_zmm_t11, index_zmm_t9, index_zmm_t11);
-    COEX<vtype1,vtype2>(key_zmm_t10, key_zmm_t12, index_zmm_t10, index_zmm_t12);
-    COEX<vtype1,vtype2>(key_zmm_t13, key_zmm_t15, index_zmm_t13, index_zmm_t15);
-    COEX<vtype1,vtype2>(key_zmm_t14, key_zmm_t16, index_zmm_t14, index_zmm_t16);
+    COEX<vtype1, vtype2>(key_zmm_t1, key_zmm_t3, index_zmm_t1, index_zmm_t3);
+    COEX<vtype1, vtype2>(key_zmm_t2, key_zmm_t4, index_zmm_t2, index_zmm_t4);
+    COEX<vtype1, vtype2>(key_zmm_t5, key_zmm_t7, index_zmm_t5, index_zmm_t7);
+    COEX<vtype1, vtype2>(key_zmm_t6, key_zmm_t8, index_zmm_t6, index_zmm_t8);
+    COEX<vtype1, vtype2>(key_zmm_t9, key_zmm_t11, index_zmm_t9, index_zmm_t11);
+    COEX<vtype1, vtype2>(
+            key_zmm_t10, key_zmm_t12, index_zmm_t10, index_zmm_t12);
+    COEX<vtype1, vtype2>(
+            key_zmm_t13, key_zmm_t15, index_zmm_t13, index_zmm_t15);
+    COEX<vtype1, vtype2>(
+            key_zmm_t14, key_zmm_t16, index_zmm_t14, index_zmm_t16);
 
-    COEX<vtype1,vtype2>(key_zmm_t1, key_zmm_t2, index_zmm_t1, index_zmm_t2);
-    COEX<vtype1,vtype2>(key_zmm_t3, key_zmm_t4, index_zmm_t3, index_zmm_t4);
-    COEX<vtype1,vtype2>(key_zmm_t5, key_zmm_t6, index_zmm_t5, index_zmm_t6);
-    COEX<vtype1,vtype2>(key_zmm_t7, key_zmm_t8, index_zmm_t7, index_zmm_t8);
-    COEX<vtype1,vtype2>(key_zmm_t9, key_zmm_t10, index_zmm_t9, index_zmm_t10);
-    COEX<vtype1,vtype2>(key_zmm_t11, key_zmm_t12, index_zmm_t11, index_zmm_t12);
-    COEX<vtype1,vtype2>(key_zmm_t13, key_zmm_t14, index_zmm_t13, index_zmm_t14);
-    COEX<vtype1,vtype2>(key_zmm_t15, key_zmm_t16, index_zmm_t15, index_zmm_t16);
+    COEX<vtype1, vtype2>(key_zmm_t1, key_zmm_t2, index_zmm_t1, index_zmm_t2);
+    COEX<vtype1, vtype2>(key_zmm_t3, key_zmm_t4, index_zmm_t3, index_zmm_t4);
+    COEX<vtype1, vtype2>(key_zmm_t5, key_zmm_t6, index_zmm_t5, index_zmm_t6);
+    COEX<vtype1, vtype2>(key_zmm_t7, key_zmm_t8, index_zmm_t7, index_zmm_t8);
+    COEX<vtype1, vtype2>(key_zmm_t9, key_zmm_t10, index_zmm_t9, index_zmm_t10);
+    COEX<vtype1, vtype2>(
+            key_zmm_t11, key_zmm_t12, index_zmm_t11, index_zmm_t12);
+    COEX<vtype1, vtype2>(
+            key_zmm_t13, key_zmm_t14, index_zmm_t13, index_zmm_t14);
+    COEX<vtype1, vtype2>(
+            key_zmm_t15, key_zmm_t16, index_zmm_t15, index_zmm_t16);
     //
-    key_zmm[0] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t1, index_zmm_t1);
-    key_zmm[1] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t2, index_zmm_t2);
-    key_zmm[2] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t3, index_zmm_t3);
-    key_zmm[3] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t4, index_zmm_t4);
-    key_zmm[4] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t5, index_zmm_t5);
-    key_zmm[5] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t6, index_zmm_t6);
-    key_zmm[6] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t7, index_zmm_t7);
-    key_zmm[7] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t8, index_zmm_t8);
-    key_zmm[8] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t9, index_zmm_t9);
-    key_zmm[9] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t10, index_zmm_t10);
-    key_zmm[10] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t11, index_zmm_t11);
-    key_zmm[11] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t12, index_zmm_t12);
-    key_zmm[12] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t13, index_zmm_t13);
-    key_zmm[13] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t14, index_zmm_t14);
-    key_zmm[14] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t15, index_zmm_t15);
-    key_zmm[15] = bitonic_merge_zmm_64bit<vtype1,vtype2>(key_zmm_t16, index_zmm_t16);
+    key_zmm[0]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t1, index_zmm_t1);
+    key_zmm[1]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t2, index_zmm_t2);
+    key_zmm[2]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t3, index_zmm_t3);
+    key_zmm[3]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t4, index_zmm_t4);
+    key_zmm[4]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t5, index_zmm_t5);
+    key_zmm[5]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t6, index_zmm_t6);
+    key_zmm[6]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t7, index_zmm_t7);
+    key_zmm[7]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t8, index_zmm_t8);
+    key_zmm[8]
+            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t9, index_zmm_t9);
+    key_zmm[9] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t10,
+                                                         index_zmm_t10);
+    key_zmm[10] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t11,
+                                                          index_zmm_t11);
+    key_zmm[11] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t12,
+                                                          index_zmm_t12);
+    key_zmm[12] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t13,
+                                                          index_zmm_t13);
+    key_zmm[13] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t14,
+                                                          index_zmm_t14);
+    key_zmm[14] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t15,
+                                                          index_zmm_t15);
+    key_zmm[15] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm_t16,
+                                                          index_zmm_t16);
 
     index_zmm[0] = index_zmm_t1;
     index_zmm[1] = index_zmm_t2;
@@ -453,10 +458,11 @@ sort_8_64bit(type1_t *keys, type2_t *indexes, int32_t N)
     typename vtype1::zmm_t key_zmm
             = vtype1::mask_loadu(vtype1::zmm_max(), load_mask, keys);
 
-    typename vtype2::zmm_t index_zmm = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask, indexes);
-    vtype1::mask_storeu(
-            keys, load_mask, sort_zmm_64bit<vtype1, vtype2>(key_zmm, index_zmm));
+    typename vtype2::zmm_t index_zmm
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask, indexes);
+    vtype1::mask_storeu(keys,
+                        load_mask,
+                        sort_zmm_64bit<vtype1, vtype2>(key_zmm, index_zmm));
     vtype2::mask_storeu(indexes, load_mask, index_zmm);
 }
 
@@ -480,12 +486,12 @@ sort_16_64bit(type1_t *keys, type2_t *indexes, int32_t N)
     zmm_t key_zmm2 = vtype1::mask_loadu(vtype1::zmm_max(), load_mask, keys + 8);
 
     index_type index_zmm1 = vtype2::loadu(indexes);
-    index_type index_zmm2 = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask, indexes + 8);
+    index_type index_zmm2
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask, indexes + 8);
 
-    key_zmm1 = sort_zmm_64bit<vtype1,vtype2>(key_zmm1, index_zmm1);
-    key_zmm2 = sort_zmm_64bit<vtype1,vtype2>(key_zmm2, index_zmm2);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    key_zmm1 = sort_zmm_64bit<vtype1, vtype2>(key_zmm1, index_zmm1);
+    key_zmm2 = sort_zmm_64bit<vtype1, vtype2>(key_zmm2, index_zmm2);
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm1, key_zmm2, index_zmm1, index_zmm2);
 
     vtype2::storeu(indexes, index_zmm1);
@@ -518,8 +524,8 @@ sort_32_64bit(type1_t *keys, type2_t *indexes, int32_t N)
     index_zmm[0] = vtype2::loadu(indexes);
     index_zmm[1] = vtype2::loadu(indexes + 8);
 
-    key_zmm[0] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[0], index_zmm[0]);
-    key_zmm[1] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[1], index_zmm[1]);
+    key_zmm[0] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[0], index_zmm[0]);
+    key_zmm[1] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[1], index_zmm[1]);
 
     opmask_t load_mask1 = 0xFF, load_mask2 = 0xFF;
     uint64_t combined_mask = (0x1ull << (N - 16)) - 0x1ull;
@@ -528,19 +534,19 @@ sort_32_64bit(type1_t *keys, type2_t *indexes, int32_t N)
     key_zmm[2] = vtype1::mask_loadu(vtype1::zmm_max(), load_mask1, keys + 16);
     key_zmm[3] = vtype1::mask_loadu(vtype1::zmm_max(), load_mask2, keys + 24);
 
-    index_zmm[2] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask1, indexes + 16);
-    index_zmm[3] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask2, indexes + 24);
+    index_zmm[2]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask1, indexes + 16);
+    index_zmm[3]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask2, indexes + 24);
 
-    key_zmm[2] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[2], index_zmm[2]);
-    key_zmm[3] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[3], index_zmm[3]);
+    key_zmm[2] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[2], index_zmm[2]);
+    key_zmm[3] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[3], index_zmm[3]);
 
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[0], key_zmm[1], index_zmm[0], index_zmm[1]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[2], key_zmm[3], index_zmm[2], index_zmm[3]);
-    bitonic_merge_four_zmm_64bit<vtype1,vtype2>(key_zmm, index_zmm);
+    bitonic_merge_four_zmm_64bit<vtype1, vtype2>(key_zmm, index_zmm);
 
     vtype2::storeu(indexes, index_zmm[0]);
     vtype2::storeu(indexes + 8, index_zmm[1]);
@@ -561,7 +567,7 @@ X86_SIMD_SORT_INLINE void
 sort_64_64bit(type1_t *keys, type2_t *indexes, int32_t N)
 {
     if (N <= 32) {
-        sort_32_64bit<vtype1,vtype2>(keys, indexes, N);
+        sort_32_64bit<vtype1, vtype2>(keys, indexes, N);
         return;
     }
     using zmm_t = typename vtype1::zmm_t;
@@ -579,10 +585,10 @@ sort_64_64bit(type1_t *keys, type2_t *indexes, int32_t N)
     index_zmm[1] = vtype2::loadu(indexes + 8);
     index_zmm[2] = vtype2::loadu(indexes + 16);
     index_zmm[3] = vtype2::loadu(indexes + 24);
-    key_zmm[0] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[0], index_zmm[0]);
-    key_zmm[1] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[1], index_zmm[1]);
-    key_zmm[2] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[2], index_zmm[2]);
-    key_zmm[3] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[3], index_zmm[3]);
+    key_zmm[0] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[0], index_zmm[0]);
+    key_zmm[1] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[1], index_zmm[1]);
+    key_zmm[2] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[2], index_zmm[2]);
+    key_zmm[3] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[3], index_zmm[3]);
 
     opmask_t load_mask1 = 0xFF, load_mask2 = 0xFF;
     opmask_t load_mask3 = 0xFF, load_mask4 = 0xFF;
@@ -597,30 +603,30 @@ sort_64_64bit(type1_t *keys, type2_t *indexes, int32_t N)
     key_zmm[6] = vtype1::mask_loadu(vtype1::zmm_max(), load_mask3, keys + 48);
     key_zmm[7] = vtype1::mask_loadu(vtype1::zmm_max(), load_mask4, keys + 56);
 
-    index_zmm[4] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask1, indexes + 32);
-    index_zmm[5] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask2, indexes + 40);
-    index_zmm[6] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask3, indexes + 48);
-    index_zmm[7] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask4, indexes + 56);
-    key_zmm[4] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[4], index_zmm[4]);
-    key_zmm[5] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[5], index_zmm[5]);
-    key_zmm[6] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[6], index_zmm[6]);
-    key_zmm[7] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[7], index_zmm[7]);
+    index_zmm[4]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask1, indexes + 32);
+    index_zmm[5]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask2, indexes + 40);
+    index_zmm[6]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask3, indexes + 48);
+    index_zmm[7]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask4, indexes + 56);
+    key_zmm[4] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[4], index_zmm[4]);
+    key_zmm[5] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[5], index_zmm[5]);
+    key_zmm[6] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[6], index_zmm[6]);
+    key_zmm[7] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[7], index_zmm[7]);
 
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[0], key_zmm[1], index_zmm[0], index_zmm[1]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[2], key_zmm[3], index_zmm[2], index_zmm[3]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[4], key_zmm[5], index_zmm[4], index_zmm[5]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[6], key_zmm[7], index_zmm[6], index_zmm[7]);
-    bitonic_merge_four_zmm_64bit<vtype1,vtype2>(key_zmm, index_zmm);
-    bitonic_merge_four_zmm_64bit<vtype1,vtype2>(key_zmm + 4, index_zmm + 4);
-    bitonic_merge_eight_zmm_64bit<vtype1,vtype2>(key_zmm, index_zmm);
+    bitonic_merge_four_zmm_64bit<vtype1, vtype2>(key_zmm, index_zmm);
+    bitonic_merge_four_zmm_64bit<vtype1, vtype2>(key_zmm + 4, index_zmm + 4);
+    bitonic_merge_eight_zmm_64bit<vtype1, vtype2>(key_zmm, index_zmm);
 
     vtype2::storeu(indexes, index_zmm[0]);
     vtype2::storeu(indexes + 8, index_zmm[1]);
@@ -649,7 +655,7 @@ X86_SIMD_SORT_INLINE void
 sort_128_64bit(type1_t *keys, type2_t *indexes, int32_t N)
 {
     if (N <= 64) {
-        sort_64_64bit<vtype1,vtype2>(keys, indexes, N);
+        sort_64_64bit<vtype1, vtype2>(keys, indexes, N);
         return;
     }
     using zmm_t = typename vtype1::zmm_t;
@@ -675,14 +681,14 @@ sort_128_64bit(type1_t *keys, type2_t *indexes, int32_t N)
     index_zmm[5] = vtype2::loadu(indexes + 40);
     index_zmm[6] = vtype2::loadu(indexes + 48);
     index_zmm[7] = vtype2::loadu(indexes + 56);
-    key_zmm[0] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[0], index_zmm[0]);
-    key_zmm[1] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[1], index_zmm[1]);
-    key_zmm[2] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[2], index_zmm[2]);
-    key_zmm[3] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[3], index_zmm[3]);
-    key_zmm[4] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[4], index_zmm[4]);
-    key_zmm[5] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[5], index_zmm[5]);
-    key_zmm[6] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[6], index_zmm[6]);
-    key_zmm[7] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[7], index_zmm[7]);
+    key_zmm[0] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[0], index_zmm[0]);
+    key_zmm[1] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[1], index_zmm[1]);
+    key_zmm[2] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[2], index_zmm[2]);
+    key_zmm[3] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[3], index_zmm[3]);
+    key_zmm[4] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[4], index_zmm[4]);
+    key_zmm[5] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[5], index_zmm[5]);
+    key_zmm[6] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[6], index_zmm[6]);
+    key_zmm[7] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[7], index_zmm[7]);
 
     opmask_t load_mask1 = 0xFF, load_mask2 = 0xFF;
     opmask_t load_mask3 = 0xFF, load_mask4 = 0xFF;
@@ -708,54 +714,54 @@ sort_128_64bit(type1_t *keys, type2_t *indexes, int32_t N)
     key_zmm[14] = vtype1::mask_loadu(vtype1::zmm_max(), load_mask7, keys + 112);
     key_zmm[15] = vtype1::mask_loadu(vtype1::zmm_max(), load_mask8, keys + 120);
 
-    index_zmm[8] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask1, indexes + 64);
-    index_zmm[9] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask2, indexes + 72);
-    index_zmm[10] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask3, indexes + 80);
-    index_zmm[11] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask4, indexes + 88);
-    index_zmm[12] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask5, indexes + 96);
-    index_zmm[13] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask6, indexes + 104);
-    index_zmm[14] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask7, indexes + 112);
-    index_zmm[15] = vtype2::mask_loadu(
-            vtype2::zmm_max(), load_mask8, indexes + 120);
-    key_zmm[8]  = sort_zmm_64bit<vtype1,vtype2>(key_zmm[8], index_zmm[8]);
-    key_zmm[9]  = sort_zmm_64bit<vtype1,vtype2>(key_zmm[9], index_zmm[9]);
-    key_zmm[10] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[10], index_zmm[10]);
-    key_zmm[11] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[11], index_zmm[11]);
-    key_zmm[12] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[12], index_zmm[12]);
-    key_zmm[13] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[13], index_zmm[13]);
-    key_zmm[14] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[14], index_zmm[14]);
-    key_zmm[15] = sort_zmm_64bit<vtype1,vtype2>(key_zmm[15], index_zmm[15]);
+    index_zmm[8]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask1, indexes + 64);
+    index_zmm[9]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask2, indexes + 72);
+    index_zmm[10]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask3, indexes + 80);
+    index_zmm[11]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask4, indexes + 88);
+    index_zmm[12]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask5, indexes + 96);
+    index_zmm[13]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask6, indexes + 104);
+    index_zmm[14]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask7, indexes + 112);
+    index_zmm[15]
+            = vtype2::mask_loadu(vtype2::zmm_max(), load_mask8, indexes + 120);
+    key_zmm[8] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[8], index_zmm[8]);
+    key_zmm[9] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[9], index_zmm[9]);
+    key_zmm[10] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[10], index_zmm[10]);
+    key_zmm[11] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[11], index_zmm[11]);
+    key_zmm[12] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[12], index_zmm[12]);
+    key_zmm[13] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[13], index_zmm[13]);
+    key_zmm[14] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[14], index_zmm[14]);
+    key_zmm[15] = sort_zmm_64bit<vtype1, vtype2>(key_zmm[15], index_zmm[15]);
 
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[0], key_zmm[1], index_zmm[0], index_zmm[1]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[2], key_zmm[3], index_zmm[2], index_zmm[3]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[4], key_zmm[5], index_zmm[4], index_zmm[5]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[6], key_zmm[7], index_zmm[6], index_zmm[7]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[8], key_zmm[9], index_zmm[8], index_zmm[9]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[10], key_zmm[11], index_zmm[10], index_zmm[11]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[12], key_zmm[13], index_zmm[12], index_zmm[13]);
-    bitonic_merge_two_zmm_64bit<vtype1,vtype2>(
+    bitonic_merge_two_zmm_64bit<vtype1, vtype2>(
             key_zmm[14], key_zmm[15], index_zmm[14], index_zmm[15]);
-    bitonic_merge_four_zmm_64bit<vtype1,vtype2>(key_zmm, index_zmm);
-    bitonic_merge_four_zmm_64bit<vtype1,vtype2>(key_zmm + 4, index_zmm + 4);
-    bitonic_merge_four_zmm_64bit<vtype1,vtype2>(key_zmm + 8, index_zmm + 8);
-    bitonic_merge_four_zmm_64bit<vtype1,vtype2>(key_zmm + 12, index_zmm + 12);
-    bitonic_merge_eight_zmm_64bit<vtype1,vtype2>(key_zmm, index_zmm);
-    bitonic_merge_eight_zmm_64bit<vtype1,vtype2>(key_zmm + 8, index_zmm + 8);
-    bitonic_merge_sixteen_zmm_64bit<vtype1,vtype2>(key_zmm, index_zmm);
+    bitonic_merge_four_zmm_64bit<vtype1, vtype2>(key_zmm, index_zmm);
+    bitonic_merge_four_zmm_64bit<vtype1, vtype2>(key_zmm + 4, index_zmm + 4);
+    bitonic_merge_four_zmm_64bit<vtype1, vtype2>(key_zmm + 8, index_zmm + 8);
+    bitonic_merge_four_zmm_64bit<vtype1, vtype2>(key_zmm + 12, index_zmm + 12);
+    bitonic_merge_eight_zmm_64bit<vtype1, vtype2>(key_zmm, index_zmm);
+    bitonic_merge_eight_zmm_64bit<vtype1, vtype2>(key_zmm + 8, index_zmm + 8);
+    bitonic_merge_sixteen_zmm_64bit<vtype1, vtype2>(key_zmm, index_zmm);
     vtype2::storeu(indexes, index_zmm[0]);
     vtype2::storeu(indexes + 8, index_zmm[1]);
     vtype2::storeu(indexes + 16, index_zmm[2]);
@@ -816,12 +822,12 @@ template <typename vtype1,
 void heap_sort(type1_t *keys, type2_t *indexes, int64_t size)
 {
     for (int64_t i = size / 2 - 1; i >= 0; i--) {
-        heapify<vtype1,vtype2>(keys, indexes, i, size);
+        heapify<vtype1, vtype2>(keys, indexes, i, size);
     }
     for (int64_t i = size - 1; i > 0; i--) {
         std::swap(keys[0], keys[i]);
         std::swap(indexes[0], indexes[i]);
-        heapify<vtype1,vtype2>(keys, indexes, 0, i);
+        heapify<vtype1, vtype2>(keys, indexes, 0, i);
     }
 }
 
@@ -840,7 +846,8 @@ void qsort_64bit_(type1_t *keys,
      */
     if (max_iters <= 0) {
         //std::sort(keys+left,keys+right+1);
-        heap_sort<vtype1,vtype2>(keys + left, indexes + left, right - left + 1);
+        heap_sort<vtype1, vtype2>(
+                keys + left, indexes + left, right - left + 1);
         return;
     }
     /*
@@ -848,7 +855,7 @@ void qsort_64bit_(type1_t *keys,
      */
     if (right + 1 - left <= 128) {
 
-        sort_128_64bit<vtype1,vtype2>(
+        sort_128_64bit<vtype1, vtype2>(
                 keys + left, indexes + left, (int32_t)(right + 1 - left));
         return;
     }
@@ -856,22 +863,20 @@ void qsort_64bit_(type1_t *keys,
     type1_t pivot = get_pivot_64bit<vtype1>(keys, left, right);
     type1_t smallest = vtype1::type_max();
     type1_t biggest = vtype1::type_min();
-    int64_t pivot_index = partition_avx512<vtype1,vtype2>(
+    int64_t pivot_index = partition_avx512<vtype1, vtype2>(
             keys, indexes, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest) {
-        qsort_64bit_<vtype1,vtype2>(
+        qsort_64bit_<vtype1, vtype2>(
                 keys, indexes, left, pivot_index - 1, max_iters - 1);
     }
     if (pivot != biggest) {
-        qsort_64bit_<vtype1,vtype2>(
+        qsort_64bit_<vtype1, vtype2>(
                 keys, indexes, pivot_index, right, max_iters - 1);
     }
 }
 
 template <>
-void avx512_qsort_kv<int64_t>(int64_t *keys,
-                              uint64_t *indexes,
-                              int64_t arrsize)
+void avx512_qsort_kv<int64_t>(int64_t *keys, uint64_t *indexes, int64_t arrsize)
 {
     if (arrsize > 1) {
         qsort_64bit_<zmm_vector<int64_t>, zmm_vector<uint64_t>>(
@@ -891,9 +896,7 @@ void avx512_qsort_kv<uint64_t>(uint64_t *keys,
 }
 
 template <>
-void avx512_qsort_kv<double>(double *keys,
-                             uint64_t *indexes,
-                             int64_t arrsize)
+void avx512_qsort_kv<double>(double *keys, uint64_t *indexes, int64_t arrsize)
 {
     if (arrsize > 1) {
         int64_t nan_count = replace_nan_with_inf(keys, arrsize);

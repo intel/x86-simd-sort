@@ -503,43 +503,41 @@ static inline int64_t partition_avx512(type_t1 *keys,
         // partition the current vector and save it on both sides of the array
         int32_t amount_gt_pivot;
 
-        amount_gt_pivot = partition_vec<vtype1, vtype2>(
-                                               keys,
-                                               indexes,
-                                               l_store,
-                                               r_store + vtype1::numlanes,
-                                               keys_vec,
-                                               indexes_vec,
-                                               pivot_vec,
-                                               &min_vec,
-                                               &max_vec);
+        amount_gt_pivot
+                = partition_vec<vtype1, vtype2>(keys,
+                                                indexes,
+                                                l_store,
+                                                r_store + vtype1::numlanes,
+                                                keys_vec,
+                                                indexes_vec,
+                                                pivot_vec,
+                                                &min_vec,
+                                                &max_vec);
         r_store -= amount_gt_pivot;
         l_store += (vtype1::numlanes - amount_gt_pivot);
     }
 
     /* partition and save vec_left and vec_right */
     int32_t amount_gt_pivot;
-    amount_gt_pivot = partition_vec<vtype1, vtype2>(
-                                           keys,
-                                           indexes,
-                                           l_store,
-                                           r_store + vtype1::numlanes,
-                                           keys_vec_left,
-                                           indexes_vec_left,
-                                           pivot_vec,
-                                           &min_vec,
-                                           &max_vec);
+    amount_gt_pivot = partition_vec<vtype1, vtype2>(keys,
+                                                    indexes,
+                                                    l_store,
+                                                    r_store + vtype1::numlanes,
+                                                    keys_vec_left,
+                                                    indexes_vec_left,
+                                                    pivot_vec,
+                                                    &min_vec,
+                                                    &max_vec);
     l_store += (vtype1::numlanes - amount_gt_pivot);
-    amount_gt_pivot = partition_vec<vtype1, vtype2>(
-                                           keys,
-                                           indexes,
-                                           l_store,
-                                           l_store + vtype1::numlanes,
-                                           keys_vec_right,
-                                           indexes_vec_right,
-                                           pivot_vec,
-                                           &min_vec,
-                                           &max_vec);
+    amount_gt_pivot = partition_vec<vtype1, vtype2>(keys,
+                                                    indexes,
+                                                    l_store,
+                                                    l_store + vtype1::numlanes,
+                                                    keys_vec_right,
+                                                    indexes_vec_right,
+                                                    pivot_vec,
+                                                    &min_vec,
+                                                    &max_vec);
     l_store += (vtype1::numlanes - amount_gt_pivot);
     *smallest = vtype1::reducemin(min_vec);
     *biggest = vtype1::reducemax(max_vec);
