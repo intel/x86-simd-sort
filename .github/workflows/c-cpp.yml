@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -y install g++-12 libgtest-dev meson curl git cmake
+        sudo apt -y install g++-12 g++-10 libgtest-dev meson curl git cmake
 
     - name: Install google benchmarks
       run: |
@@ -33,15 +33,28 @@ jobs:
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
 
-    - name: make
+    - name: Build with gcc-10
+      env:
+        CXX: g++-10
+      run: |
+        make clean
+        meson setup --warnlevel 0 --buildtype plain builddir
+        cd builddir
+        ninja
+
+    - name: Run test suite on SKX
+      run: sde -skx -- ./builddir/testexe
+
+    - name: Build with gcc-12
       env:
         CXX: g++-12
-      run: make meson
+      run: |
+        make clean
+        meson setup --warnlevel 0 --buildtype plain builddir
+        cd builddir
+        ninja
 
-    - name: Run test suite
-      run: ./builddir/testexe
-
-    - name: Run test suite on Intel SDE
+    - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe
 
   compare-benchmarks-with-main:
