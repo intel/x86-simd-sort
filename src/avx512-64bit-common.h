@@ -390,20 +390,24 @@ X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
                                             const int64_t left,
                                             const int64_t right)
 {
-    // median of 8
+    // median of 8x8 elements
     int64_t size = (right - left) / 8;
     using zmm_t = typename vtype::zmm_t;
-    __m512i rand_index = _mm512_set_epi64(left + size,
-                                          left + 2 * size,
-                                          left + 3 * size,
-                                          left + 4 * size,
-                                          left + 5 * size,
-                                          left + 6 * size,
-                                          left + 7 * size,
-                                          left + 8 * size);
-    zmm_t rand_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
+    zmm_t v[8];
+    for (int64_t ii = 0; ii < 8; ++ii) {
+        v[ii] = vtype::loadu(arr + left + ii*size);
+    }
+    COEX<vtype>(v[0], v[1]); COEX<vtype>(v[2], v[3]); /* step 1 */
+    COEX<vtype>(v[4], v[5]); COEX<vtype>(v[6], v[7]);
+    COEX<vtype>(v[0], v[2]); COEX<vtype>(v[1], v[3]); /* step 2 */
+    COEX<vtype>(v[4], v[6]); COEX<vtype>(v[5], v[7]);
+    COEX<vtype>(v[0], v[4]); COEX<vtype>(v[1], v[2]); /* step 3 */
+    COEX<vtype>(v[5], v[6]); COEX<vtype>(v[3], v[7]);
+    COEX<vtype>(v[1], v[5]); COEX<vtype>(v[2], v[6]); /* step 4 */
+    COEX<vtype>(v[3], v[5]); COEX<vtype>(v[2], v[4]); /* step 5 */
+    COEX<vtype>(v[3], v[4]);                   /* step 6 */
     // pivot will never be a nan, since there are no nan's!
-    zmm_t sort = sort_zmm_64bit<vtype>(rand_vec);
+    zmm_t sort = sort_zmm_64bit<vtype>(v[3]);
     return ((type_t *)&sort)[4];
 }
 
