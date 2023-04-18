@@ -580,7 +580,7 @@ X86_SIMD_SORT_INLINE void sort_256_64bit(type_t *arr, int32_t N)
         uint64_t combined_mask;
         if (N < 192) {
             combined_mask = (0x1ull << (N - 128)) - 0x1ull;
-            load_mask1 = (combined_mask) & 0xFF;
+            load_mask1 = (combined_mask)&0xFF;
             load_mask2 = (combined_mask >> 8) & 0xFF;
             load_mask3 = (combined_mask >> 16) & 0xFF;
             load_mask4 = (combined_mask >> 24) & 0xFF;
@@ -588,14 +588,18 @@ X86_SIMD_SORT_INLINE void sort_256_64bit(type_t *arr, int32_t N)
             load_mask6 = (combined_mask >> 40) & 0xFF;
             load_mask7 = (combined_mask >> 48) & 0xFF;
             load_mask8 = (combined_mask >> 56) & 0xFF;
-            load_mask9 = 0x00; load_mask10 = 0x0;
-            load_mask11 = 0x00; load_mask12 = 0x00;
-            load_mask13 = 0x00; load_mask14 = 0x00;
-            load_mask15 = 0x00; load_mask16 = 0x00;
+            load_mask9 = 0x00;
+            load_mask10 = 0x0;
+            load_mask11 = 0x00;
+            load_mask12 = 0x00;
+            load_mask13 = 0x00;
+            load_mask14 = 0x00;
+            load_mask15 = 0x00;
+            load_mask16 = 0x00;
         }
         else {
             combined_mask = (0x1ull << (N - 192)) - 0x1ull;
-            load_mask9  = (combined_mask) & 0xFF;
+            load_mask9 = (combined_mask)&0xFF;
             load_mask10 = (combined_mask >> 8) & 0xFF;
             load_mask11 = (combined_mask >> 16) & 0xFF;
             load_mask12 = (combined_mask >> 24) & 0xFF;
@@ -714,7 +718,6 @@ X86_SIMD_SORT_INLINE void sort_256_64bit(type_t *arr, int32_t N)
         vtype::mask_storeu(arr + 240, load_mask15, zmm[30]);
         vtype::mask_storeu(arr + 248, load_mask16, zmm[31]);
     }
-
 }
 
 template <typename vtype, typename type_t>
