@@ -259,4 +259,117 @@ static inline int64_t partition_avx512(type_t *arr,
     *biggest = vtype::reducemax(max_vec);
     return l_store;
 }
+
+template <typename vtype, typename type_t>
+static inline int64_t partition_avx512_unrolled(type_t *arr,
+                                                int64_t left,
+                                                int64_t right,
+                                                type_t pivot,
+                                                type_t *smallest,
+                                                type_t *biggest)
+{
+    const int num_unroll = 8;
+    if (right - left <= 2*num_unroll*vtype::numlanes) {
+        return partition_avx512<vtype>(arr, left, right, pivot, smallest, biggest);
+    }
+    /* make array length divisible by 8*vtype::numlanes , shortening the array */
+    for (int32_t i = ((right - left) % (num_unroll*vtype::numlanes)); i > 0; --i) {
+        *smallest = std::min(*smallest, arr[left], comparison_func<vtype>);
+        *biggest = std::max(*biggest, arr[left], comparison_func<vtype>);
+        if (!comparison_func<vtype>(arr[left], pivot)) {
+            std::swap(arr[left], arr[--right]);
+        }
+        else {
+            ++left;
+        }
+    }
+
+    if (left == right)
+        return left; /* less than vtype::numlanes elements in the array */
+
+    using zmm_t = typename vtype::zmm_t;
+    zmm_t pivot_vec = vtype::set1(pivot);
+    zmm_t min_vec = vtype::set1(*smallest);
+    zmm_t max_vec = vtype::set1(*biggest);
+
+    // We will now have atleast 16 registers worth of data to process:
+    // left and right vtype::numlanes values are partitioned at the end
+    zmm_t vec_left[num_unroll], vec_right[num_unroll];
+    #pragma GCC unroll 8
+    for (int ii = 0; ii < num_unroll; ++ii) {
+        vec_left[ii] = vtype::loadu(arr + left + vtype::numlanes*ii);
+        vec_right[ii] = vtype::loadu(arr + (right - vtype::numlanes*(num_unroll-ii)));
+    }
+    // store points of the vectors
+    int64_t r_store = right - vtype::numlanes;
+    int64_t l_store = left;
+    // indices for loading the elements
+    left += num_unroll*vtype::numlanes;
+    right -= num_unroll*vtype::numlanes;
+    while (right - left != 0) {
+        zmm_t curr_vec[num_unroll];
+        /*
+         * if fewer elements are stored on the right side of the array,
+         * then next elements are loaded from the right side,
+         * otherwise from the left side
+         */
+        if ((r_store + vtype::numlanes) - right < left - l_store) {
+            right -= num_unroll*vtype::numlanes;
+            #pragma GCC unroll 8
+            for (int ii = 0; ii < num_unroll; ++ii) {
+                curr_vec[ii] = vtype::loadu(arr + right + ii*vtype::numlanes);
+            }
+        }
+        else {
+            #pragma GCC unroll 8
+            for (int ii = 0; ii < num_unroll; ++ii) {
+                curr_vec[ii] = vtype::loadu(arr + left + ii*vtype::numlanes);
+            }
+            left += num_unroll*vtype::numlanes;
+        }
+        // partition the current vector and save it on both sides of the array
+        #pragma GCC unroll 8
+        for (int ii = 0; ii < num_unroll; ++ii) {
+            int32_t amount_ge_pivot
+                    = partition_vec<vtype>(arr,
+                                           l_store,
+                                           r_store + vtype::numlanes,
+                                           curr_vec[ii],
+                                           pivot_vec,
+                                           &min_vec,pick
+                                           &max_vec);
+            l_store += (vtype::numlanes - amount_ge_pivot);
+            r_store -= amount_ge_pivot;
+        }
+    }
+
+    /* partition and save vec_left[8] and vec_right[8] */
+    #pragma GCC unroll 8
+    for (int ii = 0; ii < num_unroll; ++ii) {
+        int32_t amount_ge_pivot = partition_vec<vtype>(arr,
+                                                       l_store,
+                                                       r_store + vtype::numlanes,
+                                                       vec_left[ii],
+                                                       pivot_vec,
+                                                       &min_vec,
+                                                       &max_vec);
+        l_store += (vtype::numlanes - amount_ge_pivot);
+        r_store -= amount_ge_pivot;
+    }
+    #pragma GCC unroll 8
+    for (int ii = 0; ii < num_unroll; ++ii) {
+        int32_t amount_ge_pivot = partition_vec<vtype>(arr,
+                                                       l_store,
+                                                       r_store + vtype::numlanes,
+                                                       vec_right[ii],
+                                                       pivot_vec,
+                                                       &min_vec,
+                                                       &max_vec);
+        l_store += (vtype::numlanes - amount_ge_pivot);
+        r_store -= amount_ge_pivot;
+    }
+    *smallest = vtype::reducemin(min_vec);
+    *biggest = vtype::reducemax(max_vec);
+    return l_store;
+}
 #endif // AVX512_QSORT_COMMON
