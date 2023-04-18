@@ -648,7 +648,7 @@ qsort_32bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
     type_t pivot = get_pivot_32bit<vtype>(arr, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
-    int64_t pivot_index = partition_avx512<vtype>(
+    int64_t pivot_index = partition_avx512_unrolled<vtype>(
             arr, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest)
         qsort_32bit_<vtype>(arr, left, pivot_index - 1, max_iters - 1);
