@@ -9,13 +9,6 @@
 
 #include "avx512-64bit-common.h"
 
-/*
- * Constants used in sorting 8 elements in a ZMM registers. Based on Bitonic
- * sorting network (see
- * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg)
- */
-// ZMM                  7, 6, 5, 4, 3, 2, 1, 0
-
 // Assumes zmm is bitonic and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
@@ -406,6 +399,67 @@ qsort_64bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
         qsort_64bit_<vtype>(arr, left, pivot_index - 1, max_iters - 1);
     if (pivot != biggest)
         qsort_64bit_<vtype>(arr, pivot_index, right, max_iters - 1);
+}
+
+template <typename vtype, typename type_t>
+static void
+qselect_64bit_(type_t *arr, int64_t pos,
+               int64_t left, int64_t right,
+               int64_t max_iters)
+{
+    /*
+     * Resort to std::sort if quicksort isnt making any progress
+     */
+    if (max_iters <= 0) {
+        std::sort(arr + left, arr + right + 1);
+        return;
+    }
+    /*
+     * Base case: use bitonic networks to sort arrays <= 128
+     */
+    if (right + 1 - left <= 128) {
+        sort_128_64bit<vtype>(arr + left, (int32_t)(right + 1 - left));
+        return;
+    }
+
+    type_t pivot = get_pivot_64bit<vtype>(arr, left, right);
+    type_t smallest = vtype::type_max();
+    type_t biggest = vtype::type_min();
+    int64_t pivot_index = partition_avx512<vtype>(
+            arr, left, right + 1, pivot, &smallest, &biggest);
+    if ((pivot != smallest) && (pos < pivot_index))
+        qselect_64bit_<vtype>(arr, pos, left, pivot_index - 1, max_iters - 1);
+    else if ((pivot != biggest) && (pos >= pivot_index))
+        qselect_64bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
+}
+
+template <>
+void avx512_qselect<int64_t>(int64_t *arr, int64_t k, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        qselect_64bit_<zmm_vector<int64_t>, int64_t>(
+                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+void avx512_qselect<uint64_t>(uint64_t *arr, int64_t k, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        qselect_64bit_<zmm_vector<uint64_t>, uint64_t>(
+                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+void avx512_qselect<double>(double *arr, int64_t k, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        int64_t nan_count = replace_nan_with_inf(arr, arrsize);
+        qselect_64bit_<zmm_vector<double>, double>(
+                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        replace_inf_with_nan(arr, arrsize, nan_count);
+    }
 }
 
 template <>

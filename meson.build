@@ -11,8 +11,8 @@ gbench_dep = dependency('benchmark', required : true)
 
 fp16code = '''#include<immintrin.h>
 int main() { 
-  __mm512h temp = _mm512_set1_ph(1.0f);
-  __mm512h var2 = _mm512_min_ph(temp, temp);
+  __m512h temp = _mm512_set1_ph(1.0f);
+  __m512h var2 = _mm512_min_ph(temp, temp);
   return 0;
 }
 '''

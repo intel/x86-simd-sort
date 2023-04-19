@@ -11,7 +11,7 @@ endif
 
 if cpp.has_argument('-march=icelake-client')
   libtests += static_library('tests_qsort',
-    files('test_qsort.cpp', ),
+    files('test_sort.cpp', ),
     dependencies: gtest_dep,
     include_directories : [src, utils],
     cpp_args : ['-O3', '-march=icelake-client'],
