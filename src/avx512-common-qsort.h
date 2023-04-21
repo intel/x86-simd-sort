@@ -260,7 +260,9 @@ static inline int64_t partition_avx512(type_t *arr,
     return l_store;
 }
 
-template <typename vtype, typename type_t>
+template <typename vtype,
+          int num_unroll,
+          typename type_t = typename vtype::type_t>
 static inline int64_t partition_avx512_unrolled(type_t *arr,
                                                 int64_t left,
                                                 int64_t right,
@@ -268,7 +270,6 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
                                                 type_t *smallest,
                                                 type_t *biggest)
 {
-    const int num_unroll = 8;
     if (right - left <= 2 * num_unroll * vtype::numlanes) {
         return partition_avx512<vtype>(
                 arr, left, right, pivot, smallest, biggest);
