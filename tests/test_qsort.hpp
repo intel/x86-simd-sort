@@ -47,14 +47,14 @@ TYPED_TEST_P(avx512_sort, test_reverse)
         }
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii < 1024; ++ii) {
-            arrsizes.push_back((TypeParam) (ii + 1));
+            arrsizes.push_back((TypeParam)(ii + 1));
         }
         std::vector<TypeParam> arr;
         std::vector<TypeParam> sortedarr;
         for (size_t ii = 0; ii < arrsizes.size(); ++ii) {
             /* reverse array */
             for (int jj = 0; jj < arrsizes[ii]; ++jj) {
-                arr.push_back((TypeParam) (arrsizes[ii] - jj));
+                arr.push_back((TypeParam)(arrsizes[ii] - jj));
             }
             sortedarr = arr;
             /* Sort with std::sort for comparison */
@@ -78,7 +78,7 @@ TYPED_TEST_P(avx512_sort, test_constant)
         }
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii < 1024; ++ii) {
-            arrsizes.push_back((TypeParam) (ii + 1));
+            arrsizes.push_back((TypeParam)(ii + 1));
         }
         std::vector<TypeParam> arr;
         std::vector<TypeParam> sortedarr;
@@ -109,7 +109,7 @@ TYPED_TEST_P(avx512_sort, test_small_range)
         }
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii < 1024; ++ii) {
-            arrsizes.push_back((TypeParam) (ii + 1));
+            arrsizes.push_back((TypeParam)(ii + 1));
         }
         std::vector<TypeParam> arr;
         std::vector<TypeParam> sortedarr;
@@ -129,4 +129,7 @@ TYPED_TEST_P(avx512_sort, test_small_range)
     }
 }
 REGISTER_TYPED_TEST_SUITE_P(avx512_sort,
-        test_random, test_reverse, test_constant, test_small_range);
+                            test_random,
+                            test_reverse,
+                            test_constant,
+                            test_small_range);

@@ -95,7 +95,8 @@ TEST(avx512_qselect_float16, test_arrsizes)
             std::sort(sortedarr.begin(), sortedarr.end());
             for (size_t k = 0; k < arr.size(); ++k) {
                 psortedarr = arr;
-                avx512_qselect<_Float16>(psortedarr.data(), k, psortedarr.size());
+                avx512_qselect<_Float16>(
+                        psortedarr.data(), k, psortedarr.size());
                 /* index k is correct */
                 ASSERT_EQ(sortedarr[k], psortedarr[k]);
                 /* Check left partition */
@@ -103,7 +104,7 @@ TEST(avx512_qselect_float16, test_arrsizes)
                     ASSERT_LE(psortedarr[jj], psortedarr[k]);
                 }
                 /* Check right partition */
-                for (size_t jj = k+1; jj < arr.size(); jj++) {
+                for (size_t jj = k + 1; jj < arr.size(); jj++) {
                     ASSERT_GE(psortedarr[jj], psortedarr[k]);
                 }
                 psortedarr.clear();
@@ -142,7 +143,8 @@ TEST(avx512_partial_qsort_float16, test_ranges)
             int k = get_uniform_rand_array<int64_t>(1, arrsize, 1).front();
 
             /* Sort the range and verify all the required elements match the presorted set */
-            avx512_partial_qsort<_Float16>(psortedarr.data(), k, psortedarr.size());
+            avx512_partial_qsort<_Float16>(
+                    psortedarr.data(), k, psortedarr.size());
             for (size_t jj = 0; jj < k; jj++) {
                 ASSERT_EQ(sortedarr[jj], psortedarr[jj]);
             }

@@ -30,7 +30,8 @@ TYPED_TEST_P(avx512_partial_sort, test_ranges)
             int k = get_uniform_rand_array<int64_t>(1, arrsize, 1).front();
 
             /* Sort the range and verify all the required elements match the presorted set */
-            avx512_partial_qsort<TypeParam>(psortedarr.data(), k, psortedarr.size());
+            avx512_partial_qsort<TypeParam>(
+                    psortedarr.data(), k, psortedarr.size());
             for (size_t jj = 0; jj < k; jj++) {
                 ASSERT_EQ(sortedarr[jj], psortedarr[jj]);
             }

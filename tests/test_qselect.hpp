@@ -26,7 +26,8 @@ TYPED_TEST_P(avx512_select, test_random)
             std::sort(sortedarr.begin(), sortedarr.end());
             for (size_t k = 0; k < arr.size(); ++k) {
                 psortedarr = arr;
-                avx512_qselect<TypeParam>(psortedarr.data(), k, psortedarr.size());
+                avx512_qselect<TypeParam>(
+                        psortedarr.data(), k, psortedarr.size());
                 /* index k is correct */
                 ASSERT_EQ(sortedarr[k], psortedarr[k]);
                 /* Check left partition */
@@ -34,7 +35,7 @@ TYPED_TEST_P(avx512_select, test_random)
                     ASSERT_LE(psortedarr[jj], psortedarr[k]);
                 }
                 /* Check right partition */
-                for (size_t jj = k+1; jj < arr.size(); jj++) {
+                for (size_t jj = k + 1; jj < arr.size(); jj++) {
                     ASSERT_GE(psortedarr[jj], psortedarr[k]);
                 }
                 psortedarr.clear();
@@ -69,7 +70,8 @@ TYPED_TEST_P(avx512_select, test_small_range)
             std::sort(sortedarr.begin(), sortedarr.end());
             for (size_t k = 0; k < arr.size(); ++k) {
                 psortedarr = arr;
-                avx512_qselect<TypeParam>(psortedarr.data(), k, psortedarr.size());
+                avx512_qselect<TypeParam>(
+                        psortedarr.data(), k, psortedarr.size());
                 /* index k is correct */
                 ASSERT_EQ(sortedarr[k], psortedarr[k]);
                 /* Check left partition */
@@ -77,7 +79,7 @@ TYPED_TEST_P(avx512_select, test_small_range)
                     ASSERT_LE(psortedarr[jj], psortedarr[k]);
                 }
                 /* Check right partition */
-                for (size_t jj = k+1; jj < arr.size(); jj++) {
+                for (size_t jj = k + 1; jj < arr.size(); jj++) {
                     ASSERT_GE(psortedarr[jj], psortedarr[k]);
                 }
                 psortedarr.clear();

@@ -4,8 +4,8 @@
  * *******************************************/
 
 #include "avx512-64bit-keyvaluesort.hpp"
-#include "rand_array.h"
 #include "cpuinfo.h"
+#include "rand_array.h"
 #include <gtest/gtest.h>
 #include <vector>
 
