@@ -95,7 +95,8 @@ void avx512_qselect(T *arr, int64_t k, int64_t arrsize);
 void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize);
 
 template <typename T>
-inline void avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize) {
+inline void avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize)
+{
     avx512_qselect<T>(arr, k - 1, arrsize);
     avx512_qsort<T>(arr, k - 1);
 }

@@ -290,10 +290,11 @@ qsort_16bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
 }
 
 template <typename vtype, typename type_t>
-static void
-qselect_16bit_(type_t *arr, int64_t pos,
-               int64_t left, int64_t right,
-               int64_t max_iters)
+static void qselect_16bit_(type_t *arr,
+                           int64_t pos,
+                           int64_t left,
+                           int64_t right,
+                           int64_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
