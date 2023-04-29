@@ -2,7 +2,10 @@ libtests = []
 
 if cpp.has_argument('-march=skylake-avx512')
   libtests += static_library('tests_kv',
-    files('test_keyvalue.cpp', ),
+    files(
+      'test_keyvalue.cpp',
+      'test_argsort.cpp',
+    ),
     dependencies: gtest_dep,
     include_directories : [src, utils],
     cpp_args : ['-O3', '-march=skylake-avx512'],
