@@ -7,6 +7,7 @@
 #include "avx512-16bit-qsort.hpp"
 #include "avx512-32bit-qsort.hpp"
 #include "avx512-64bit-qsort.hpp"
+#include "avx512-64bit-argsort.hpp"
 
 #define MY_BENCHMARK_CAPTURE(func, T, test_case_name, ...) \
     BENCHMARK_PRIVATE_DECLARE(func) \
