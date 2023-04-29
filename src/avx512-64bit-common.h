@@ -23,6 +23,7 @@ template <>
 struct zmm_vector<int64_t> {
     using type_t = int64_t;
     using zmm_t = __m512i;
+    using argzmm_t = __m512i;
     using ymm_t = __m512i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
@@ -51,10 +52,17 @@ struct zmm_vector<int64_t> {
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
-
+    static opmask_t kxor_opmask(opmask_t x, opmask_t y)
+    {
+        return _kxor_mask8(x, y);
+    }
     static opmask_t knot_opmask(opmask_t x)
     {
         return _knot_mask8(x);
+    }
+    static opmask_t le(zmm_t x, zmm_t y)
+    {
+        return _mm512_cmp_epi64_mask(x, y, _MM_CMPINT_LE);
     }
     static opmask_t ge(zmm_t x, zmm_t y)
     {
@@ -63,6 +71,11 @@ struct zmm_vector<int64_t> {
     static opmask_t eq(zmm_t x, zmm_t y)
     {
         return _mm512_cmp_epi64_mask(x, y, _MM_CMPINT_EQ);
+    }
+    template <int scale>
+    static zmm_t mask_i64gather(zmm_t src, opmask_t mask, __m512i index, void const *base)
+    {
+        return _mm512_mask_i64gather_epi64(src, mask, index, base, scale);
     }
     template <int scale>
     static zmm_t i64gather(__m512i index, void const *base)
@@ -80,6 +93,10 @@ struct zmm_vector<int64_t> {
     static void mask_compressstoreu(void *mem, opmask_t mask, zmm_t x)
     {
         return _mm512_mask_compressstoreu_epi64(mem, mask, x);
+    }
+    static zmm_t maskz_loadu(opmask_t mask, void const *mem)
+    {
+        return _mm512_maskz_loadu_epi64(mask, mem);
     }
     static zmm_t mask_loadu(zmm_t x, opmask_t mask, void const *mem)
     {
