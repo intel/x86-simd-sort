@@ -73,7 +73,8 @@ struct zmm_vector<int64_t> {
         return _mm512_cmp_epi64_mask(x, y, _MM_CMPINT_EQ);
     }
     template <int scale>
-    static zmm_t mask_i64gather(zmm_t src, opmask_t mask, __m512i index, void const *base)
+    static zmm_t
+    mask_i64gather(zmm_t src, opmask_t mask, __m512i index, void const *base)
     {
         return _mm512_mask_i64gather_epi64(src, mask, index, base, scale);
     }

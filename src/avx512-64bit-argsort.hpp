@@ -7,13 +7,15 @@
 #ifndef AVX512_ARGSORT_64BIT
 #define AVX512_ARGSORT_64BIT
 
-#include "avx512-common-argsort.h"
 #include "avx512-64bit-keyvalue-networks.hpp"
+#include "avx512-common-argsort.h"
 
 /* argsort using std::sort */
-template<typename T>
-void std_argsort(T* arr, int64_t* arg, int64_t left, int64_t right) {
-    std::sort(arg + left, arg + right,
+template <typename T>
+void std_argsort(T *arr, int64_t *arg, int64_t left, int64_t right)
+{
+    std::sort(arg + left,
+              arg + right,
               [arr](int64_t left, int64_t right) -> bool {
                   // sort indices according to corresponding array element
                   return arr[left] < arr[right];
@@ -21,21 +23,19 @@ void std_argsort(T* arr, int64_t* arg, int64_t left, int64_t right) {
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void
-argsort_8_64bit(type_t *arr, int64_t* arg, int32_t N)
+X86_SIMD_SORT_INLINE void argsort_8_64bit(type_t *arr, int64_t *arg, int32_t N)
 {
     using zmm_t = typename vtype::zmm_t;
     typename vtype::opmask_t load_mask = (0x01 << N) - 0x01;
     argzmm_t argzmm = argtype::maskz_loadu(load_mask, arg);
-    zmm_t arrzmm
-            = vtype::template mask_i64gather<sizeof(type_t)>(vtype::zmm_max(), load_mask, argzmm, arr);
+    zmm_t arrzmm = vtype::template mask_i64gather<sizeof(type_t)>(
+            vtype::zmm_max(), load_mask, argzmm, arr);
     arrzmm = sort_zmm_64bit<vtype, argtype>(arrzmm, argzmm);
     vtype::mask_storeu(arg, load_mask, argzmm);
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void
-argsort_16_64bit(type_t *arr, int64_t *arg, int32_t N)
+X86_SIMD_SORT_INLINE void argsort_16_64bit(type_t *arr, int64_t *arg, int32_t N)
 {
     if (N <= 8) {
         argsort_8_64bit<vtype>(arr, arg, N);
@@ -46,17 +46,18 @@ argsort_16_64bit(type_t *arr, int64_t *arg, int32_t N)
     argzmm_t argzmm1 = argtype::loadu(arg);
     argzmm_t argzmm2 = argtype::maskz_loadu(load_mask, arg + 8);
     zmm_t arrzmm1 = vtype::template i64gather<sizeof(type_t)>(argzmm1, arr);
-    zmm_t arrzmm2 = vtype::template mask_i64gather<sizeof(type_t)>(vtype::zmm_max(), load_mask, argzmm2, arr);
+    zmm_t arrzmm2 = vtype::template mask_i64gather<sizeof(type_t)>(
+            vtype::zmm_max(), load_mask, argzmm2, arr);
     arrzmm1 = sort_zmm_64bit<vtype, argtype>(arrzmm1, argzmm1);
     arrzmm2 = sort_zmm_64bit<vtype, argtype>(arrzmm2, argzmm2);
-    bitonic_merge_two_zmm_64bit<vtype, argtype>(arrzmm1, arrzmm2, argzmm1, argzmm2);
+    bitonic_merge_two_zmm_64bit<vtype, argtype>(
+            arrzmm1, arrzmm2, argzmm1, argzmm2);
     argtype::storeu(arg, argzmm1);
     argtype::mask_storeu(arg + 8, load_mask, argzmm2);
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void
-argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
+X86_SIMD_SORT_INLINE void argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
 {
     if (N <= 16) {
         argsort_16_64bit<vtype>(arr, arg, N);
@@ -69,7 +70,7 @@ argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
 
 #pragma GCC unroll 2
     for (int ii = 0; ii < 2; ++ii) {
-        argzmm[ii] = argtype::loadu(arg + 8*ii);
+        argzmm[ii] = argtype::loadu(arg + 8 * ii);
         arrzmm[ii] = vtype::template i64gather<sizeof(type_t)>(argzmm[ii], arr);
         arrzmm[ii] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii], argzmm[ii]);
     }
@@ -78,10 +79,12 @@ argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
     opmask_t load_mask[2] = {0xFF, 0xFF};
 #pragma GCC unroll 2
     for (int ii = 0; ii < 2; ++ii) {
-        load_mask[ii] = (combined_mask >> (ii*8)) & 0xFF;
-        argzmm[ii+2] = argtype::maskz_loadu(load_mask[ii], arg + 16 + 8*ii);
-        arrzmm[ii+2] = vtype::template mask_i64gather<sizeof(type_t)>(vtype::zmm_max(), load_mask[ii], argzmm[ii+2], arr);
-        arrzmm[ii+2] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii+2], argzmm[ii+2]);
+        load_mask[ii] = (combined_mask >> (ii * 8)) & 0xFF;
+        argzmm[ii + 2] = argtype::maskz_loadu(load_mask[ii], arg + 16 + 8 * ii);
+        arrzmm[ii + 2] = vtype::template mask_i64gather<sizeof(type_t)>(
+                vtype::zmm_max(), load_mask[ii], argzmm[ii + 2], arr);
+        arrzmm[ii + 2] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii + 2],
+                                                        argzmm[ii + 2]);
     }
 
     bitonic_merge_two_zmm_64bit<vtype, argtype>(
@@ -97,8 +100,7 @@ argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void
-argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
+X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
 {
     if (N <= 32) {
         argsort_32_64bit<vtype>(arr, arg, N);
@@ -111,7 +113,7 @@ argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
 
 #pragma GCC unroll 4
     for (int ii = 0; ii < 4; ++ii) {
-        argzmm[ii] = argtype::loadu(arg + 8*ii);
+        argzmm[ii] = argtype::loadu(arg + 8 * ii);
         arrzmm[ii] = vtype::template i64gather<sizeof(type_t)>(argzmm[ii], arr);
         arrzmm[ii] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii], argzmm[ii]);
     }
@@ -120,15 +122,18 @@ argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
     uint64_t combined_mask = (0x1ull << (N - 32)) - 0x1ull;
 #pragma GCC unroll 4
     for (int ii = 0; ii < 4; ++ii) {
-        load_mask[ii] = (combined_mask >> (ii*8)) & 0xFF;
-        argzmm[ii+4] = argtype::maskz_loadu(load_mask[ii], arg + 32 + 8*ii);
-        arrzmm[ii+4] = vtype::template mask_i64gather<sizeof(type_t)>(vtype::zmm_max(), load_mask[ii], argzmm[ii+4], arr);
-        arrzmm[ii+4] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii+4], argzmm[ii+4]);
+        load_mask[ii] = (combined_mask >> (ii * 8)) & 0xFF;
+        argzmm[ii + 4] = argtype::maskz_loadu(load_mask[ii], arg + 32 + 8 * ii);
+        arrzmm[ii + 4] = vtype::template mask_i64gather<sizeof(type_t)>(
+                vtype::zmm_max(), load_mask[ii], argzmm[ii + 4], arr);
+        arrzmm[ii + 4] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii + 4],
+                                                        argzmm[ii + 4]);
     }
 
 #pragma GCC unroll 4
     for (int ii = 0; ii < 8; ii = ii + 2) {
-        bitonic_merge_two_zmm_64bit<vtype, argtype>(arrzmm[ii], arrzmm[ii + 1], argzmm[ii], argzmm[ii + 1]);
+        bitonic_merge_two_zmm_64bit<vtype, argtype>(
+                arrzmm[ii], arrzmm[ii + 1], argzmm[ii], argzmm[ii + 1]);
     }
     bitonic_merge_four_zmm_64bit<vtype, argtype>(arrzmm, argzmm);
     bitonic_merge_four_zmm_64bit<vtype, argtype>(arrzmm + 4, argzmm + 4);
@@ -136,11 +141,11 @@ argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
 
 #pragma GCC unroll 4
     for (int ii = 0; ii < 4; ++ii) {
-        argtype::storeu(arg + 8*ii, argzmm[ii]);
+        argtype::storeu(arg + 8 * ii, argzmm[ii]);
     }
 #pragma GCC unroll 4
     for (int ii = 0; ii < 4; ++ii) {
-        argtype::mask_storeu(arg + 32 + 8*ii, load_mask[ii], argzmm[ii + 4]);
+        argtype::mask_storeu(arg + 32 + 8 * ii, load_mask[ii], argzmm[ii + 4]);
     }
 }
 
@@ -204,7 +209,7 @@ argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
 
 template <typename vtype, typename type_t>
 type_t get_pivot_64bit(type_t *arr,
-                       int64_t* arg,
+                       int64_t *arg,
                        const int64_t left,
                        const int64_t right)
 {
@@ -221,7 +226,8 @@ type_t get_pivot_64bit(type_t *arr,
                                               arg[left + 6 * size],
                                               arg[left + 7 * size],
                                               arg[left + 8 * size]);
-        zmm_t rand_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
+        zmm_t rand_vec
+                = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
         // pivot will never be a nan, since there are no nan's!
         zmm_t sort = sort_zmm_64bit<vtype>(rand_vec);
         return ((type_t *)&sort)[4];
@@ -232,8 +238,11 @@ type_t get_pivot_64bit(type_t *arr,
 }
 
 template <typename vtype, typename type_t>
-inline void
-argsort_64bit_(type_t *arr, int64_t* arg, int64_t left, int64_t right, int64_t max_iters)
+inline void argsort_64bit_(type_t *arr,
+                           int64_t *arg,
+                           int64_t left,
+                           int64_t right,
+                           int64_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -252,7 +261,7 @@ argsort_64bit_(type_t *arr, int64_t* arg, int64_t left, int64_t right, int64_t m
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
-    int64_t pivot_index = partition_avx512_unrolled<vtype,4>(
+    int64_t pivot_index = partition_avx512_unrolled<vtype, 4>(
             arr, arg, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest)
         argsort_64bit_<vtype>(arr, arg, left, pivot_index - 1, max_iters - 1);
@@ -261,7 +270,7 @@ argsort_64bit_(type_t *arr, int64_t* arg, int64_t left, int64_t right, int64_t m
 }
 
 template <>
-void avx512_argsort<int64_t>(int64_t *arr, int64_t* arg, int64_t arrsize)
+void avx512_argsort<int64_t>(int64_t *arr, int64_t *arg, int64_t arrsize)
 {
     if (arrsize > 1) {
         argsort_64bit_<zmm_vector<int64_t>, int64_t>(

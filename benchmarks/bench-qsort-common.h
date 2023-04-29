@@ -1,13 +1,13 @@
 #ifndef AVX512_BENCH_COMMON
 #define AVX512_BENCH_COMMON
 
-#include <benchmark/benchmark.h>
-#include "rand_array.h"
-#include "cpuinfo.h"
 #include "avx512-16bit-qsort.hpp"
 #include "avx512-32bit-qsort.hpp"
-#include "avx512-64bit-qsort.hpp"
 #include "avx512-64bit-argsort.hpp"
+#include "avx512-64bit-qsort.hpp"
+#include "cpuinfo.h"
+#include "rand_array.h"
+#include <benchmark/benchmark.h>
 
 #define MY_BENCHMARK_CAPTURE(func, T, test_case_name, ...) \
     BENCHMARK_PRIVATE_DECLARE(func) \
