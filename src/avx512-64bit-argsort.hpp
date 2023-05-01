@@ -279,6 +279,33 @@ void avx512_argsort(T* arr, int64_t *arg, int64_t arrsize)
     }
 }
 
+template <>
+void avx512_argsort(int32_t* arr, int64_t *arg, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        argsort_64bit_<ymm_vector<int32_t>>(
+                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+void avx512_argsort(uint32_t* arr, int64_t *arg, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        argsort_64bit_<ymm_vector<uint32_t>>(
+                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+void avx512_argsort(float* arr, int64_t *arg, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        argsort_64bit_<ymm_vector<float>>(
+                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
 template <typename T>
 std::vector<int64_t> avx512_argsort(T* arr, int64_t arrsize)
 {

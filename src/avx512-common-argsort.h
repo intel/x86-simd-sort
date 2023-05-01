@@ -22,28 +22,6 @@ template <typename T>
 std::vector<int64_t> avx512_argsort(T *arr, int64_t arrsize);
 
 /*
- * COEX == Compare and Exchange two registers by swapping min and max values
- */
-//template <typename vtype, typename mm_t>
-//static void COEX(mm_t &a, mm_t &b)
-//{
-//    mm_t temp = a;
-//    a = vtype::min(a, b);
-//    b = vtype::max(temp, b);
-//}
-//
-template <typename vtype,
-          typename zmm_t = typename vtype::zmm_t,
-          typename opmask_t = typename vtype::opmask_t>
-static inline zmm_t
-cmp_merge(zmm_t in1, zmm_t in2, argzmm_t &arg1, argzmm_t arg2, opmask_t mask)
-{
-    typename vtype::opmask_t le_mask = vtype::le(in1, in2);
-    opmask_t temp = vtype::kxor_opmask(le_mask, mask);
-    arg1 = vtype::mask_mov(arg2, temp, arg1); // 0 -> min, 1 -> max
-    return vtype::mask_mov(in2, temp, in1); // 0 -> min, 1 -> max
-}
-/*
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */

@@ -88,6 +88,9 @@
 template <typename type>
 struct zmm_vector;
 
+template <typename type>
+struct ymm_vector;
+
 // Regular quicksort routines:
 template <typename T>
 void avx512_qsort(T *arr, int64_t arrsize);

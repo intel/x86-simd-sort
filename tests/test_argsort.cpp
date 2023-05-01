@@ -181,7 +181,10 @@ REGISTER_TYPED_TEST_SUITE_P(avx512argsort,
                             test_sorted,
                             test_small_range);
 
-using ArgSortTestTypes = testing::Types<uint64_t,
+using ArgSortTestTypes = testing::Types<int32_t,
+                                        uint32_t,
+                                        float,
+                                        uint64_t,
                                         int64_t,
                                         double>;
 
