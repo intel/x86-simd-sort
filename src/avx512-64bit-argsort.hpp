@@ -32,7 +32,7 @@ X86_SIMD_SORT_INLINE void argsort_8_64bit(type_t *arr, int64_t *arg, int32_t N)
     zmm_t arrzmm = vtype::template mask_i64gather<sizeof(type_t)>(
             vtype::zmm_max(), load_mask, argzmm, arr);
     arrzmm = sort_zmm_64bit<vtype, argtype>(arrzmm, argzmm);
-    vtype::mask_storeu(arg, load_mask, argzmm);
+    argtype::mask_storeu(arg, load_mask, argzmm);
 }
 
 template <typename vtype, typename type_t>
@@ -268,6 +268,42 @@ inline void argsort_64bit_(type_t *arr,
         argsort_64bit_<vtype>(arr, arg, left, pivot_index - 1, max_iters - 1);
     if (pivot != biggest)
         argsort_64bit_<vtype>(arr, arg, pivot_index, right, max_iters - 1);
+}
+
+template <>
+void avx512_argsort<double>(double *arr, int64_t *arg, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        argsort_64bit_<zmm_vector<double>, double>(
+                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+std::vector<int64_t> avx512_argsort<double>(double *arr, int64_t arrsize)
+{
+    std::vector<int64_t> indices(arrsize);
+    std::iota(indices.begin(), indices.end(), 0);
+    avx512_argsort<double>(arr, indices.data(), arrsize);
+    return indices;
+}
+
+template <>
+void avx512_argsort<uint64_t>(uint64_t *arr, int64_t *arg, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        argsort_64bit_<zmm_vector<uint64_t>, uint64_t>(
+                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+std::vector<int64_t> avx512_argsort<uint64_t>(uint64_t *arr, int64_t arrsize)
+{
+    std::vector<int64_t> indices(arrsize);
+    std::iota(indices.begin(), indices.end(), 0);
+    avx512_argsort<uint64_t>(arr, indices.data(), arrsize);
+    return indices;
 }
 
 template <>

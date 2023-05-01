@@ -175,7 +175,12 @@ struct zmm_vector<uint64_t> {
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
-
+    template <int scale>
+    static zmm_t
+    mask_i64gather(zmm_t src, opmask_t mask, __m512i index, void const *base)
+    {
+        return _mm512_mask_i64gather_epi64(src, mask, index, base, scale);
+    }
     template <int scale>
     static zmm_t i64gather(__m512i index, void const *base)
     {
@@ -293,6 +298,12 @@ struct zmm_vector<double> {
     static opmask_t eq(zmm_t x, zmm_t y)
     {
         return _mm512_cmp_pd_mask(x, y, _CMP_EQ_OQ);
+    }
+    template <int scale>
+    static zmm_t
+    mask_i64gather(zmm_t src, opmask_t mask, __m512i index, void const *base)
+    {
+        return _mm512_mask_i64gather_pd(src, mask, index, base, scale);
     }
     template <int scale>
     static zmm_t i64gather(__m512i index, void const *base)
