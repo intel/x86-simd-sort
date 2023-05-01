@@ -270,57 +270,21 @@ inline void argsort_64bit_(type_t *arr,
         argsort_64bit_<vtype>(arr, arg, pivot_index, right, max_iters - 1);
 }
 
-template <>
-void avx512_argsort<double>(double *arr, int64_t *arg, int64_t arrsize)
+template <typename T>
+void avx512_argsort(T* arr, int64_t *arg, int64_t arrsize)
 {
     if (arrsize > 1) {
-        argsort_64bit_<zmm_vector<double>, double>(
+        argsort_64bit_<zmm_vector<T>>(
                 arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
 
-template <>
-std::vector<int64_t> avx512_argsort<double>(double *arr, int64_t arrsize)
+template <typename T>
+std::vector<int64_t> avx512_argsort(T* arr, int64_t arrsize)
 {
     std::vector<int64_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
-    avx512_argsort<double>(arr, indices.data(), arrsize);
-    return indices;
-}
-
-template <>
-void avx512_argsort<uint64_t>(uint64_t *arr, int64_t *arg, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        argsort_64bit_<zmm_vector<uint64_t>, uint64_t>(
-                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-std::vector<int64_t> avx512_argsort<uint64_t>(uint64_t *arr, int64_t arrsize)
-{
-    std::vector<int64_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx512_argsort<uint64_t>(arr, indices.data(), arrsize);
-    return indices;
-}
-
-template <>
-void avx512_argsort<int64_t>(int64_t *arr, int64_t *arg, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        argsort_64bit_<zmm_vector<int64_t>, int64_t>(
-                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-std::vector<int64_t> avx512_argsort<int64_t>(int64_t *arr, int64_t arrsize)
-{
-    std::vector<int64_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx512_argsort<int64_t>(arr, indices.data(), arrsize);
+    avx512_argsort<T>(arr, indices.data(), arrsize);
     return indices;
 }
 
