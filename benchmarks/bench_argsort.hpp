@@ -84,5 +84,11 @@ static void avx512argsort(benchmark::State &state, Args &&...args)
     }
 }
 
-BENCH(avx512argsort, int64_t)
-BENCH(stdargsort, int64_t)
+#define BENCH_BOTH(type)\
+    BENCH(avx512argsort, type)\
+    BENCH(stdargsort, type)\
+
+BENCH_BOTH(int64_t)
+BENCH_BOTH(uint64_t)
+BENCH_BOTH(double)
+
