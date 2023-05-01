@@ -7,8 +7,9 @@
 #ifndef AVX512_ARGSORT_64BIT
 #define AVX512_ARGSORT_64BIT
 
-#include "avx512-64bit-keyvalue-networks.hpp"
+#include "avx512-64bit-common.h"
 #include "avx512-common-argsort.h"
+#include "avx512-64bit-keyvalue-networks.hpp"
 
 /* argsort using std::sort */
 template <typename T>
