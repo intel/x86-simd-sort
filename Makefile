@@ -1,4 +1,4 @@
-CXX		= g++-12
+CXX		?= g++-12
 SRCDIR		= ./src
 TESTDIR		= ./tests
 BENCHDIR	= ./benchmarks

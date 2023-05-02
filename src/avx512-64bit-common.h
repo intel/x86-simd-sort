@@ -219,7 +219,7 @@ struct ymm_vector<uint32_t> {
     }
     static zmm_t loadu(void const *mem)
     {
-        return _mm256_loadu_epi32(mem);
+        return _mm256_loadu_si256((__m256i*) mem);
     }
     static zmm_t max(zmm_t x, zmm_t y)
     {
@@ -348,7 +348,7 @@ struct ymm_vector<int32_t> {
     }
     static zmm_t loadu(void const *mem)
     {
-        return _mm256_loadu_epi32(mem);
+        return _mm256_loadu_si256((__m256i*) mem);
     }
     static zmm_t max(zmm_t x, zmm_t y)
     {
