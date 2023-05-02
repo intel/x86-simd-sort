@@ -136,18 +136,18 @@ struct ymm_vector<float> {
     {
         return _mm256_set1_ps(v);
     }
-    template <uint8_t mask>
+    template <uint8_t mask, bool = (mask == 0b01010101)>
     static zmm_t shuffle(zmm_t zmm)
     {
         /* Hack!: have to make shuffles within 128-bit lanes work for both
          * 32-bit and 64-bit */
-        if constexpr (mask == 0b01010101) {
-            return _mm256_shuffle_ps(zmm, zmm, 0b10110001);
-        }
-        else {
-            /* Not used, so far */
-            return _mm256_shuffle_ps(zmm, zmm, mask);
-        }
+        return _mm256_shuffle_ps(zmm, zmm, 0b10110001);
+        //if constexpr (mask == 0b01010101) {
+        //}
+        //else {
+        //    /* Not used, so far */
+        //    return _mm256_shuffle_ps(zmm, zmm, mask);
+        //}
     }
     static void storeu(void *mem, zmm_t x)
     {
@@ -271,18 +271,12 @@ struct ymm_vector<uint32_t> {
     {
         return _mm256_set1_epi32(v);
     }
-    template <uint8_t mask>
+    template <uint8_t mask, bool = (mask == 0b01010101)>
     static zmm_t shuffle(zmm_t zmm)
     {
         /* Hack!: have to make shuffles within 128-bit lanes work for both
          * 32-bit and 64-bit */
-        if constexpr (mask == 0b01010101) {
-            return _mm256_shuffle_epi32(zmm, 0b10110001);
-        }
-        else {
-            /* Not used, so far */
-            return _mm256_shuffle_epi32(zmm, mask);
-        }
+        return _mm256_shuffle_epi32(zmm, 0b10110001);
     }
     static void storeu(void *mem, zmm_t x)
     {
@@ -406,18 +400,12 @@ struct ymm_vector<int32_t> {
     {
         return _mm256_set1_epi32(v);
     }
-    template <uint8_t mask>
+    template <uint8_t mask, bool = (mask == 0b01010101)>
     static zmm_t shuffle(zmm_t zmm)
     {
         /* Hack!: have to make shuffles within 128-bit lanes work for both
          * 32-bit and 64-bit */
-        if constexpr (mask == 0b01010101) {
-            return _mm256_shuffle_epi32(zmm, 0b10110001);
-        }
-        else {
-            /* Not used, so far */
-            return _mm256_shuffle_epi32(zmm, mask);
-        }
+        return _mm256_shuffle_epi32(zmm, 0b10110001);
     }
     static void storeu(void *mem, zmm_t x)
     {
