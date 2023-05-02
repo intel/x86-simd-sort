@@ -91,4 +91,6 @@ static void avx512argsort(benchmark::State &state, Args &&...args)
 BENCH_BOTH(int64_t)
 BENCH_BOTH(uint64_t)
 BENCH_BOTH(double)
-
+BENCH_BOTH(int32_t)
+BENCH_BOTH(uint32_t)
+BENCH_BOTH(float)
