@@ -1,10 +1,11 @@
-#include <benchmark/benchmark.h>
-#include "rand_array.h"
-#include "cpuinfo.h"
 #include "avx512fp16-16bit-qsort.hpp"
+#include "cpuinfo.h"
+#include "rand_array.h"
+#include <benchmark/benchmark.h>
 
 template <typename T>
-static void avx512_qsort(benchmark::State& state) {
+static void avx512_qsort(benchmark::State &state)
+{
     if (cpu_has_avx512fp16()) {
         // Perform setup here
         size_t ARRSIZE = state.range(0);
@@ -13,7 +14,7 @@ static void avx512_qsort(benchmark::State& state) {
 
         /* Initialize elements */
         for (size_t jj = 0; jj < ARRSIZE; ++jj) {
-            _Float16 temp = (float) rand() / (float)(RAND_MAX);
+            _Float16 temp = (float)rand() / (float)(RAND_MAX);
             arr.push_back(temp);
         }
         arr_bkp = arr;
@@ -32,7 +33,8 @@ static void avx512_qsort(benchmark::State& state) {
 }
 
 template <typename T>
-static void stdsort(benchmark::State& state) {
+static void stdsort(benchmark::State &state)
+{
     if (cpu_has_avx512fp16()) {
         // Perform setup here
         size_t ARRSIZE = state.range(0);
@@ -40,7 +42,7 @@ static void stdsort(benchmark::State& state) {
         std::vector<T> arr_bkp;
 
         for (size_t jj = 0; jj < ARRSIZE; ++jj) {
-            _Float16 temp = (float) rand() / (float)(RAND_MAX);
+            _Float16 temp = (float)rand() / (float)(RAND_MAX);
             arr.push_back(temp);
         }
         arr_bkp = arr;
@@ -63,7 +65,8 @@ BENCHMARK(avx512_qsort<_Float16>)->Arg(10000)->Arg(1000000);
 BENCHMARK(stdsort<_Float16>)->Arg(10000)->Arg(1000000);
 
 template <typename T>
-static void avx512_qselect(benchmark::State& state) {
+static void avx512_qselect(benchmark::State &state)
+{
     if (cpu_has_avx512fp16()) {
         // Perform setup here
         int64_t K = state.range(0);
@@ -73,7 +76,7 @@ static void avx512_qselect(benchmark::State& state) {
 
         /* Initialize elements */
         for (size_t jj = 0; jj < ARRSIZE; ++jj) {
-            _Float16 temp = (float) rand() / (float)(RAND_MAX);
+            _Float16 temp = (float)rand() / (float)(RAND_MAX);
             arr.push_back(temp);
         }
         arr_bkp = arr;
@@ -93,7 +96,8 @@ static void avx512_qselect(benchmark::State& state) {
 }
 
 template <typename T>
-static void stdnthelement(benchmark::State& state) {
+static void stdnthelement(benchmark::State &state)
+{
     if (cpu_has_avx512fp16()) {
         // Perform setup here
         int64_t K = state.range(0);
@@ -103,7 +107,7 @@ static void stdnthelement(benchmark::State& state) {
 
         /* Initialize elements */
         for (size_t jj = 0; jj < ARRSIZE; ++jj) {
-            _Float16 temp = (float) rand() / (float)(RAND_MAX);
+            _Float16 temp = (float)rand() / (float)(RAND_MAX);
             arr.push_back(temp);
         }
         arr_bkp = arr;
@@ -127,7 +131,8 @@ BENCHMARK(avx512_qselect<_Float16>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
 BENCHMARK(stdnthelement<_Float16>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
 
 template <typename T>
-static void avx512_partial_qsort(benchmark::State& state) {
+static void avx512_partial_qsort(benchmark::State &state)
+{
     if (cpu_has_avx512fp16()) {
         // Perform setup here
         int64_t K = state.range(0);
@@ -137,7 +142,7 @@ static void avx512_partial_qsort(benchmark::State& state) {
 
         /* Initialize elements */
         for (size_t jj = 0; jj < ARRSIZE; ++jj) {
-            _Float16 temp = (float) rand() / (float)(RAND_MAX);
+            _Float16 temp = (float)rand() / (float)(RAND_MAX);
             arr.push_back(temp);
         }
         arr_bkp = arr;
@@ -157,7 +162,8 @@ static void avx512_partial_qsort(benchmark::State& state) {
 }
 
 template <typename T>
-static void stdpartialsort(benchmark::State& state) {
+static void stdpartialsort(benchmark::State &state)
+{
     if (cpu_has_avx512fp16()) {
         // Perform setup here
         int64_t K = state.range(0);
@@ -167,7 +173,7 @@ static void stdpartialsort(benchmark::State& state) {
 
         /* Initialize elements */
         for (size_t jj = 0; jj < ARRSIZE; ++jj) {
-            _Float16 temp = (float) rand() / (float)(RAND_MAX);
+            _Float16 temp = (float)rand() / (float)(RAND_MAX);
             arr.push_back(temp);
         }
         arr_bkp = arr;
@@ -187,5 +193,9 @@ static void stdpartialsort(benchmark::State& state) {
 }
 
 // Register the function as a benchmark
-BENCHMARK(avx512_partial_qsort<_Float16>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
+BENCHMARK(avx512_partial_qsort<_Float16>)
+        ->Arg(10)
+        ->Arg(100)
+        ->Arg(1000)
+        ->Arg(5000);
 BENCHMARK(stdpartialsort<_Float16>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);

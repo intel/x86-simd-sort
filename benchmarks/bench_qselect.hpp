@@ -1,7 +1,8 @@
 #include "bench-qsort-common.h"
 
 template <typename T>
-static void avx512_qselect(benchmark::State& state) {
+static void avx512_qselect(benchmark::State &state)
+{
     if (!cpu_has_avx512bw()) {
         state.SkipWithMessage("Requires AVX512 BW ISA");
     }
@@ -29,7 +30,8 @@ static void avx512_qselect(benchmark::State& state) {
 }
 
 template <typename T>
-static void stdnthelement(benchmark::State& state) {
+static void stdnthelement(benchmark::State &state)
+{
     // Perform setup here
     int64_t K = state.range(0);
     size_t ARRSIZE = 10000;
