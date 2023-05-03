@@ -20,15 +20,19 @@
 
 #define BENCH(func, type) \
     MY_BENCHMARK_CAPTURE( \
-            func, type, random_10000, 10000, std::string("random")); \
+            func, type, random_5k, 5000, std::string("random")); \
     MY_BENCHMARK_CAPTURE( \
-            func, type, random_100000, 100000, std::string("random")); \
+            func, type, random_100k, 100000, std::string("random")); \
     MY_BENCHMARK_CAPTURE( \
-            func, type, sorted_10000, 10000, std::string("sorted")); \
+            func, type, random_1m, 1000000, std::string("random")); \
     MY_BENCHMARK_CAPTURE( \
-            func, type, constant_10000, 10000, std::string("constant")); \
+            func, type, random_10m, 10000000, std::string("random")); \
     MY_BENCHMARK_CAPTURE( \
-            func, type, reverse_10000, 10000, std::string("reverse"));
+            func, type, sorted_10k, 10000, std::string("sorted")); \
+    MY_BENCHMARK_CAPTURE( \
+            func, type, constant_10k, 10000, std::string("constant")); \
+    MY_BENCHMARK_CAPTURE( \
+            func, type, reverse_10k, 10000, std::string("reverse"));
 
 
 #endif
