@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <vector>
+#define inf X86_SIMD_SORT_INFINITY
 
 template <typename T>
 class avx512argsort : public ::testing::Test {
@@ -30,6 +31,12 @@ std::vector<int64_t> std_argsort(const std::vector<T> &array)
     return indices;
 }
 
+#define EXPECT_UNIQUE(arr) \
+    std::sort(arr.begin(), arr.end());\
+    std::vector<int64_t> vec(arr.size());\
+    std::iota(vec.begin(), vec.end(), 0);\
+    EXPECT_EQ(arr, vec) << "Indices aren't unique. Array size = " << arr.size();\
+
 TYPED_TEST_P(avx512argsort, test_random)
 {
     if (cpu_has_avx512bw()) {
@@ -50,6 +57,7 @@ TYPED_TEST_P(avx512argsort, test_random)
                 sort2.push_back(arr[inx2[jj]]);
             }
             ASSERT_EQ(sort1, sort2) << "Array size =" << size;
+            EXPECT_UNIQUE(inx2)
             arr.clear();
         }
     }
@@ -81,6 +89,7 @@ TYPED_TEST_P(avx512argsort, test_constant)
                 sort2.push_back(arr[inx2[jj]]);
             }
             ASSERT_EQ(sort1, sort2) << "Array size =" << size;
+            EXPECT_UNIQUE(inx2)
             arr.clear();
         }
     }
@@ -109,6 +118,7 @@ TYPED_TEST_P(avx512argsort, test_small_range)
                 sort2.push_back(arr[inx2[jj]]);
             }
             ASSERT_EQ(sort1, sort2) << "Array size = " << size;
+            EXPECT_UNIQUE(inx2)
             arr.clear();
         }
     }
@@ -137,6 +147,7 @@ TYPED_TEST_P(avx512argsort, test_sorted)
                 sort2.push_back(arr[inx2[jj]]);
             }
             ASSERT_EQ(sort1, sort2) << "Array size =" << size;
+            EXPECT_UNIQUE(inx2)
             arr.clear();
         }
     }
@@ -166,6 +177,7 @@ TYPED_TEST_P(avx512argsort, test_reverse)
                 sort2.push_back(arr[inx2[jj]]);
             }
             ASSERT_EQ(sort1, sort2) << "Array size =" << size;
+            EXPECT_UNIQUE(inx2)
             arr.clear();
         }
     }
@@ -203,6 +215,38 @@ TYPED_TEST_P(avx512argsort, test_array_with_nan)
         if (!std::is_sorted(sort1.begin(), sort1.end() - 2)) {
             FAIL() << "Array isn't sorted";
         }
+        EXPECT_UNIQUE(inx)
+        arr.clear();
+    }
+}
+
+TYPED_TEST_P(avx512argsort, test_max_value_at_end_of_array)
+{
+    if (!cpu_has_avx512bw()) {
+        GTEST_SKIP() << "Skipping this test, it requires avx512bw ISA";
+    }
+    std::vector<int64_t> arrsizes;
+    for (int64_t ii = 1; ii <= 64; ++ii) {
+        arrsizes.push_back(ii);
+    }
+    std::vector<TypeParam> arr;
+    for (auto &size : arrsizes) {
+        arr = get_uniform_rand_array<TypeParam>(size);
+        if (std::numeric_limits<TypeParam>::has_infinity) {
+            arr[size-1] = std::numeric_limits<TypeParam>::infinity();
+        }
+        else {
+            arr[size-1] = std::numeric_limits<TypeParam>::max();
+        }
+        std::vector<int64_t> inx = avx512_argsort(arr.data(), arr.size());
+        std::vector<TypeParam> sorted;
+        for (size_t jj = 0; jj < size; ++jj) {
+            sorted.push_back(arr[inx[jj]]);
+        }
+        if (!std::is_sorted(sorted.begin(), sorted.end())) {
+            EXPECT_TRUE(false) << "Array of size " << size << "is not sorted";
+        }
+        EXPECT_UNIQUE(inx)
         arr.clear();
     }
 }
@@ -213,7 +257,8 @@ REGISTER_TYPED_TEST_SUITE_P(avx512argsort,
                             test_constant,
                             test_sorted,
                             test_small_range,
-                            test_array_with_nan);
+                            test_array_with_nan,
+                            test_max_value_at_end_of_array);
 
 using ArgSortTestTypes = testing::Types<int32_t,
                                         uint32_t,
