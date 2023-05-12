@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <vector>
-#define inf X86_SIMD_SORT_INFINITY
 
 template <typename T>
 class avx512argsort : public ::testing::Test {
@@ -32,10 +31,10 @@ std::vector<int64_t> std_argsort(const std::vector<T> &array)
 }
 
 #define EXPECT_UNIQUE(arr) \
-    std::sort(arr.begin(), arr.end());\
-    std::vector<int64_t> vec(arr.size());\
-    std::iota(vec.begin(), vec.end(), 0);\
-    EXPECT_EQ(arr, vec) << "Indices aren't unique. Array size = " << arr.size();\
+    std::sort(arr.begin(), arr.end()); \
+    std::vector<int64_t> vec(arr.size()); \
+    std::iota(vec.begin(), vec.end(), 0); \
+    EXPECT_EQ(arr, vec) << "Indices aren't unique. Array size = " << arr.size();
 
 TYPED_TEST_P(avx512argsort, test_random)
 {
@@ -209,7 +208,7 @@ TYPED_TEST_P(avx512argsort, test_array_with_nan)
         for (size_t jj = 0; jj < size; ++jj) {
             sort1.push_back(arr[inx[jj]]);
         }
-        if ((!std::isnan(sort1[size-1])) || (!std::isnan(sort1[size-2]))) {
+        if ((!std::isnan(sort1[size - 1])) || (!std::isnan(sort1[size - 2]))) {
             FAIL() << "NAN's aren't sorted to the end";
         }
         if (!std::is_sorted(sort1.begin(), sort1.end() - 2)) {
@@ -233,10 +232,10 @@ TYPED_TEST_P(avx512argsort, test_max_value_at_end_of_array)
     for (auto &size : arrsizes) {
         arr = get_uniform_rand_array<TypeParam>(size);
         if (std::numeric_limits<TypeParam>::has_infinity) {
-            arr[size-1] = std::numeric_limits<TypeParam>::infinity();
+            arr[size - 1] = std::numeric_limits<TypeParam>::infinity();
         }
         else {
-            arr[size-1] = std::numeric_limits<TypeParam>::max();
+            arr[size - 1] = std::numeric_limits<TypeParam>::max();
         }
         std::vector<int64_t> inx = avx512_argsort(arr.data(), arr.size());
         std::vector<TypeParam> sorted;
@@ -260,11 +259,7 @@ REGISTER_TYPED_TEST_SUITE_P(avx512argsort,
                             test_array_with_nan,
                             test_max_value_at_end_of_array);
 
-using ArgSortTestTypes = testing::Types<int32_t,
-                                        uint32_t,
-                                        float,
-                                        uint64_t,
-                                        int64_t,
-                                        double>;
+using ArgSortTestTypes
+        = testing::Types<int32_t, uint32_t, float, uint64_t, int64_t, double>;
 
 INSTANTIATE_TYPED_TEST_SUITE_P(TestPrefix, avx512argsort, ArgSortTestTypes);

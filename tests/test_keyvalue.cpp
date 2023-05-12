@@ -72,7 +72,8 @@ TYPED_TEST_P(TestKeyValueSort, KeyValueSort)
 TEST(TestKeyValueSort, test_inf_at_endofarray)
 {
     std::vector<double> key = {8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0, inf};
-    std::vector<double> key_sorted = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, inf};
+    std::vector<double> key_sorted
+            = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, inf};
     std::vector<uint64_t> val = {7, 6, 5, 4, 3, 2, 1, 0, 8};
     std::vector<uint64_t> val_sorted = {0, 1, 2, 3, 4, 5, 6, 7, 8};
     avx512_qsort_kv(key.data(), val.data(), key.size());
