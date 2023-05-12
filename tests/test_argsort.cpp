@@ -55,7 +55,7 @@ TYPED_TEST_P(avx512argsort, test_random)
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
-            ASSERT_EQ(sort1, sort2) << "Array size =" << size;
+            EXPECT_EQ(sort1, sort2) << "Array size =" << size;
             EXPECT_UNIQUE(inx2)
             arr.clear();
         }
@@ -87,7 +87,7 @@ TYPED_TEST_P(avx512argsort, test_constant)
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
-            ASSERT_EQ(sort1, sort2) << "Array size =" << size;
+            EXPECT_EQ(sort1, sort2) << "Array size =" << size;
             EXPECT_UNIQUE(inx2)
             arr.clear();
         }
@@ -116,7 +116,7 @@ TYPED_TEST_P(avx512argsort, test_small_range)
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
-            ASSERT_EQ(sort1, sort2) << "Array size = " << size;
+            EXPECT_EQ(sort1, sort2) << "Array size = " << size;
             EXPECT_UNIQUE(inx2)
             arr.clear();
         }
@@ -145,7 +145,7 @@ TYPED_TEST_P(avx512argsort, test_sorted)
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
-            ASSERT_EQ(sort1, sort2) << "Array size =" << size;
+            EXPECT_EQ(sort1, sort2) << "Array size =" << size;
             EXPECT_UNIQUE(inx2)
             arr.clear();
         }
@@ -175,7 +175,7 @@ TYPED_TEST_P(avx512argsort, test_reverse)
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
-            ASSERT_EQ(sort1, sort2) << "Array size =" << size;
+            EXPECT_EQ(sort1, sort2) << "Array size =" << size;
             EXPECT_UNIQUE(inx2)
             arr.clear();
         }
