@@ -13,6 +13,19 @@
 
 /* argsort using std::sort */
 template <typename T>
+void std_argsort_withnan(T *arr, int64_t *arg, int64_t left, int64_t right)
+{
+    std::sort(arg + left,
+              arg + right,
+              [arr](int64_t left, int64_t right) -> bool {
+              if ((!std::isnan(arr[left])) && (!std::isnan(arr[right]))) {return arr[left] < arr[right];}
+              else if (std::isnan(arr[left])) {return false;}
+              else {return true;}
+              });
+}
+
+/* argsort using std::sort */
+template <typename T>
 void std_argsort(T *arr, int64_t *arg, int64_t left, int64_t right)
 {
     std::sort(arg + left,
@@ -270,6 +283,33 @@ inline void argsort_64bit_(type_t *arr,
         argsort_64bit_<vtype>(arr, arg, pivot_index, right, max_iters - 1);
 }
 
+template <typename vtype, typename type_t>
+bool has_nan(type_t* arr, int64_t arrsize)
+{
+    using opmask_t = typename vtype::opmask_t;
+    using zmm_t = typename vtype::zmm_t;
+    bool found_nan = false;
+    opmask_t loadmask = 0xFF;
+    zmm_t in;
+    while (arrsize > 0) {
+        if (arrsize < vtype::numlanes) {
+            loadmask = (0x01 << arrsize) - 0x01;
+            in = vtype::maskz_loadu(loadmask, arr);
+        }
+        else {
+            in = vtype::loadu(arr);
+        }
+        opmask_t nanmask = vtype::template fpclass<0x01|0x80>(in);
+        arr += vtype::numlanes;
+        arrsize -= vtype::numlanes;
+        if (nanmask != 0x00) {
+            found_nan = true;
+            break;
+        }
+    }
+    return found_nan;
+}
+
 template <typename T>
 void avx512_argsort(T* arr, int64_t *arg, int64_t arrsize)
 {
@@ -278,6 +318,21 @@ void avx512_argsort(T* arr, int64_t *arg, int64_t arrsize)
                 arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
+
+template <>
+void avx512_argsort(double* arr, int64_t *arg, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        if (has_nan<zmm_vector<double>>(arr, arrsize)) {
+            std_argsort_withnan(arr, arg, 0, arrsize);
+        }
+        else {
+            argsort_64bit_<zmm_vector<double>>(
+                    arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        }
+    }
+}
+
 
 template <>
 void avx512_argsort(int32_t* arr, int64_t *arg, int64_t arrsize)
@@ -301,8 +356,13 @@ template <>
 void avx512_argsort(float* arr, int64_t *arg, int64_t arrsize)
 {
     if (arrsize > 1) {
-        argsort_64bit_<ymm_vector<float>>(
-                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        if (has_nan<ymm_vector<float>>(arr, arrsize)) {
+            std_argsort_withnan(arr, arg, 0, arrsize);
+        }
+        else {
+            argsort_64bit_<ymm_vector<float>>(
+                    arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        }
     }
 }
 

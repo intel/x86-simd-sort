@@ -174,12 +174,46 @@ TYPED_TEST_P(avx512argsort, test_reverse)
     }
 }
 
+TYPED_TEST_P(avx512argsort, test_array_with_nan)
+{
+    if (!cpu_has_avx512bw()) {
+        GTEST_SKIP() << "Skipping this test, it requires avx512bw ISA";
+    }
+    if (!std::is_floating_point<TypeParam>::value) {
+        GTEST_SKIP() << "Skipping this test, it is meant for float/double";
+    }
+    std::vector<int64_t> arrsizes;
+    for (int64_t ii = 2; ii <= 1024; ++ii) {
+        arrsizes.push_back(ii);
+    }
+    std::vector<TypeParam> arr;
+    for (auto &size : arrsizes) {
+        arr = get_uniform_rand_array<TypeParam>(size);
+        arr[0] = std::numeric_limits<TypeParam>::quiet_NaN();
+        arr[1] = std::numeric_limits<TypeParam>::quiet_NaN();
+        std::vector<int64_t> inx
+                = avx512_argsort<TypeParam>(arr.data(), arr.size());
+        std::vector<TypeParam> sort1;
+        for (size_t jj = 0; jj < size; ++jj) {
+            sort1.push_back(arr[inx[jj]]);
+        }
+        if ((!std::isnan(sort1[size-1])) || (!std::isnan(sort1[size-2]))) {
+            FAIL() << "NAN's aren't sorted to the end";
+        }
+        if (!std::is_sorted(sort1.begin(), sort1.end() - 2)) {
+            FAIL() << "Array isn't sorted";
+        }
+        arr.clear();
+    }
+}
+
 REGISTER_TYPED_TEST_SUITE_P(avx512argsort,
                             test_random,
                             test_reverse,
                             test_constant,
                             test_sorted,
-                            test_small_range);
+                            test_small_range,
+                            test_array_with_nan);
 
 using ArgSortTestTypes = testing::Types<int32_t,
                                         uint32_t,

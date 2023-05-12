@@ -71,6 +71,11 @@ struct ymm_vector<float> {
     {
         return _mm256_cmp_ps_mask(x, y, _CMP_EQ_OQ);
     }
+    template <int type>
+    static opmask_t fpclass(zmm_t x)
+    {
+        return _mm256_fpclass_ps_mask(x, type);
+    }
     template <int scale>
     static zmm_t
     mask_i64gather(zmm_t src, opmask_t mask, __m512i index, void const *base)
@@ -682,6 +687,10 @@ struct zmm_vector<double> {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
 
+    static zmm_t maskz_loadu(opmask_t mask, void const *mem)
+    {
+        return _mm512_maskz_loadu_pd(mask, mem);
+    }
     static opmask_t knot_opmask(opmask_t x)
     {
         return _knot_mask8(x);
@@ -693,6 +702,11 @@ struct zmm_vector<double> {
     static opmask_t eq(zmm_t x, zmm_t y)
     {
         return _mm512_cmp_pd_mask(x, y, _CMP_EQ_OQ);
+    }
+    template <int type>
+    static opmask_t fpclass(zmm_t x)
+    {
+        return _mm512_fpclass_pd_mask(x, type);
     }
     template <int scale>
     static zmm_t
