@@ -1,6 +1,6 @@
-#include "test_partial_qsort.hpp"
-#include "test_qselect.hpp"
-#include "test_qsort.hpp"
+#include "test-partial-qsort.hpp"
+#include "test-qselect.hpp"
+#include "test-qsort.hpp"
 
 using QuickSortTestTypes = testing::Types<uint16_t,
                                           int16_t,
