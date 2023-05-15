@@ -302,4 +302,4 @@ REGISTER_TYPED_TEST_SUITE_P(avx512argsort,
 using ArgSortTestTypes
         = testing::Types<int32_t, uint32_t, float, uint64_t, int64_t, double>;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(TestPrefix, avx512argsort, ArgSortTestTypes);
+INSTANTIATE_TYPED_TEST_SUITE_P(T, avx512argsort, ArgSortTestTypes);
