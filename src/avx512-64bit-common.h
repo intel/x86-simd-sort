@@ -285,7 +285,7 @@ struct ymm_vector<uint32_t> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        _mm256_storeu_epi32(mem, x);
+        _mm256_storeu_si256((__m256i*) mem, x);
     }
 };
 template <>
@@ -414,7 +414,7 @@ struct ymm_vector<int32_t> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        _mm256_storeu_epi32(mem, x);
+        _mm256_storeu_si256((__m256i*) mem, x);
     }
 };
 template <>
