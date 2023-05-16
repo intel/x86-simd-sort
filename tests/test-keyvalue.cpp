@@ -8,6 +8,7 @@
 #include "rand_array.h"
 #include <gtest/gtest.h>
 #include <vector>
+#define inf X86_SIMD_SORT_INFINITY
 
 template <typename K, typename V = uint64_t>
 struct sorted_t {
@@ -22,12 +23,12 @@ bool compare(sorted_t<K, V> a, sorted_t<K, V> b)
 }
 
 template <typename K>
-class TestKeyValueSort : public ::testing::Test {
+class KeyValueSort : public ::testing::Test {
 };
 
-TYPED_TEST_SUITE_P(TestKeyValueSort);
+TYPED_TEST_SUITE_P(KeyValueSort);
 
-TYPED_TEST_P(TestKeyValueSort, KeyValueSort)
+TYPED_TEST_P(KeyValueSort, test_64bit_random_data)
 {
     if (cpu_has_avx512bw()) {
         std::vector<int64_t> keysizes;
@@ -68,7 +69,19 @@ TYPED_TEST_P(TestKeyValueSort, KeyValueSort)
     }
 }
 
-REGISTER_TYPED_TEST_SUITE_P(TestKeyValueSort, KeyValueSort);
+TEST(KeyValueSort, test_inf_at_endofarray)
+{
+    std::vector<double> key = {8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0, inf};
+    std::vector<double> key_sorted
+            = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, inf};
+    std::vector<uint64_t> val = {7, 6, 5, 4, 3, 2, 1, 0, 8};
+    std::vector<uint64_t> val_sorted = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+    avx512_qsort_kv(key.data(), val.data(), key.size());
+    ASSERT_EQ(key, key_sorted);
+    ASSERT_EQ(val, val_sorted);
+}
+
+REGISTER_TYPED_TEST_SUITE_P(KeyValueSort, test_64bit_random_data);
 
 using TypesKv = testing::Types<double, uint64_t, int64_t>;
-INSTANTIATE_TYPED_TEST_SUITE_P(TestPrefixKv, TestKeyValueSort, TypesKv);
+INSTANTIATE_TYPED_TEST_SUITE_P(T, KeyValueSort, TypesKv);

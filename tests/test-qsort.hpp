@@ -128,8 +128,41 @@ TYPED_TEST_P(avx512_sort, test_small_range)
         GTEST_SKIP() << "Skipping this test, it requires avx512bw";
     }
 }
+
+TYPED_TEST_P(avx512_sort, test_max_value_at_end_of_array)
+{
+    if (!cpu_has_avx512bw()) {
+        GTEST_SKIP() << "Skipping this test, it requires avx512bw ISA";
+    }
+    if ((sizeof(TypeParam) == 2) && (!cpu_has_avx512_vbmi2())) {
+        GTEST_SKIP() << "Skipping this test, it requires avx512_vbmi2";
+    }
+    std::vector<int64_t> arrsizes;
+    for (int64_t ii = 1; ii <= 1024; ++ii) {
+        arrsizes.push_back(ii);
+    }
+    std::vector<TypeParam> arr;
+    std::vector<TypeParam> sortedarr;
+    for (auto &size : arrsizes) {
+        arr = get_uniform_rand_array<TypeParam>(size);
+        if (std::numeric_limits<TypeParam>::has_infinity) {
+            arr[size - 1] = std::numeric_limits<TypeParam>::infinity();
+        }
+        else {
+            arr[size - 1] = std::numeric_limits<TypeParam>::max();
+        }
+        sortedarr = arr;
+        avx512_qsort(arr.data(), arr.size());
+        std::sort(sortedarr.begin(), sortedarr.end());
+        EXPECT_EQ(sortedarr, arr) << "Array size = " << size;
+        arr.clear();
+        sortedarr.clear();
+    }
+}
+
 REGISTER_TYPED_TEST_SUITE_P(avx512_sort,
                             test_random,
                             test_reverse,
                             test_constant,
-                            test_small_range);
+                            test_small_range,
+                            test_max_value_at_end_of_array);

@@ -156,7 +156,7 @@ struct ymm_vector<float> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        return _mm256_storeu_ps((float*)mem, x);
+        _mm256_storeu_ps((float*)mem, x);
     }
 };
 template <>
@@ -285,7 +285,7 @@ struct ymm_vector<uint32_t> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        return _mm256_storeu_epi32(mem, x);
+        _mm256_storeu_epi32(mem, x);
     }
 };
 template <>
@@ -414,7 +414,7 @@ struct ymm_vector<int32_t> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        return _mm256_storeu_epi32(mem, x);
+        _mm256_storeu_epi32(mem, x);
     }
 };
 template <>
@@ -538,7 +538,7 @@ struct zmm_vector<int64_t> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        return _mm512_storeu_si512(mem, x);
+        _mm512_storeu_si512(mem, x);
     }
 };
 template <>
@@ -650,7 +650,7 @@ struct zmm_vector<uint64_t> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        return _mm512_storeu_si512(mem, x);
+        _mm512_storeu_si512(mem, x);
     }
 };
 template <>
@@ -770,7 +770,7 @@ struct zmm_vector<double> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        return _mm512_storeu_pd(mem, x);
+        _mm512_storeu_pd(mem, x);
     }
 };
 X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(double *arr, int64_t arrsize)

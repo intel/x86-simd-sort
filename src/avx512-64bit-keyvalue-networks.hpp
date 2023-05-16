@@ -96,10 +96,14 @@ X86_SIMD_SORT_INLINE void bitonic_merge_two_zmm_64bit(zmm_t &key_zmm1,
     zmm_t key_zmm3 = vtype1::min(key_zmm1, key_zmm2);
     zmm_t key_zmm4 = vtype1::max(key_zmm1, key_zmm2);
 
-    index_type index_zmm3 = vtype2::mask_mov(
-            index_zmm2, vtype1::eq(key_zmm3, key_zmm1), index_zmm1);
-    index_type index_zmm4 = vtype2::mask_mov(
-            index_zmm1, vtype1::eq(key_zmm3, key_zmm1), index_zmm2);
+    typename vtype1::opmask_t movmask = vtype1::eq(key_zmm3, key_zmm1);
+
+    index_type index_zmm3 = vtype2::mask_mov(index_zmm2, movmask, index_zmm1);
+    index_type index_zmm4 = vtype2::mask_mov(index_zmm1, movmask, index_zmm2);
+
+    /* need to reverse the lower registers to keep the correct order */
+    key_zmm4 = vtype1::permutexvar(rev_index1, key_zmm4);
+    index_zmm4 = vtype2::permutexvar(rev_index2, index_zmm4);
 
     // 2) Recursive half cleaner for each
     key_zmm1 = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm3, index_zmm3);
@@ -129,14 +133,17 @@ X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_64bit(zmm_t *key_zmm,
     zmm_t key_zmm_m1 = vtype1::max(key_zmm[0], key_zmm3r);
     zmm_t key_zmm_m2 = vtype1::max(key_zmm[1], key_zmm2r);
 
+    typename vtype1::opmask_t movmask1 = vtype1::eq(key_zmm_t1, key_zmm[0]);
+    typename vtype1::opmask_t movmask2 = vtype1::eq(key_zmm_t2, key_zmm[1]);
+
     index_type index_zmm_t1 = vtype2::mask_mov(
-            index_zmm3r, vtype1::eq(key_zmm_t1, key_zmm[0]), index_zmm[0]);
+            index_zmm3r, movmask1, index_zmm[0]);
     index_type index_zmm_m1 = vtype2::mask_mov(
-            index_zmm[0], vtype1::eq(key_zmm_t1, key_zmm[0]), index_zmm3r);
+            index_zmm[0], movmask1, index_zmm3r);
     index_type index_zmm_t2 = vtype2::mask_mov(
-            index_zmm2r, vtype1::eq(key_zmm_t2, key_zmm[1]), index_zmm[1]);
+            index_zmm2r, movmask2, index_zmm[1]);
     index_type index_zmm_m2 = vtype2::mask_mov(
-            index_zmm[1], vtype1::eq(key_zmm_t2, key_zmm[1]), index_zmm2r);
+            index_zmm[1], movmask2, index_zmm2r);
 
     // 2) Recursive half clearer: 16
     zmm_t key_zmm_t3 = vtype1::permutexvar(rev_index1, key_zmm_m2);
@@ -149,14 +156,17 @@ X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_64bit(zmm_t *key_zmm,
     zmm_t key_zmm2 = vtype1::min(key_zmm_t3, key_zmm_t4);
     zmm_t key_zmm3 = vtype1::max(key_zmm_t3, key_zmm_t4);
 
+    movmask1 = vtype1::eq(key_zmm0, key_zmm_t1);
+    movmask2 = vtype1::eq(key_zmm2, key_zmm_t3);
+
     index_type index_zmm0 = vtype2::mask_mov(
-            index_zmm_t2, vtype1::eq(key_zmm0, key_zmm_t1), index_zmm_t1);
+            index_zmm_t2, movmask1, index_zmm_t1);
     index_type index_zmm1 = vtype2::mask_mov(
-            index_zmm_t1, vtype1::eq(key_zmm0, key_zmm_t1), index_zmm_t2);
+            index_zmm_t1, movmask1, index_zmm_t2);
     index_type index_zmm2 = vtype2::mask_mov(
-            index_zmm_t4, vtype1::eq(key_zmm2, key_zmm_t3), index_zmm_t3);
+            index_zmm_t4, movmask2, index_zmm_t3);
     index_type index_zmm3 = vtype2::mask_mov(
-            index_zmm_t3, vtype1::eq(key_zmm2, key_zmm_t3), index_zmm_t4);
+            index_zmm_t3, movmask2, index_zmm_t4);
 
     key_zmm[0] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm0, index_zmm0);
     key_zmm[1] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm1, index_zmm1);
@@ -197,22 +207,27 @@ X86_SIMD_SORT_INLINE void bitonic_merge_eight_zmm_64bit(zmm_t *key_zmm,
     zmm_t key_zmm_m3 = vtype1::max(key_zmm[2], key_zmm5r);
     zmm_t key_zmm_m4 = vtype1::max(key_zmm[3], key_zmm4r);
 
+    typename vtype1::opmask_t movmask1 = vtype1::eq(key_zmm_t1, key_zmm[0]);
+    typename vtype1::opmask_t movmask2 = vtype1::eq(key_zmm_t2, key_zmm[1]);
+    typename vtype1::opmask_t movmask3 = vtype1::eq(key_zmm_t3, key_zmm[2]);
+    typename vtype1::opmask_t movmask4 = vtype1::eq(key_zmm_t4, key_zmm[3]);
+
     index_type index_zmm_t1 = vtype2::mask_mov(
-            index_zmm7r, vtype1::eq(key_zmm_t1, key_zmm[0]), index_zmm[0]);
+            index_zmm7r, movmask1, index_zmm[0]);
     index_type index_zmm_m1 = vtype2::mask_mov(
-            index_zmm[0], vtype1::eq(key_zmm_t1, key_zmm[0]), index_zmm7r);
+            index_zmm[0], movmask1, index_zmm7r);
     index_type index_zmm_t2 = vtype2::mask_mov(
-            index_zmm6r, vtype1::eq(key_zmm_t2, key_zmm[1]), index_zmm[1]);
+            index_zmm6r, movmask2, index_zmm[1]);
     index_type index_zmm_m2 = vtype2::mask_mov(
-            index_zmm[1], vtype1::eq(key_zmm_t2, key_zmm[1]), index_zmm6r);
+            index_zmm[1], movmask2, index_zmm6r);
     index_type index_zmm_t3 = vtype2::mask_mov(
-            index_zmm5r, vtype1::eq(key_zmm_t3, key_zmm[2]), index_zmm[2]);
+            index_zmm5r, movmask3, index_zmm[2]);
     index_type index_zmm_m3 = vtype2::mask_mov(
-            index_zmm[2], vtype1::eq(key_zmm_t3, key_zmm[2]), index_zmm5r);
+            index_zmm[2], movmask3, index_zmm5r);
     index_type index_zmm_t4 = vtype2::mask_mov(
-            index_zmm4r, vtype1::eq(key_zmm_t4, key_zmm[3]), index_zmm[3]);
+            index_zmm4r, movmask4, index_zmm[3]);
     index_type index_zmm_m4 = vtype2::mask_mov(
-            index_zmm[3], vtype1::eq(key_zmm_t4, key_zmm[3]), index_zmm4r);
+            index_zmm[3], movmask4, index_zmm4r);
 
     zmm_t key_zmm_t5 = vtype1::permutexvar(rev_index1, key_zmm_m4);
     zmm_t key_zmm_t6 = vtype1::permutexvar(rev_index1, key_zmm_m3);
