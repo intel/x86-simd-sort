@@ -24,7 +24,7 @@ jobs:
         git clone https://github.com/google/benchmark.git
         cd benchmark
         cmake -E make_directory "build"
-        cmake -E chdir "build" cmake -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on -DCMAKE_BUILD_TYPE=Release ../
+        cmake -E chdir "build" cmake -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release ../
         sudo cmake --build "build" --config Release --target install
 
     - name: Install Intel SDE
@@ -86,7 +86,7 @@ jobs:
         cd benchmark
         pip3 install -r requirements.txt
         cmake -E make_directory "build"
-        cmake -E chdir "build" cmake -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on -DCMAKE_BUILD_TYPE=Release ../
+        cmake -E chdir "build" cmake -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release ../
         sudo cmake --build "build" --config Release --target install
 
     - name: Run bench-compare
