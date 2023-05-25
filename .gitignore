@@ -33,5 +33,6 @@
 *.out
 *.app
 
+# Build or IDE artifacts
 **/.vscode
-
+/builddir/

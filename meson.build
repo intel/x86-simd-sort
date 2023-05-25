@@ -6,8 +6,8 @@ src = include_directories('src')
 bench = include_directories('benchmarks')
 utils = include_directories('utils')
 tests = include_directories('tests')
-gtest_dep = dependency('gtest_main', required : true)
-gbench_dep = dependency('benchmark', required : true)
+gtest_dep = dependency('gtest_main', required : true, static: true)
+gbench_dep = dependency('benchmark', required : true, static: true)
 
 fp16code = '''#include<immintrin.h>
 int main() { 
@@ -28,9 +28,10 @@ testexe = executable('testexe',
                      link_whole : [libtests, libcpuinfo]
                     )
 
-benchexe = executable('benchexe', 'benchmarks/main.cpp',
+benchexe = executable('benchexe',
                       include_directories : [src, utils, bench],
                       dependencies : [gbench_dep],
+                      link_args: ['-lbenchmark_main'],
                       link_whole : [libbench, libcpuinfo],
                      )
 

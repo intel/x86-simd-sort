@@ -1,4 +1,11 @@
 CXX		?= g++-12
+CXXFLAGS	+= -I$(SRCDIR) -I$(UTILS) -O3
+GTESTCFLAGS	= `pkg-config --cflags gtest_main`
+GTESTLDFLAGS	= `pkg-config --static --libs gtest_main`
+GBENCHCFLAGS	= `pkg-config --cflags benchmark`
+GBENCHLDFLAGS	= `pkg-config --static --libs benchmark`
+MARCHFLAG	= -march=sapphirerapids
+
 SRCDIR		= ./src
 TESTDIR		= ./tests
 BENCHDIR	= ./benchmarks
@@ -8,13 +15,16 @@ TESTS		= $(wildcard $(TESTDIR)/*.cpp)
 BENCHS		= $(wildcard $(BENCHDIR)/*.cpp)
 TESTOBJS	= $(patsubst $(TESTDIR)/%.cpp,$(TESTDIR)/%.o,$(TESTS))
 BENCHOBJS	= $(patsubst $(BENCHDIR)/%.cpp,$(BENCHDIR)/%.o,$(BENCHS))
-BENCHOBJS	:= $(filter-out $(BENCHDIR)/main.o ,$(BENCHOBJS))
-CXXFLAGS	+= -I$(SRCDIR) -I$(UTILS)
-GTESTCFLAGS	= `pkg-config --cflags gtest_main`
-GTESTLDFLAGS	= `pkg-config --libs gtest_main`
-GBENCHCFLAGS	= `pkg-config --cflags benchmark`
-GBENCHLDFLAGS	= `pkg-config --libs benchmark`
-MARCHFLAG	= -march=sapphirerapids -O3
+
+# Compiling AVX512-FP16 instructions isn't possible for g++ < 12
+ifeq ($(shell expr `$(CXX) -dumpversion | cut -d '.' -f 1` \< 12), 1)
+	MARCHFLAG = -march=icelake-client
+	BENCHOBJS_SKIP += bench-qsortfp16.o
+	TESTOBJS_SKIP += test-qsortfp16.o
+endif
+
+BENCHOBJS	:= $(filter-out $(addprefix $(BENCHDIR)/, $(BENCHOBJS_SKIP)) ,$(BENCHOBJS))
+TESTOBJS	:= $(filter-out $(addprefix $(TESTDIR)/, $(TESTOBJS_SKIP)) ,$(TESTOBJS))
 
 all : test bench
 
@@ -31,7 +41,7 @@ $(BENCHDIR)/%.o : $(BENCHDIR)/%.cpp $(SRCS)
 	$(CXX) $(CXXFLAGS) $(MARCHFLAG) $(GBENCHCFLAGS) -c $< -o $@
 
 bench: $(BENCHOBJS) $(UTILS)/cpuinfo.o
-	$(CXX) $(BENCHDIR)/main.cpp $(BENCHOBJS) $(MARCHFLAG) $(CXXFLAGS) $(GBENCHLDFLAGS) $(UTILS)/cpuinfo.o -o benchexe
+	$(CXX) $(BENCHOBJS) $(UTILS)/cpuinfo.o $(MARCHFLAG) $(CXXFLAGS) -lbenchmark_main $(GBENCHLDFLAGS) -o benchexe
 
 meson:
 	meson setup --warnlevel 0 --buildtype plain builddir
