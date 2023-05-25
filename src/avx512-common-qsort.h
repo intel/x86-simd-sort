@@ -131,16 +131,18 @@ int64_t move_nans_to_end_of_array(T* arr, int64_t arrsize)
 {
     int64_t jj = arrsize - 1;
     int64_t ii = 0;
-    while (ii < jj) {
+    int64_t count = 0;
+    while (ii <= jj) {
         if (is_a_nan(arr[ii])) {
             std::swap(arr[ii], arr[jj]);
             jj -= 1;
+            count++;
         }
         else {
             ii += 1;
         }
     }
-    return ii;
+    return arrsize-count-1;
 }
 
 template <typename vtype, typename T = typename vtype::type_t>
