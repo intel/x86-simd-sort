@@ -125,7 +125,7 @@ bool is_a_nan<_Float16>(_Float16 elem)
 template <>
 void avx512_qselect(_Float16 *arr, int64_t k, int64_t arrsize)
 {
-    int64_t indx_last_elem = put_nans_at_end_of_array(arr, arrsize);
+    int64_t indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     if (indx_last_elem >= k) {
         qselect_16bit_<zmm_vector<_Float16>, _Float16>(
                 arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
@@ -135,7 +135,7 @@ void avx512_qselect(_Float16 *arr, int64_t k, int64_t arrsize)
 template <>
 void avx512_qsort(_Float16 *arr, int64_t arrsize)
 {
-    int64_t indx_last_elem = put_nans_at_end_of_array(arr, arrsize);
+    int64_t indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     if (indx_last_elem > 0) {
         qsort_16bit_<zmm_vector<_Float16>, _Float16>(
                 arr, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
