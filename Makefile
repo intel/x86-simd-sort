@@ -16,11 +16,17 @@ BENCHS		= $(wildcard $(BENCHDIR)/*.cpp)
 TESTOBJS	= $(patsubst $(TESTDIR)/%.cpp,$(TESTDIR)/%.o,$(TESTS))
 BENCHOBJS	= $(patsubst $(BENCHDIR)/%.cpp,$(BENCHDIR)/%.o,$(BENCHS))
 
-# Compiling AVX512-FP16 instructions isn't possible for g++ < 12
-ifeq ($(shell expr `$(CXX) -dumpversion | cut -d '.' -f 1` \< 12), 1)
-	MARCHFLAG = -march=icelake-client
-	BENCHOBJS_SKIP += bench-qsortfp16.o
-	TESTOBJS_SKIP += test-qsortfp16.o
+test_cxx_flag = $(shell 2>/dev/null $(CXX) -o /dev/null $(1) -c -x c++ /dev/null; echo $$?)
+
+# Compiling AVX512-FP16 instructions wasn't possible until GCC 12
+ifeq ($(call test_cxx_flag,-mavx512fp16), 1)
+  BENCHOBJS_SKIP += bench-qsortfp16.o
+  TESTOBJS_SKIP += test-qsortfp16.o
+endif
+
+# Sapphire Rapids was otherwise supported from GCC 11. Downgrade if required.
+ifeq ($(call test_cxx_flag,$(MARCHFLAG)), 1)
+  MARCHFLAG = -march=icelake-client
 endif
 
 BENCHOBJS	:= $(filter-out $(addprefix $(BENCHDIR)/, $(BENCHOBJS_SKIP)) ,$(BENCHOBJS))
