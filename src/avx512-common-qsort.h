@@ -85,6 +85,13 @@
 #define X86_SIMD_SORT_FINLINE static
 #endif
 
+#if __GNUC__ >= 8
+#define UNROLL_LOOP(num)\
+GCC unroll num
+#else
+#define UNROLL_LOOP(num)
+#endif
+
 template <typename type>
 struct zmm_vector;
 
@@ -309,7 +316,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
     // We will now have atleast 16 registers worth of data to process:
     // left and right vtype::numlanes values are partitioned at the end
     zmm_t vec_left[num_unroll], vec_right[num_unroll];
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         vec_left[ii] = vtype::loadu(arr + left + vtype::numlanes * ii);
         vec_right[ii] = vtype::loadu(
@@ -330,20 +337,20 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
          */
         if ((r_store + vtype::numlanes) - right < left - l_store) {
             right -= num_unroll * vtype::numlanes;
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + right + ii * vtype::numlanes);
             }
         }
         else {
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + left + ii * vtype::numlanes);
             }
             left += num_unroll * vtype::numlanes;
         }
 // partition the current vector and save it on both sides of the array
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
         for (int ii = 0; ii < num_unroll; ++ii) {
             int32_t amount_ge_pivot
                     = partition_vec<vtype>(arr,
@@ -359,7 +366,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
     }
 
 /* partition and save vec_left[8] and vec_right[8] */
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         int32_t amount_ge_pivot
                 = partition_vec<vtype>(arr,
@@ -372,7 +379,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
         l_store += (vtype::numlanes - amount_ge_pivot);
         r_store -= amount_ge_pivot;
     }
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         int32_t amount_ge_pivot
                 = partition_vec<vtype>(arr,

@@ -203,7 +203,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
     // first and last vtype::numlanes values are partitioned at the end
     zmm_t vec_left[num_unroll], vec_right[num_unroll];
     argzmm_t argvec_left[num_unroll], argvec_right[num_unroll];
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         argvec_left[ii] = argtype::loadu(arg + left + vtype::numlanes * ii);
         vec_left[ii] = vtype::template i64gather<sizeof(type_t)>(
@@ -229,7 +229,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
          */
         if ((r_store + vtype::numlanes) - right < left - l_store) {
             right -= num_unroll * vtype::numlanes;
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 arg_vec[ii] = argtype::loadu(arg + right + ii * vtype::numlanes);
                 curr_vec[ii] = vtype::template i64gather<sizeof(type_t)>(
@@ -237,7 +237,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
             }
         }
         else {
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 arg_vec[ii] = argtype::loadu(arg + left + ii * vtype::numlanes);
                 curr_vec[ii] = vtype::template i64gather<sizeof(type_t)>(
@@ -246,7 +246,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
             left += num_unroll * vtype::numlanes;
         }
         // partition the current vector and save it on both sides of the array
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
         for (int ii = 0; ii < num_unroll; ++ii) {
             int32_t amount_gt_pivot
                     = partition_vec<vtype>(arg,
@@ -263,7 +263,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
     }
 
     /* partition and save vec_left and vec_right */
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         int32_t amount_gt_pivot
                 = partition_vec<vtype>(arg,
@@ -277,7 +277,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
         l_store += (vtype::numlanes - amount_gt_pivot);
         r_store -= amount_gt_pivot;
     }
-#pragma GCC unroll 8
+#pragma UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         int32_t amount_gt_pivot
                 = partition_vec<vtype>(arg,
