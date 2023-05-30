@@ -35,4 +35,4 @@ cd builddir-main
 ninja
 cd ..
 echo "Running benchmarks .."
-$compare benchmarks ./builddir-main/benchexe ./builddir-${branch}/benchexe
+$compare benchmarks ./builddir-main/benchexe ./builddir-${branch}/benchexe --benchmark_filter=avx
