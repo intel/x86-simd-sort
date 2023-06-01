@@ -116,6 +116,35 @@ inline void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize)
 template <typename T>
 void avx512_qsort_kv(T *keys, uint64_t *indexes, int64_t arrsize);
 
+template <typename T>
+bool is_a_nan(T elem)
+{
+    return std::isnan(elem);
+}
+
+/*
+ * Sort all the NAN's to end of the array and return the index of the last elem
+ * in the array which is not a nan
+ */
+template <typename T>
+int64_t move_nans_to_end_of_array(T* arr, int64_t arrsize)
+{
+    int64_t jj = arrsize - 1;
+    int64_t ii = 0;
+    int64_t count = 0;
+    while (ii <= jj) {
+        if (is_a_nan(arr[ii])) {
+            std::swap(arr[ii], arr[jj]);
+            jj -= 1;
+            count++;
+        }
+        else {
+            ii += 1;
+        }
+    }
+    return arrsize-count-1;
+}
+
 template <typename vtype, typename T = typename vtype::type_t>
 bool comparison_func(const T &a, const T &b)
 {
