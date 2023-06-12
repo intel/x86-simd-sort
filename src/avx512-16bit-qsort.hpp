@@ -403,7 +403,7 @@ void avx512_qselect(uint16_t *arr, int64_t k, int64_t arrsize)
 
 void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize)
 {
-    int64_t indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+    int64_t indx_last_elem = put_nans_at_end_of_array(arr, arrsize);
     if (indx_last_elem >= k) {
         qselect_16bit_<zmm_vector<float16>, uint16_t>(
                 arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
@@ -430,7 +430,7 @@ void avx512_qsort(uint16_t *arr, int64_t arrsize)
 
 void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize)
 {
-    int64_t indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+    int64_t indx_last_elem = put_nans_at_end_of_array(arr, arrsize);
     if (indx_last_elem > 0) {
         qsort_16bit_<zmm_vector<float16>, uint16_t>(
                 arr, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));

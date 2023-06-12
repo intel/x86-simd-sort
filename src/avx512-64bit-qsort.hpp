@@ -804,7 +804,7 @@ void avx512_qselect<uint64_t>(uint64_t *arr, int64_t k, int64_t arrsize)
 template <>
 void avx512_qselect<double>(double *arr, int64_t k, int64_t arrsize)
 {
-    int64_t indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+    int64_t indx_last_elem = put_nans_at_end_of_array(arr, arrsize);
     if (indx_last_elem >= k) {
         qselect_64bit_<zmm_vector<double>, double>(
                 arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
@@ -832,7 +832,7 @@ void avx512_qsort<uint64_t>(uint64_t *arr, int64_t arrsize)
 template <>
 void avx512_qsort<double>(double *arr, int64_t arrsize)
 {
-    int64_t indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+    int64_t indx_last_elem = put_nans_at_end_of_array(arr, arrsize);
     if (indx_last_elem > 0) {
         qsort_64bit_<zmm_vector<double>, double>(
                 arr, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));

@@ -127,7 +127,7 @@ bool is_a_nan(T elem)
  * in the array which is not a nan
  */
 template <typename T>
-int64_t move_nans_to_end_of_array(T* arr, int64_t arrsize)
+int64_t put_nans_at_end_of_array(T* arr, int64_t arrsize)
 {
     int64_t jj = arrsize - 1;
     int64_t ii = 0;
