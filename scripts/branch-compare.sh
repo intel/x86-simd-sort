@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-cd $SCRIPT_DIR/..
+BASE_DIR=$(dirname $SCRIPT_DIR)
 branch=$(git rev-parse --abbrev-ref HEAD)
 echo "Comparing main branch with $branch"
 
@@ -20,7 +20,7 @@ rm -rf .bench-compare
 mkdir .bench-compare
 cd .bench-compare
 echo "Fetching and build $branch .."
-git clone ${SCRIPT_DIR} -b $branch .
+git clone ${BASE_DIR} -b $branch .
 git fetch origin
 meson setup --warnlevel 0 --buildtype plain builddir-${branch}
 cd builddir-${branch}
