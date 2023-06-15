@@ -1,4 +1,4 @@
-#~/bin/bash
+#!/bin/bash
 set -e
 branch=$(git rev-parse --abbrev-ref HEAD)
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
