@@ -1,7 +1,7 @@
 #~/bin/bash
 set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-cd $SCRIPT_DIR
+cd $SCRIPT_DIR/..
 branch=$(git rev-parse --abbrev-ref HEAD)
 echo "Comparing main branch with $branch"
 
@@ -34,5 +34,10 @@ meson setup --warnlevel 0 --buildtype plain builddir-main
 cd builddir-main
 ninja
 cd ..
-echo "Running benchmarks .."
-$compare benchmarks ./builddir-main/benchexe ./builddir-${branch}/benchexe
+if [ -z "$1" ]; then
+    echo "Comparing all benchmarks .."
+    $compare benchmarks ./builddir-main/benchexe ./builddir-${branch}/benchexe
+else
+    echo "Comparing benchmark $1 .."
+    $compare benchmarksfiltered ./builddir-main/benchexe $1 ./builddir-${branch}/benchexe $1
+fi
