@@ -94,4 +94,4 @@ jobs:
       env:
         CXX: g++-12
         GBENCH: ${{ github.workspace }}/benchmark
-      run: bash -x bench-compare.sh
+      run: bash -x scripts/branch-compare.sh avx
