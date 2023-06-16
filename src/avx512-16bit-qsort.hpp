@@ -406,7 +406,13 @@ replace_inf_with_nan(uint16_t *arr, int64_t arrsize, int64_t nan_count)
 }
 
 template <>
-void avx512_qselect(int16_t *arr, int64_t k, int64_t arrsize)
+bool is_a_nan<uint16_t>(uint16_t elem)
+{
+    return (elem & 0x7c00) == 0x7c00;
+}
+
+template <>
+void avx512_qselect(int16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
 {
     if (arrsize > 1) {
         qselect_16bit_<zmm_vector<int16_t>, int16_t>(
@@ -415,7 +421,7 @@ void avx512_qselect(int16_t *arr, int64_t k, int64_t arrsize)
 }
 
 template <>
-void avx512_qselect(uint16_t *arr, int64_t k, int64_t arrsize)
+void avx512_qselect(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
 {
     if (arrsize > 1) {
         qselect_16bit_<zmm_vector<uint16_t>, uint16_t>(
@@ -423,13 +429,15 @@ void avx512_qselect(uint16_t *arr, int64_t k, int64_t arrsize)
     }
 }
 
-void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize)
+void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
 {
-    if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf(arr, arrsize);
+    int64_t indx_last_elem = arrsize - 1;
+    if (UNLIKELY(hasnan)) {
+         indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+    }
+    if (indx_last_elem >= k) {
         qselect_16bit_<zmm_vector<float16>, uint16_t>(
-                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        replace_inf_with_nan(arr, arrsize, nan_count);
+            arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }
 

@@ -145,13 +145,23 @@ replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
 }
 
 template <>
-void avx512_qselect(_Float16 *arr, int64_t k, int64_t arrsize)
+bool is_a_nan<_Float16>(_Float16 elem)
 {
-    if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf(arr, arrsize);
+    Fp16Bits temp;
+    temp.f_ = elem;
+    return (temp.i_ & 0x7c00) == 0x7c00;
+}
+
+template <>
+void avx512_qselect(_Float16 *arr, int64_t k, int64_t arrsize, bool hasnan)
+{
+    int64_t indx_last_elem = arrsize - 1;
+    if (UNLIKELY(hasnan)) {
+         indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+    }
+    if (indx_last_elem >= k) {
         qselect_16bit_<zmm_vector<_Float16>, _Float16>(
-                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        replace_inf_with_nan(arr, arrsize, nan_count);
+            arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }
 
