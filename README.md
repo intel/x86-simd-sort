@@ -1,11 +1,55 @@
 # x86-simd-sort
 
 C++ header file library for SIMD based 16-bit, 32-bit and 64-bit data type
-sorting on x86 processors. Source header files are available in src directory.
-We currently only have AVX-512 based implementation of quicksort. This
-repository also includes a test suite which can be built and run to test the
-sorting algorithms for correctness. It also has benchmarking code to compare
-its performance relative to std::sort.
+sorting algorithms on x86 processors. Source header files are available in src
+directory.  We currently only have AVX-512 based implementation of quicksort,
+argsort, quickselect, paritalsort and key-value sort. This repository also
+includes a test suite which can be built and run to test the sorting algorithms
+for correctness. It also has benchmarking code to compare its performance
+relative to std::sort. The following API's are currently supported:
+
+#### Quicksort
+
+```
+void avx512_qsort<T>(T* arr, int64_t arrsize)
+```
+Supported datatypes: `uint16_t, int16_t, _Float16, uint32_t, int32_t, float,
+uint64_t, int64_t and double`
+
+#### Argsort
+
+```
+std::vector<int64_t> arg = avx512_argsort<T>(T* arr, int64_t arrsize)
+void avx512_argsort<T>(T* arr, int64_t *arg, int64_t arrsize)
+```
+Supported datatypes: `uint32_t, int32_t, float, uint64_t, int64_t and double`.
+The algorithm resorts to scalar `std::sort` if the array contains NAN.
+
+#### Quickselect
+
+```
+void avx512_qselect<T>(T* arr, int64_t arrsize)
+void avx512_qselect<T>(T* arr, int64_t arrsize, bool hasnan)
+```
+Supported datatypes: `uint16_t, int16_t, _Float16 ,uint32_t, int32_t, float,
+uint64_t, int64_t and double`. Use an additional optional argument `bool
+hasnan` if you expect your arrays to contain nan.
+
+#### Partialsort
+
+```
+void avx512_partialsort<T>(T* arr, int64_t arrsize)
+void avx512_partialsort<T>(T* arr, int64_t arrsize, bool hasnan)
+```
+Supported datatypes: `uint16_t, int16_t, _Float16 ,uint32_t, int32_t, float,
+uint64_t, int64_t and double`. Use an additional optional argument `bool
+hasnan` if you expect your arrays to contain nan.
+
+#### Key-value sort
+```
+void avx512_qsort_kv<T>(T* key, uint64_t* value , int64_t arrsize)
+```
+Supported datatypes: `uint64_t, int64_t and double`
 
 ## Algorithm details
 
@@ -20,13 +64,14 @@ network. The core implementations of the vectorized qsort functions
 `avx512_qsort<T>(T*, int64_t)` are modified versions of avx2 quicksort
 presented in the paper [2] and source code associated with that paper [3].
 
-## Handling NAN in float and double arrays
+## A note on NAN in float and double arrays
 
 If you expect your array to contain NANs, please be aware that the these
-routines **do not preserve your NANs as you pass them**. The
-`avx512_qsort<T>()` routine will put all your NAN's at the end of the sorted
-array and replace them with `std::nan("1")`. Please take a look at
-`avx512_qsort<float>()` and `avx512_qsort<double>()` functions for details.
+routines **do not preserve your NANs as you pass them**. The quicksort,
+quickselect, partialsort and key-value sorting routines will sort NAN's to the
+end of the array and replace them with `std::nan("1")`. `avx512_argsort`
+routines will also resort to a scalar argsort that uses `std::sort` to sort array
+that contains NAN.
 
 ## Example to include and build this in a C++ code
 
@@ -36,7 +81,7 @@ array and replace them with `std::nan("1")`. Please take a look at
 #include "src/avx512-32bit-qsort.hpp"
 
 int main() {
-    const int ARRSIZE = 10;
+    const int ARRSIZE = 1000;
     std::vector<float> arr;
 
     /* Initialize elements is reverse order */
@@ -45,7 +90,7 @@ int main() {
     }
 
     /* call avx512 quicksort */
-    avx512_qsort<float>(arr.data(), ARRSIZE);
+    avx512_qsort(arr.data(), ARRSIZE);
     return 0;
 }
 
@@ -54,7 +99,7 @@ int main() {
 ### Build using gcc
 
 ```
-gcc main.cpp -mavx512f -mavx512dq -O3
+g++ main.cpp -mavx512f -mavx512dq -O3
 ```
 
 This is a header file only library and we do not provide any compile time and
@@ -75,24 +120,30 @@ compiler to build.
 gcc >= 8.x
 ```
 
+### Build using Meson
+
+meson is the recommended build system to build the test and benchmark suite.
+
+```
+meson setup builddir && cd builddir && ninja
+```
+
+It build two executables:
+
+- `testexe`: runs a bunch of tests written in ./tests directory.
+- `benchexe`: measures performance of these algorithms for various data types.
+
+
 ### Build using Make
 
-`make` command builds two executables:
+Makefile uses `-march=sapphirerapids` as a global compile flag and hence it
+will require g++-12. `make` command builds two executables:
 - `testexe`: runs a bunch of tests written in ./tests directory.
 - `benchexe`: measures performance of these algorithms for various data types
   and compares them to std::sort.
 
 You can use `make test` and `make bench` to build just the `testexe` and
 `benchexe` respectively.
-
-### Build using Meson
-
-You can also build `testexe` and `benchexe` using Meson/Ninja with the following
-command:
-
-```
-meson setup builddir && cd builddir && ninja
-```
 
 ## Requirements and dependencies
 
@@ -101,7 +152,8 @@ relatively modern compiler to build (gcc 8.x and above). Since they use the
 AVX-512 instruction set, they can only run on processors that have AVX-512.
 Specifically, the 32-bit and 64-bit require AVX-512F and AVX-512DQ instruction
 set. The 16-bit sorting requires the AVX-512F, AVX-512BW and AVX-512 VMBI2
-instruction set. The test suite is written using the Google test framework.
+instruction set. The test suite is written using the Google test framework. The
+benchmark is written using the google benchmark framework.
 
 ## References
 
