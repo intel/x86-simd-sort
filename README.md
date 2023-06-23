@@ -38,8 +38,8 @@ hasnan` if you expect your arrays to contain nan.
 #### Partialsort
 
 ```
-void avx512_partialsort<T>(T* arr, int64_t arrsize)
-void avx512_partialsort<T>(T* arr, int64_t arrsize, bool hasnan)
+void avx512_partial_qsort<T>(T* arr, int64_t arrsize)
+void avx512_partial_qsort<T>(T* arr, int64_t arrsize, bool hasnan)
 ```
 Supported datatypes: `uint16_t, int16_t, _Float16 ,uint32_t, int32_t, float,
 uint64_t, int64_t and double`. Use an additional optional argument `bool
