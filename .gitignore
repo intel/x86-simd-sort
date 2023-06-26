@@ -36,3 +36,5 @@
 # Build or IDE artifacts
 **/.vscode
 /builddir/
+/testexe
+/benchexe
