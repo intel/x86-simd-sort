@@ -1,4 +1,9 @@
-CXX		?= g++-12
+# When unset, discover g++. Prioritise the latest version on the path.
+ifeq (, $(and $(strip $(CXX)), $(filter-out default undefined, $(origin CXX))))
+  override CXX	:= $(shell basename `which g++-12 g++-11 g++-10 g++-9 g++-8 g++ | head -n 1`)
+endif
+
+export CXX
 CXXFLAGS	+= $(OPTIMFLAG) $(MARCHFLAG)
 override CXXFLAGS += -I$(SRCDIR) -I$(UTILSDIR)
 GTESTCFLAGS	:= `pkg-config --cflags gtest_main`
