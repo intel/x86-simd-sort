@@ -774,4 +774,19 @@ void avx512_qsort<float>(float *arr, int64_t arrsize)
     }
 }
 
+extern "C" {
+    void int32_avx512_qsort(int32_t* arr, int64_t arrsize)
+    {
+        avx512_qsort<int32_t>(arr, arrsize);
+    }
+    void uint32_avx512_qsort(uint32_t* arr, int64_t arrsize)
+    {
+        avx512_qsort<uint32_t>(arr, arrsize);
+    }
+    void float_avx512_qsort(float* arr, int64_t arrsize)
+    {
+        avx512_qsort<float>(arr, arrsize);
+    }
+}
+
 #endif //AVX512_QSORT_32BIT

@@ -842,4 +842,20 @@ void avx512_qsort<double>(double *arr, int64_t arrsize)
         replace_inf_with_nan(arr, arrsize, nan_count);
     }
 }
+
+extern "C" {
+    void int64_avx512_qsort(int64_t* arr, int64_t arrsize)
+    {
+        avx512_qsort<int64_t>(arr, arrsize);
+    }
+    void uint64_avx512_qsort(uint64_t* arr, int64_t arrsize)
+    {
+        avx512_qsort<uint64_t>(arr, arrsize);
+    }
+    void double_avx512_qsort(double* arr, int64_t arrsize)
+    {
+        avx512_qsort<double>(arr, arrsize);
+    }
+}
+
 #endif // AVX512_QSORT_64BIT

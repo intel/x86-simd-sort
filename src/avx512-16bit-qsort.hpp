@@ -469,4 +469,19 @@ void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize)
     }
 }
 
+extern "C" {
+    void int16_avx512_qsort(int16_t* arr, int64_t arrsize)
+    {
+        avx512_qsort<int16_t>(arr, arrsize);
+    }
+    void uint16_avx512_qsort(uint16_t* arr, int64_t arrsize)
+    {
+        avx512_qsort<uint16_t>(arr, arrsize);
+    }
+    void float16_avx512_qsort(uint16_t* arr, int64_t arrsize)
+    {
+        avx512_qsort_fp16(arr, arrsize);
+    }
+}
+
 #endif // AVX512_QSORT_16BIT
