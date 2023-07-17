@@ -604,7 +604,7 @@ X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(float *arr, int64_t arrsize)
         if (arrsize < 8) { loadmask = (0x01 << arrsize) - 0x01; }
         __m256 in_ymm = ymm_vector<float>::maskz_loadu(loadmask, arr);
         __m256i nanmask = _mm256_castps_si256(_mm256_cmp_ps(in_ymm, in_ymm, _CMP_NEQ_UQ));
-        nan_count += avx2_emu_popcnt(nanmask);
+        nan_count += _popcnt32(avx2_mask_helper(nanmask));
         ymm_vector<float>::mask_storeu(arr, nanmask, YMM_MAX_FLOAT);
         arr += 8;
         arrsize -= 8;
