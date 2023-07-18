@@ -284,6 +284,39 @@ inline void argsort_64bit_(type_t *arr,
 }
 
 template <typename vtype, typename type_t>
+static void argselect_64bit_(type_t *arr,
+                             int64_t *arg,
+                             int64_t pos,
+                             int64_t left,
+                             int64_t right,
+                             int64_t max_iters)
+{
+    /*
+     * Resort to std::sort if quicksort isnt making any progress
+     */
+    if (max_iters <= 0) {
+        std_argsort(arr, arg, left, right + 1);
+        return;
+    }
+    /*
+     * Base case: use bitonic networks to sort arrays <= 64
+     */
+    if (right + 1 - left <= 64) {
+        argsort_64_64bit<vtype>(arr, arg + left, (int32_t)(right + 1 - left));
+        return;
+    }
+    type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
+    type_t smallest = vtype::type_max();
+    type_t biggest = vtype::type_min();
+    int64_t pivot_index = partition_avx512_unrolled<vtype, 4>(
+            arr, arg, left, right + 1, pivot, &smallest, &biggest);
+    if ((pivot != smallest) && (pos < pivot_index))
+        argselect_64bit_<vtype>(arr, arg, pos, left, pivot_index - 1, max_iters - 1);
+    else if ((pivot != biggest) && (pos >= pivot_index))
+        argselect_64bit_<vtype>(arr, arg, pos, pivot_index, right, max_iters - 1);
+}
+
+template <typename vtype, typename type_t>
 bool has_nan(type_t* arr, int64_t arrsize)
 {
     using opmask_t = typename vtype::opmask_t;
@@ -310,6 +343,8 @@ bool has_nan(type_t* arr, int64_t arrsize)
     return found_nan;
 }
 
+
+/* argsort methods for 32-bit and 64-bit dtypes */
 template <typename T>
 void avx512_argsort(T* arr, int64_t *arg, int64_t arrsize)
 {
@@ -372,6 +407,73 @@ std::vector<int64_t> avx512_argsort(T* arr, int64_t arrsize)
     std::vector<int64_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
     avx512_argsort<T>(arr, indices.data(), arrsize);
+    return indices;
+}
+
+/* argselect methods for 32-bit and 64-bit dtypes */
+template <typename T>
+void avx512_argselect(T* arr, int64_t *arg, int64_t k, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        argselect_64bit_<zmm_vector<T>>(
+                arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+void avx512_argselect(double* arr, int64_t *arg, int64_t k, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        if (has_nan<zmm_vector<double>>(arr, arrsize)) {
+            /* FIXME: no need to do a full argsort */
+            std_argsort_withnan(arr, arg, 0, arrsize);
+        }
+        else {
+            argselect_64bit_<zmm_vector<double>>(
+                    arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        }
+    }
+}
+
+template <>
+void avx512_argselect(int32_t* arr, int64_t *arg, int64_t k, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        argselect_64bit_<ymm_vector<int32_t>>(
+                arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+void avx512_argselect(uint32_t* arr, int64_t *arg, int64_t k, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        argselect_64bit_<ymm_vector<uint32_t>>(
+                arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+void avx512_argselect(float* arr, int64_t *arg, int64_t k, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        if (has_nan<ymm_vector<float>>(arr, arrsize)) {
+            /* FIXME: no need to do a full argsort */
+            std_argsort_withnan(arr, arg, 0, arrsize);
+        }
+        else {
+            argselect_64bit_<ymm_vector<float>>(
+                    arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        }
+    }
+}
+
+template <typename T>
+std::vector<int64_t> avx512_argselect(T* arr, int64_t k, int64_t arrsize)
+{
+    std::vector<int64_t> indices(arrsize);
+    std::iota(indices.begin(), indices.end(), 0);
+    avx512_argselect<T>(arr, indices.data(), k, arrsize);
     return indices;
 }
 
