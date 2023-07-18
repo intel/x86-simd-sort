@@ -18,7 +18,7 @@
  * < 128, then use Bitonic sorting network implemented on 512-bit registers.
  * The precise network definitions depend on the dtype and are defined in
  * separate files: avx512-16bit-qsort.hpp, avx512-32bit-qsort.hpp and
- * avx512-64bit-qsort.hpp. Article [4] is a good resource for bitonic sorting
+ * avx512-32bit-qsort.hpp. Article [4] is a good resource for bitonic sorting
  * network. The core implementations of the vectorized qsort functions
  * avx512_qsort<T>(T*, int64_t) are modified versions of avx2 quicksort
  * presented in the paper [2] and source code associated with that paper [3].

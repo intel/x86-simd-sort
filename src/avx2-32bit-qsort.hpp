@@ -11,7 +11,7 @@
 
 // Assumes ymm is bitonic and performs a recursive half cleaner
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE ymm_t bitonic_merge_ymm_64bit(ymm_t ymm)
+X86_SIMD_SORT_INLINE ymm_t bitonic_merge_ymm_32bit(ymm_t ymm)
 {
     
     const typename vtype::opmask_t oxAA = _mm256_set_epi32(0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0);
@@ -35,7 +35,7 @@ X86_SIMD_SORT_INLINE ymm_t bitonic_merge_ymm_64bit(ymm_t ymm)
 }
 // Assumes ymm1 and ymm2 are sorted and performs a recursive half cleaner
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_two_ymm_64bit(ymm_t &ymm1, ymm_t &ymm2)
+X86_SIMD_SORT_INLINE void bitonic_merge_two_ymm_32bit(ymm_t &ymm1, ymm_t &ymm2)
 {
     const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
     // 1) First step of a merging network: coex of ymm1 and ymm2 reversed
@@ -43,13 +43,13 @@ X86_SIMD_SORT_INLINE void bitonic_merge_two_ymm_64bit(ymm_t &ymm1, ymm_t &ymm2)
     ymm_t ymm3 = vtype::min(ymm1, ymm2);
     ymm_t ymm4 = vtype::max(ymm1, ymm2);
     // 2) Recursive half cleaner for each
-    ymm1 = bitonic_merge_ymm_64bit<vtype>(ymm3);
-    ymm2 = bitonic_merge_ymm_64bit<vtype>(ymm4);
+    ymm1 = bitonic_merge_ymm_32bit<vtype>(ymm3);
+    ymm2 = bitonic_merge_ymm_32bit<vtype>(ymm4);
 }
 // Assumes [ymm0, ymm1] and [ymm2, ymm3] are sorted and performs a recursive
 // half cleaner
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_four_ymm_64bit(ymm_t *ymm)
+X86_SIMD_SORT_INLINE void bitonic_merge_four_ymm_32bit(ymm_t *ymm)
 {
     const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
     // 1) First step of a merging network
@@ -64,13 +64,13 @@ X86_SIMD_SORT_INLINE void bitonic_merge_four_ymm_64bit(ymm_t *ymm)
     ymm_t ymm1 = vtype::max(ymm_t1, ymm_t2);
     ymm_t ymm2 = vtype::min(ymm_t3, ymm_t4);
     ymm_t ymm3 = vtype::max(ymm_t3, ymm_t4);
-    ymm[0] = bitonic_merge_ymm_64bit<vtype>(ymm0);
-    ymm[1] = bitonic_merge_ymm_64bit<vtype>(ymm1);
-    ymm[2] = bitonic_merge_ymm_64bit<vtype>(ymm2);
-    ymm[3] = bitonic_merge_ymm_64bit<vtype>(ymm3);
+    ymm[0] = bitonic_merge_ymm_32bit<vtype>(ymm0);
+    ymm[1] = bitonic_merge_ymm_32bit<vtype>(ymm1);
+    ymm[2] = bitonic_merge_ymm_32bit<vtype>(ymm2);
+    ymm[3] = bitonic_merge_ymm_32bit<vtype>(ymm3);
 }
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_eight_ymm_64bit(ymm_t *ymm)
+X86_SIMD_SORT_INLINE void bitonic_merge_eight_ymm_32bit(ymm_t *ymm)
 {
     const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
     ymm_t ymm4r = vtype::permutexvar(rev_index, ymm[4]);
@@ -93,17 +93,17 @@ X86_SIMD_SORT_INLINE void bitonic_merge_eight_ymm_64bit(ymm_t *ymm)
     COEX<vtype>(ymm_t3, ymm_t4);
     COEX<vtype>(ymm_t5, ymm_t6);
     COEX<vtype>(ymm_t7, ymm_t8);
-    ymm[0] = bitonic_merge_ymm_64bit<vtype>(ymm_t1);
-    ymm[1] = bitonic_merge_ymm_64bit<vtype>(ymm_t2);
-    ymm[2] = bitonic_merge_ymm_64bit<vtype>(ymm_t3);
-    ymm[3] = bitonic_merge_ymm_64bit<vtype>(ymm_t4);
-    ymm[4] = bitonic_merge_ymm_64bit<vtype>(ymm_t5);
-    ymm[5] = bitonic_merge_ymm_64bit<vtype>(ymm_t6);
-    ymm[6] = bitonic_merge_ymm_64bit<vtype>(ymm_t7);
-    ymm[7] = bitonic_merge_ymm_64bit<vtype>(ymm_t8);
+    ymm[0] = bitonic_merge_ymm_32bit<vtype>(ymm_t1);
+    ymm[1] = bitonic_merge_ymm_32bit<vtype>(ymm_t2);
+    ymm[2] = bitonic_merge_ymm_32bit<vtype>(ymm_t3);
+    ymm[3] = bitonic_merge_ymm_32bit<vtype>(ymm_t4);
+    ymm[4] = bitonic_merge_ymm_32bit<vtype>(ymm_t5);
+    ymm[5] = bitonic_merge_ymm_32bit<vtype>(ymm_t6);
+    ymm[6] = bitonic_merge_ymm_32bit<vtype>(ymm_t7);
+    ymm[7] = bitonic_merge_ymm_32bit<vtype>(ymm_t8);
 }
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_ymm_64bit(ymm_t *ymm)
+X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_ymm_32bit(ymm_t *ymm)
 {
     const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
     ymm_t ymm8r = vtype::permutexvar(rev_index, ymm[8]);
@@ -158,26 +158,26 @@ X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_ymm_64bit(ymm_t *ymm)
     COEX<vtype>(ymm_t13, ymm_t14);
     COEX<vtype>(ymm_t15, ymm_t16);
     //
-    ymm[0] = bitonic_merge_ymm_64bit<vtype>(ymm_t1);
-    ymm[1] = bitonic_merge_ymm_64bit<vtype>(ymm_t2);
-    ymm[2] = bitonic_merge_ymm_64bit<vtype>(ymm_t3);
-    ymm[3] = bitonic_merge_ymm_64bit<vtype>(ymm_t4);
-    ymm[4] = bitonic_merge_ymm_64bit<vtype>(ymm_t5);
-    ymm[5] = bitonic_merge_ymm_64bit<vtype>(ymm_t6);
-    ymm[6] = bitonic_merge_ymm_64bit<vtype>(ymm_t7);
-    ymm[7] = bitonic_merge_ymm_64bit<vtype>(ymm_t8);
-    ymm[8] = bitonic_merge_ymm_64bit<vtype>(ymm_t9);
-    ymm[9] = bitonic_merge_ymm_64bit<vtype>(ymm_t10);
-    ymm[10] = bitonic_merge_ymm_64bit<vtype>(ymm_t11);
-    ymm[11] = bitonic_merge_ymm_64bit<vtype>(ymm_t12);
-    ymm[12] = bitonic_merge_ymm_64bit<vtype>(ymm_t13);
-    ymm[13] = bitonic_merge_ymm_64bit<vtype>(ymm_t14);
-    ymm[14] = bitonic_merge_ymm_64bit<vtype>(ymm_t15);
-    ymm[15] = bitonic_merge_ymm_64bit<vtype>(ymm_t16);
+    ymm[0] = bitonic_merge_ymm_32bit<vtype>(ymm_t1);
+    ymm[1] = bitonic_merge_ymm_32bit<vtype>(ymm_t2);
+    ymm[2] = bitonic_merge_ymm_32bit<vtype>(ymm_t3);
+    ymm[3] = bitonic_merge_ymm_32bit<vtype>(ymm_t4);
+    ymm[4] = bitonic_merge_ymm_32bit<vtype>(ymm_t5);
+    ymm[5] = bitonic_merge_ymm_32bit<vtype>(ymm_t6);
+    ymm[6] = bitonic_merge_ymm_32bit<vtype>(ymm_t7);
+    ymm[7] = bitonic_merge_ymm_32bit<vtype>(ymm_t8);
+    ymm[8] = bitonic_merge_ymm_32bit<vtype>(ymm_t9);
+    ymm[9] = bitonic_merge_ymm_32bit<vtype>(ymm_t10);
+    ymm[10] = bitonic_merge_ymm_32bit<vtype>(ymm_t11);
+    ymm[11] = bitonic_merge_ymm_32bit<vtype>(ymm_t12);
+    ymm[12] = bitonic_merge_ymm_32bit<vtype>(ymm_t13);
+    ymm[13] = bitonic_merge_ymm_32bit<vtype>(ymm_t14);
+    ymm[14] = bitonic_merge_ymm_32bit<vtype>(ymm_t15);
+    ymm[15] = bitonic_merge_ymm_32bit<vtype>(ymm_t16);
 }
 
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_32_ymm_64bit(ymm_t *ymm)
+X86_SIMD_SORT_INLINE void bitonic_merge_32_ymm_32bit(ymm_t *ymm)
 {
     const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
     ymm_t ymm16r = vtype::permutexvar(rev_index, ymm[16]);
@@ -297,72 +297,72 @@ X86_SIMD_SORT_INLINE void bitonic_merge_32_ymm_64bit(ymm_t *ymm)
     COEX<vtype>(ymm_t29, ymm_t30);
     COEX<vtype>(ymm_t31, ymm_t32);
     //
-    ymm[0] = bitonic_merge_ymm_64bit<vtype>(ymm_t1);
-    ymm[1] = bitonic_merge_ymm_64bit<vtype>(ymm_t2);
-    ymm[2] = bitonic_merge_ymm_64bit<vtype>(ymm_t3);
-    ymm[3] = bitonic_merge_ymm_64bit<vtype>(ymm_t4);
-    ymm[4] = bitonic_merge_ymm_64bit<vtype>(ymm_t5);
-    ymm[5] = bitonic_merge_ymm_64bit<vtype>(ymm_t6);
-    ymm[6] = bitonic_merge_ymm_64bit<vtype>(ymm_t7);
-    ymm[7] = bitonic_merge_ymm_64bit<vtype>(ymm_t8);
-    ymm[8] = bitonic_merge_ymm_64bit<vtype>(ymm_t9);
-    ymm[9] = bitonic_merge_ymm_64bit<vtype>(ymm_t10);
-    ymm[10] = bitonic_merge_ymm_64bit<vtype>(ymm_t11);
-    ymm[11] = bitonic_merge_ymm_64bit<vtype>(ymm_t12);
-    ymm[12] = bitonic_merge_ymm_64bit<vtype>(ymm_t13);
-    ymm[13] = bitonic_merge_ymm_64bit<vtype>(ymm_t14);
-    ymm[14] = bitonic_merge_ymm_64bit<vtype>(ymm_t15);
-    ymm[15] = bitonic_merge_ymm_64bit<vtype>(ymm_t16);
-    ymm[16] = bitonic_merge_ymm_64bit<vtype>(ymm_t17);
-    ymm[17] = bitonic_merge_ymm_64bit<vtype>(ymm_t18);
-    ymm[18] = bitonic_merge_ymm_64bit<vtype>(ymm_t19);
-    ymm[19] = bitonic_merge_ymm_64bit<vtype>(ymm_t20);
-    ymm[20] = bitonic_merge_ymm_64bit<vtype>(ymm_t21);
-    ymm[21] = bitonic_merge_ymm_64bit<vtype>(ymm_t22);
-    ymm[22] = bitonic_merge_ymm_64bit<vtype>(ymm_t23);
-    ymm[23] = bitonic_merge_ymm_64bit<vtype>(ymm_t24);
-    ymm[24] = bitonic_merge_ymm_64bit<vtype>(ymm_t25);
-    ymm[25] = bitonic_merge_ymm_64bit<vtype>(ymm_t26);
-    ymm[26] = bitonic_merge_ymm_64bit<vtype>(ymm_t27);
-    ymm[27] = bitonic_merge_ymm_64bit<vtype>(ymm_t28);
-    ymm[28] = bitonic_merge_ymm_64bit<vtype>(ymm_t29);
-    ymm[29] = bitonic_merge_ymm_64bit<vtype>(ymm_t30);
-    ymm[30] = bitonic_merge_ymm_64bit<vtype>(ymm_t31);
-    ymm[31] = bitonic_merge_ymm_64bit<vtype>(ymm_t32);
+    ymm[0] = bitonic_merge_ymm_32bit<vtype>(ymm_t1);
+    ymm[1] = bitonic_merge_ymm_32bit<vtype>(ymm_t2);
+    ymm[2] = bitonic_merge_ymm_32bit<vtype>(ymm_t3);
+    ymm[3] = bitonic_merge_ymm_32bit<vtype>(ymm_t4);
+    ymm[4] = bitonic_merge_ymm_32bit<vtype>(ymm_t5);
+    ymm[5] = bitonic_merge_ymm_32bit<vtype>(ymm_t6);
+    ymm[6] = bitonic_merge_ymm_32bit<vtype>(ymm_t7);
+    ymm[7] = bitonic_merge_ymm_32bit<vtype>(ymm_t8);
+    ymm[8] = bitonic_merge_ymm_32bit<vtype>(ymm_t9);
+    ymm[9] = bitonic_merge_ymm_32bit<vtype>(ymm_t10);
+    ymm[10] = bitonic_merge_ymm_32bit<vtype>(ymm_t11);
+    ymm[11] = bitonic_merge_ymm_32bit<vtype>(ymm_t12);
+    ymm[12] = bitonic_merge_ymm_32bit<vtype>(ymm_t13);
+    ymm[13] = bitonic_merge_ymm_32bit<vtype>(ymm_t14);
+    ymm[14] = bitonic_merge_ymm_32bit<vtype>(ymm_t15);
+    ymm[15] = bitonic_merge_ymm_32bit<vtype>(ymm_t16);
+    ymm[16] = bitonic_merge_ymm_32bit<vtype>(ymm_t17);
+    ymm[17] = bitonic_merge_ymm_32bit<vtype>(ymm_t18);
+    ymm[18] = bitonic_merge_ymm_32bit<vtype>(ymm_t19);
+    ymm[19] = bitonic_merge_ymm_32bit<vtype>(ymm_t20);
+    ymm[20] = bitonic_merge_ymm_32bit<vtype>(ymm_t21);
+    ymm[21] = bitonic_merge_ymm_32bit<vtype>(ymm_t22);
+    ymm[22] = bitonic_merge_ymm_32bit<vtype>(ymm_t23);
+    ymm[23] = bitonic_merge_ymm_32bit<vtype>(ymm_t24);
+    ymm[24] = bitonic_merge_ymm_32bit<vtype>(ymm_t25);
+    ymm[25] = bitonic_merge_ymm_32bit<vtype>(ymm_t26);
+    ymm[26] = bitonic_merge_ymm_32bit<vtype>(ymm_t27);
+    ymm[27] = bitonic_merge_ymm_32bit<vtype>(ymm_t28);
+    ymm[28] = bitonic_merge_ymm_32bit<vtype>(ymm_t29);
+    ymm[29] = bitonic_merge_ymm_32bit<vtype>(ymm_t30);
+    ymm[30] = bitonic_merge_ymm_32bit<vtype>(ymm_t31);
+    ymm[31] = bitonic_merge_ymm_32bit<vtype>(ymm_t32);
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_8_64bit(type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_8_32bit(type_t *arr, int32_t N)
 {
     typename vtype::opmask_t load_mask = (0x01 << N) - 0x01;
     typename vtype::ymm_t ymm
             = vtype::mask_loadu(vtype::ymm_max(), load_mask, arr);
-    vtype::mask_storeu(arr, load_mask, sort_ymm_64bit<vtype>(ymm));
+    vtype::mask_storeu(arr, load_mask, sort_ymm_32bit<vtype>(ymm));
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_16_64bit(type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_16_32bit(type_t *arr, int32_t N)
 {
     if (N <= 8) {
-        sort_8_64bit<vtype>(arr, N);
+        sort_8_32bit<vtype>(arr, N);
         return;
     }
     using ymm_t = typename vtype::ymm_t;
     ymm_t ymm1 = vtype::loadu(arr);
     typename vtype::opmask_t load_mask = (0x01 << (N - 8)) - 0x01;
     ymm_t ymm2 = vtype::mask_loadu(vtype::ymm_max(), load_mask, arr + 8);
-    ymm1 = sort_ymm_64bit<vtype>(ymm1);
-    ymm2 = sort_ymm_64bit<vtype>(ymm2);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm1, ymm2);
+    ymm1 = sort_ymm_32bit<vtype>(ymm1);
+    ymm2 = sort_ymm_32bit<vtype>(ymm2);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm1, ymm2);
     vtype::storeu(arr, ymm1);
     vtype::mask_storeu(arr + 8, load_mask, ymm2);
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_32_64bit(type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_32_32bit(type_t *arr, int32_t N)
 {
     if (N <= 16) {
-        sort_16_64bit<vtype>(arr, N);
+        sort_16_32bit<vtype>(arr, N);
         return;
     }
     using ymm_t = typename vtype::ymm_t;
@@ -376,13 +376,13 @@ X86_SIMD_SORT_INLINE void sort_32_64bit(type_t *arr, int32_t N)
     load_mask2 = (combined_mask >> 8) & 0xFF;
     ymm[2] = vtype::mask_loadu(vtype::ymm_max(), load_mask1, arr + 16);
     ymm[3] = vtype::mask_loadu(vtype::ymm_max(), load_mask2, arr + 24);
-    ymm[0] = sort_ymm_64bit<vtype>(ymm[0]);
-    ymm[1] = sort_ymm_64bit<vtype>(ymm[1]);
-    ymm[2] = sort_ymm_64bit<vtype>(ymm[2]);
-    ymm[3] = sort_ymm_64bit<vtype>(ymm[3]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[0], ymm[1]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[2], ymm[3]);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm);
+    ymm[0] = sort_ymm_32bit<vtype>(ymm[0]);
+    ymm[1] = sort_ymm_32bit<vtype>(ymm[1]);
+    ymm[2] = sort_ymm_32bit<vtype>(ymm[2]);
+    ymm[3] = sort_ymm_32bit<vtype>(ymm[3]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[0], ymm[1]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[2], ymm[3]);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm);
     vtype::storeu(arr, ymm[0]);
     vtype::storeu(arr + 8, ymm[1]);
     vtype::mask_storeu(arr + 16, load_mask1, ymm[2]);
@@ -390,10 +390,10 @@ X86_SIMD_SORT_INLINE void sort_32_64bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_64_64bit(type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_64_32bit(type_t *arr, int32_t N)
 {
     if (N <= 32) {
-        sort_32_64bit<vtype>(arr, N);
+        sort_32_32bit<vtype>(arr, N);
         return;
     }
     using ymm_t = typename vtype::ymm_t;
@@ -403,10 +403,10 @@ X86_SIMD_SORT_INLINE void sort_64_64bit(type_t *arr, int32_t N)
     ymm[1] = vtype::loadu(arr + 8);
     ymm[2] = vtype::loadu(arr + 16);
     ymm[3] = vtype::loadu(arr + 24);
-    ymm[0] = sort_ymm_64bit<vtype>(ymm[0]);
-    ymm[1] = sort_ymm_64bit<vtype>(ymm[1]);
-    ymm[2] = sort_ymm_64bit<vtype>(ymm[2]);
-    ymm[3] = sort_ymm_64bit<vtype>(ymm[3]);
+    ymm[0] = sort_ymm_32bit<vtype>(ymm[0]);
+    ymm[1] = sort_ymm_32bit<vtype>(ymm[1]);
+    ymm[2] = sort_ymm_32bit<vtype>(ymm[2]);
+    ymm[3] = sort_ymm_32bit<vtype>(ymm[3]);
     opmask_t load_mask1 = 0xFF, load_mask2 = 0xFF;
     opmask_t load_mask3 = 0xFF, load_mask4 = 0xFF;
     // N-32 >= 1
@@ -419,17 +419,17 @@ X86_SIMD_SORT_INLINE void sort_64_64bit(type_t *arr, int32_t N)
     ymm[5] = vtype::mask_loadu(vtype::ymm_max(), load_mask2, arr + 40);
     ymm[6] = vtype::mask_loadu(vtype::ymm_max(), load_mask3, arr + 48);
     ymm[7] = vtype::mask_loadu(vtype::ymm_max(), load_mask4, arr + 56);
-    ymm[4] = sort_ymm_64bit<vtype>(ymm[4]);
-    ymm[5] = sort_ymm_64bit<vtype>(ymm[5]);
-    ymm[6] = sort_ymm_64bit<vtype>(ymm[6]);
-    ymm[7] = sort_ymm_64bit<vtype>(ymm[7]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[0], ymm[1]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[2], ymm[3]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[4], ymm[5]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[6], ymm[7]);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 4);
-    bitonic_merge_eight_ymm_64bit<vtype>(ymm);
+    ymm[4] = sort_ymm_32bit<vtype>(ymm[4]);
+    ymm[5] = sort_ymm_32bit<vtype>(ymm[5]);
+    ymm[6] = sort_ymm_32bit<vtype>(ymm[6]);
+    ymm[7] = sort_ymm_32bit<vtype>(ymm[7]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[0], ymm[1]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[2], ymm[3]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[4], ymm[5]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[6], ymm[7]);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 4);
+    bitonic_merge_eight_ymm_32bit<vtype>(ymm);
     vtype::storeu(arr, ymm[0]);
     vtype::storeu(arr + 8, ymm[1]);
     vtype::storeu(arr + 16, ymm[2]);
@@ -441,10 +441,10 @@ X86_SIMD_SORT_INLINE void sort_64_64bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_128_64bit(type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_128_32bit(type_t *arr, int32_t N)
 {
     if (N <= 64) {
-        sort_64_64bit<vtype>(arr, N);
+        sort_64_32bit<vtype>(arr, N);
         return;
     }
     using ymm_t = typename vtype::ymm_t;
@@ -458,14 +458,14 @@ X86_SIMD_SORT_INLINE void sort_128_64bit(type_t *arr, int32_t N)
     ymm[5] = vtype::loadu(arr + 40);
     ymm[6] = vtype::loadu(arr + 48);
     ymm[7] = vtype::loadu(arr + 56);
-    ymm[0] = sort_ymm_64bit<vtype>(ymm[0]);
-    ymm[1] = sort_ymm_64bit<vtype>(ymm[1]);
-    ymm[2] = sort_ymm_64bit<vtype>(ymm[2]);
-    ymm[3] = sort_ymm_64bit<vtype>(ymm[3]);
-    ymm[4] = sort_ymm_64bit<vtype>(ymm[4]);
-    ymm[5] = sort_ymm_64bit<vtype>(ymm[5]);
-    ymm[6] = sort_ymm_64bit<vtype>(ymm[6]);
-    ymm[7] = sort_ymm_64bit<vtype>(ymm[7]);
+    ymm[0] = sort_ymm_32bit<vtype>(ymm[0]);
+    ymm[1] = sort_ymm_32bit<vtype>(ymm[1]);
+    ymm[2] = sort_ymm_32bit<vtype>(ymm[2]);
+    ymm[3] = sort_ymm_32bit<vtype>(ymm[3]);
+    ymm[4] = sort_ymm_32bit<vtype>(ymm[4]);
+    ymm[5] = sort_ymm_32bit<vtype>(ymm[5]);
+    ymm[6] = sort_ymm_32bit<vtype>(ymm[6]);
+    ymm[7] = sort_ymm_32bit<vtype>(ymm[7]);
     opmask_t load_mask1 = 0xFF, load_mask2 = 0xFF;
     opmask_t load_mask3 = 0xFF, load_mask4 = 0xFF;
     opmask_t load_mask5 = 0xFF, load_mask6 = 0xFF;
@@ -489,29 +489,29 @@ X86_SIMD_SORT_INLINE void sort_128_64bit(type_t *arr, int32_t N)
     ymm[13] = vtype::mask_loadu(vtype::ymm_max(), load_mask6, arr + 104);
     ymm[14] = vtype::mask_loadu(vtype::ymm_max(), load_mask7, arr + 112);
     ymm[15] = vtype::mask_loadu(vtype::ymm_max(), load_mask8, arr + 120);
-    ymm[8] = sort_ymm_64bit<vtype>(ymm[8]);
-    ymm[9] = sort_ymm_64bit<vtype>(ymm[9]);
-    ymm[10] = sort_ymm_64bit<vtype>(ymm[10]);
-    ymm[11] = sort_ymm_64bit<vtype>(ymm[11]);
-    ymm[12] = sort_ymm_64bit<vtype>(ymm[12]);
-    ymm[13] = sort_ymm_64bit<vtype>(ymm[13]);
-    ymm[14] = sort_ymm_64bit<vtype>(ymm[14]);
-    ymm[15] = sort_ymm_64bit<vtype>(ymm[15]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[0], ymm[1]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[2], ymm[3]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[4], ymm[5]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[6], ymm[7]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[8], ymm[9]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[10], ymm[11]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[12], ymm[13]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[14], ymm[15]);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 4);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 8);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 12);
-    bitonic_merge_eight_ymm_64bit<vtype>(ymm);
-    bitonic_merge_eight_ymm_64bit<vtype>(ymm + 8);
-    bitonic_merge_sixteen_ymm_64bit<vtype>(ymm);
+    ymm[8] = sort_ymm_32bit<vtype>(ymm[8]);
+    ymm[9] = sort_ymm_32bit<vtype>(ymm[9]);
+    ymm[10] = sort_ymm_32bit<vtype>(ymm[10]);
+    ymm[11] = sort_ymm_32bit<vtype>(ymm[11]);
+    ymm[12] = sort_ymm_32bit<vtype>(ymm[12]);
+    ymm[13] = sort_ymm_32bit<vtype>(ymm[13]);
+    ymm[14] = sort_ymm_32bit<vtype>(ymm[14]);
+    ymm[15] = sort_ymm_32bit<vtype>(ymm[15]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[0], ymm[1]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[2], ymm[3]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[4], ymm[5]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[6], ymm[7]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[8], ymm[9]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[10], ymm[11]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[12], ymm[13]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[14], ymm[15]);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 4);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 8);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 12);
+    bitonic_merge_eight_ymm_32bit<vtype>(ymm);
+    bitonic_merge_eight_ymm_32bit<vtype>(ymm + 8);
+    bitonic_merge_sixteen_ymm_32bit<vtype>(ymm);
     vtype::storeu(arr, ymm[0]);
     vtype::storeu(arr + 8, ymm[1]);
     vtype::storeu(arr + 16, ymm[2]);
@@ -531,10 +531,10 @@ X86_SIMD_SORT_INLINE void sort_128_64bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_256_64bit(type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_256_32bit(type_t *arr, int32_t N)
 {
     if (N <= 128) {
-        sort_128_64bit<vtype>(arr, N);
+        sort_128_32bit<vtype>(arr, N);
         return;
     }
     using ymm_t = typename vtype::ymm_t;
@@ -556,22 +556,22 @@ X86_SIMD_SORT_INLINE void sort_256_64bit(type_t *arr, int32_t N)
     ymm[13] = vtype::loadu(arr + 104);
     ymm[14] = vtype::loadu(arr + 112);
     ymm[15] = vtype::loadu(arr + 120);
-    ymm[0] = sort_ymm_64bit<vtype>(ymm[0]);
-    ymm[1] = sort_ymm_64bit<vtype>(ymm[1]);
-    ymm[2] = sort_ymm_64bit<vtype>(ymm[2]);
-    ymm[3] = sort_ymm_64bit<vtype>(ymm[3]);
-    ymm[4] = sort_ymm_64bit<vtype>(ymm[4]);
-    ymm[5] = sort_ymm_64bit<vtype>(ymm[5]);
-    ymm[6] = sort_ymm_64bit<vtype>(ymm[6]);
-    ymm[7] = sort_ymm_64bit<vtype>(ymm[7]);
-    ymm[8] = sort_ymm_64bit<vtype>(ymm[8]);
-    ymm[9] = sort_ymm_64bit<vtype>(ymm[9]);
-    ymm[10] = sort_ymm_64bit<vtype>(ymm[10]);
-    ymm[11] = sort_ymm_64bit<vtype>(ymm[11]);
-    ymm[12] = sort_ymm_64bit<vtype>(ymm[12]);
-    ymm[13] = sort_ymm_64bit<vtype>(ymm[13]);
-    ymm[14] = sort_ymm_64bit<vtype>(ymm[14]);
-    ymm[15] = sort_ymm_64bit<vtype>(ymm[15]);
+    ymm[0] = sort_ymm_32bit<vtype>(ymm[0]);
+    ymm[1] = sort_ymm_32bit<vtype>(ymm[1]);
+    ymm[2] = sort_ymm_32bit<vtype>(ymm[2]);
+    ymm[3] = sort_ymm_32bit<vtype>(ymm[3]);
+    ymm[4] = sort_ymm_32bit<vtype>(ymm[4]);
+    ymm[5] = sort_ymm_32bit<vtype>(ymm[5]);
+    ymm[6] = sort_ymm_32bit<vtype>(ymm[6]);
+    ymm[7] = sort_ymm_32bit<vtype>(ymm[7]);
+    ymm[8] = sort_ymm_32bit<vtype>(ymm[8]);
+    ymm[9] = sort_ymm_32bit<vtype>(ymm[9]);
+    ymm[10] = sort_ymm_32bit<vtype>(ymm[10]);
+    ymm[11] = sort_ymm_32bit<vtype>(ymm[11]);
+    ymm[12] = sort_ymm_32bit<vtype>(ymm[12]);
+    ymm[13] = sort_ymm_32bit<vtype>(ymm[13]);
+    ymm[14] = sort_ymm_32bit<vtype>(ymm[14]);
+    ymm[15] = sort_ymm_32bit<vtype>(ymm[15]);
     opmask_t load_mask1 = 0xFF, load_mask2 = 0xFF;
     opmask_t load_mask3 = 0xFF, load_mask4 = 0xFF;
     opmask_t load_mask5 = 0xFF, load_mask6 = 0xFF;
@@ -641,53 +641,53 @@ X86_SIMD_SORT_INLINE void sort_256_64bit(type_t *arr, int32_t N)
         ymm[30] = vtype::mask_loadu(vtype::ymm_max(), load_mask15, arr + 240);
         ymm[31] = vtype::mask_loadu(vtype::ymm_max(), load_mask16, arr + 248);
     }
-    ymm[16] = sort_ymm_64bit<vtype>(ymm[16]);
-    ymm[17] = sort_ymm_64bit<vtype>(ymm[17]);
-    ymm[18] = sort_ymm_64bit<vtype>(ymm[18]);
-    ymm[19] = sort_ymm_64bit<vtype>(ymm[19]);
-    ymm[20] = sort_ymm_64bit<vtype>(ymm[20]);
-    ymm[21] = sort_ymm_64bit<vtype>(ymm[21]);
-    ymm[22] = sort_ymm_64bit<vtype>(ymm[22]);
-    ymm[23] = sort_ymm_64bit<vtype>(ymm[23]);
-    ymm[24] = sort_ymm_64bit<vtype>(ymm[24]);
-    ymm[25] = sort_ymm_64bit<vtype>(ymm[25]);
-    ymm[26] = sort_ymm_64bit<vtype>(ymm[26]);
-    ymm[27] = sort_ymm_64bit<vtype>(ymm[27]);
-    ymm[28] = sort_ymm_64bit<vtype>(ymm[28]);
-    ymm[29] = sort_ymm_64bit<vtype>(ymm[29]);
-    ymm[30] = sort_ymm_64bit<vtype>(ymm[30]);
-    ymm[31] = sort_ymm_64bit<vtype>(ymm[31]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[0], ymm[1]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[2], ymm[3]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[4], ymm[5]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[6], ymm[7]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[8], ymm[9]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[10], ymm[11]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[12], ymm[13]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[14], ymm[15]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[16], ymm[17]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[18], ymm[19]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[20], ymm[21]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[22], ymm[23]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[24], ymm[25]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[26], ymm[27]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[28], ymm[29]);
-    bitonic_merge_two_ymm_64bit<vtype>(ymm[30], ymm[31]);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 4);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 8);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 12);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 16);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 20);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 24);
-    bitonic_merge_four_ymm_64bit<vtype>(ymm + 28);
-    bitonic_merge_eight_ymm_64bit<vtype>(ymm);
-    bitonic_merge_eight_ymm_64bit<vtype>(ymm + 8);
-    bitonic_merge_eight_ymm_64bit<vtype>(ymm + 16);
-    bitonic_merge_eight_ymm_64bit<vtype>(ymm + 24);
-    bitonic_merge_sixteen_ymm_64bit<vtype>(ymm);
-    bitonic_merge_sixteen_ymm_64bit<vtype>(ymm + 16);
-    bitonic_merge_32_ymm_64bit<vtype>(ymm);
+    ymm[16] = sort_ymm_32bit<vtype>(ymm[16]);
+    ymm[17] = sort_ymm_32bit<vtype>(ymm[17]);
+    ymm[18] = sort_ymm_32bit<vtype>(ymm[18]);
+    ymm[19] = sort_ymm_32bit<vtype>(ymm[19]);
+    ymm[20] = sort_ymm_32bit<vtype>(ymm[20]);
+    ymm[21] = sort_ymm_32bit<vtype>(ymm[21]);
+    ymm[22] = sort_ymm_32bit<vtype>(ymm[22]);
+    ymm[23] = sort_ymm_32bit<vtype>(ymm[23]);
+    ymm[24] = sort_ymm_32bit<vtype>(ymm[24]);
+    ymm[25] = sort_ymm_32bit<vtype>(ymm[25]);
+    ymm[26] = sort_ymm_32bit<vtype>(ymm[26]);
+    ymm[27] = sort_ymm_32bit<vtype>(ymm[27]);
+    ymm[28] = sort_ymm_32bit<vtype>(ymm[28]);
+    ymm[29] = sort_ymm_32bit<vtype>(ymm[29]);
+    ymm[30] = sort_ymm_32bit<vtype>(ymm[30]);
+    ymm[31] = sort_ymm_32bit<vtype>(ymm[31]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[0], ymm[1]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[2], ymm[3]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[4], ymm[5]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[6], ymm[7]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[8], ymm[9]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[10], ymm[11]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[12], ymm[13]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[14], ymm[15]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[16], ymm[17]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[18], ymm[19]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[20], ymm[21]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[22], ymm[23]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[24], ymm[25]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[26], ymm[27]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[28], ymm[29]);
+    bitonic_merge_two_ymm_32bit<vtype>(ymm[30], ymm[31]);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 4);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 8);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 12);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 16);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 20);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 24);
+    bitonic_merge_four_ymm_32bit<vtype>(ymm + 28);
+    bitonic_merge_eight_ymm_32bit<vtype>(ymm);
+    bitonic_merge_eight_ymm_32bit<vtype>(ymm + 8);
+    bitonic_merge_eight_ymm_32bit<vtype>(ymm + 16);
+    bitonic_merge_eight_ymm_32bit<vtype>(ymm + 24);
+    bitonic_merge_sixteen_ymm_32bit<vtype>(ymm);
+    bitonic_merge_sixteen_ymm_32bit<vtype>(ymm + 16);
+    bitonic_merge_32_ymm_32bit<vtype>(ymm);
     vtype::storeu(arr, ymm[0]);
     vtype::storeu(arr + 8, ymm[1]);
     vtype::storeu(arr + 16, ymm[2]);
@@ -726,7 +726,7 @@ X86_SIMD_SORT_INLINE void sort_256_64bit(type_t *arr, int32_t N)
 
 template <typename vtype, typename type_t>
 static void
-qsort_64bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
+qsort_32bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -739,23 +739,23 @@ qsort_64bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
      * Base case: use bitonic networks to sort arrays <= 128
      */
     if (right + 1 - left <= 256) {
-        sort_256_64bit<vtype>(arr + left, (int32_t)(right + 1 - left));
+        sort_256_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
         return;
     }
 
-    type_t pivot = get_pivot_64bit<vtype>(arr, left, right);
+    type_t pivot = get_pivot_32bit<vtype>(arr, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
     int64_t pivot_index = partition_avx512_unrolled<vtype, 8>(
             arr, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest)
-        qsort_64bit_<vtype>(arr, left, pivot_index - 1, max_iters - 1);
+        qsort_32bit_<vtype>(arr, left, pivot_index - 1, max_iters - 1);
     if (pivot != biggest)
-        qsort_64bit_<vtype>(arr, pivot_index, right, max_iters - 1);
+        qsort_32bit_<vtype>(arr, pivot_index, right, max_iters - 1);
 }
 
 template <typename vtype, typename type_t>
-static void qselect_64bit_(type_t *arr,
+static void qselect_32bit_(type_t *arr,
                            int64_t pos,
                            int64_t left,
                            int64_t right,
@@ -772,26 +772,26 @@ static void qselect_64bit_(type_t *arr,
      * Base case: use bitonic networks to sort arrays <= 128
      */
     if (right + 1 - left <= 128) {
-        sort_128_64bit<vtype>(arr + left, (int32_t)(right + 1 - left));
+        sort_128_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
         return;
     }
 
-    type_t pivot = get_pivot_64bit<vtype>(arr, left, right);
+    type_t pivot = get_pivot_32bit<vtype>(arr, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
     int64_t pivot_index = partition_avx512_unrolled<vtype, 8>(
             arr, left, right + 1, pivot, &smallest, &biggest);
     if ((pivot != smallest) && (pos < pivot_index))
-        qselect_64bit_<vtype>(arr, pos, left, pivot_index - 1, max_iters - 1);
+        qselect_32bit_<vtype>(arr, pos, left, pivot_index - 1, max_iters - 1);
     else if ((pivot != biggest) && (pos >= pivot_index))
-        qselect_64bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
+        qselect_32bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
 template <>
 void avx2_qselect<int32_t>(int32_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
 {
     if (arrsize > 1) {
-        qselect_64bit_<ymm_vector<int32_t>, int32_t>(
+        qselect_32bit_<ymm_vector<int32_t>, int32_t>(
                 arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
@@ -800,7 +800,7 @@ template <>
 void avx2_qselect<uint32_t>(uint32_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
 {
     if (arrsize > 1) {
-        qselect_64bit_<ymm_vector<uint32_t>, uint32_t>(
+        qselect_32bit_<ymm_vector<uint32_t>, uint32_t>(
                 arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
@@ -813,7 +813,7 @@ void avx2_qselect<float>(float *arr, int64_t k, int64_t arrsize, bool hasnan)
          indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     }
     if (indx_last_elem >= k) {
-        qselect_64bit_<ymm_vector<float>, float>(
+        qselect_32bit_<ymm_vector<float>, float>(
             arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }
@@ -822,7 +822,7 @@ template <>
 void avx2_qsort<int32_t>(int32_t *arr, int64_t arrsize)
 {
     if (arrsize > 1) {
-        qsort_64bit_<ymm_vector<int32_t>, int32_t>(
+        qsort_32bit_<ymm_vector<int32_t>, int32_t>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
@@ -831,7 +831,7 @@ template <>
 void avx2_qsort<uint32_t>(uint32_t *arr, int64_t arrsize)
 {
     if (arrsize > 1) {
-        qsort_64bit_<ymm_vector<uint32_t>, uint32_t>(
+        qsort_32bit_<ymm_vector<uint32_t>, uint32_t>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
@@ -841,7 +841,7 @@ void avx2_qsort<float>(float *arr, int64_t arrsize)
 {
     if (arrsize > 1) {
         int64_t nan_count = replace_nan_with_inf(arr, arrsize);
-        qsort_64bit_<ymm_vector<float>, float>(
+        qsort_32bit_<ymm_vector<float>, float>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);
     }

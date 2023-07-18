@@ -625,7 +625,7 @@ replace_inf_with_nan(float *arr, int64_t arrsize, int64_t nan_count)
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE ymm_t sort_ymm_64bit(ymm_t ymm)
+X86_SIMD_SORT_INLINE ymm_t sort_ymm_32bit(ymm_t ymm)
 {
     const typename vtype::opmask_t oxAA = _mm256_set_epi32(0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0);
     const typename vtype::opmask_t oxCC = _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0);
@@ -651,7 +651,7 @@ X86_SIMD_SORT_INLINE ymm_t sort_ymm_64bit(ymm_t ymm)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
+X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
                                             const int64_t left,
                                             const int64_t right)
 {
@@ -668,7 +668,7 @@ X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
                                           left + 8 * size);
     ymm_t rand_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
     // pivot will never be a nan, since there are no nan's!
-    ymm_t sort = sort_ymm_64bit<vtype>(rand_vec);
+    ymm_t sort = sort_ymm_32bit<vtype>(rand_vec);
     return ((type_t *)&sort)[4];
 }
 
