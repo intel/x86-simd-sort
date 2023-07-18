@@ -14,10 +14,10 @@
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg)
  */
 // ymm                  7, 6, 5, 4, 3, 2, 1, 0
-#define NETWORK_64BIT_1 4, 5, 6, 7, 0, 1, 2, 3
-#define NETWORK_64BIT_2 0, 1, 2, 3, 4, 5, 6, 7
-#define NETWORK_64BIT_3 5, 4, 7, 6, 1, 0, 3, 2
-#define NETWORK_64BIT_4 3, 2, 1, 0, 7, 6, 5, 4
+#define NETWORK_32BIT_1 4, 5, 6, 7, 0, 1, 2, 3
+#define NETWORK_32BIT_2 0, 1, 2, 3, 4, 5, 6, 7
+#define NETWORK_32BIT_3 5, 4, 7, 6, 1, 0, 3, 2
+#define NETWORK_32BIT_4 3, 2, 1, 0, 7, 6, 5, 4
 
 
 // TODO actually fix the code instead of using conversions
@@ -631,19 +631,19 @@ X86_SIMD_SORT_INLINE ymm_t sort_ymm_32bit(ymm_t ymm)
     const typename vtype::opmask_t oxCC = _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0);
     const typename vtype::opmask_t oxF0 = _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0);
     
-    const typename vtype::ymmi_t rev_index = vtype::seti(NETWORK_64BIT_2);
+    const typename vtype::ymmi_t rev_index = vtype::seti(NETWORK_32BIT_2);
     ymm = cmp_merge<vtype>(
             ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
     ymm = cmp_merge<vtype>(
             ymm,
-            vtype::permutexvar(vtype::seti(NETWORK_64BIT_1), ymm),
+            vtype::permutexvar(vtype::seti(NETWORK_32BIT_1), ymm),
             oxCC);
     ymm = cmp_merge<vtype>(
             ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
     ymm = cmp_merge<vtype>(ymm, vtype::permutexvar(rev_index, ymm), oxF0);
     ymm = cmp_merge<vtype>(
             ymm,
-            vtype::permutexvar(vtype::seti(NETWORK_64BIT_3), ymm),
+            vtype::permutexvar(vtype::seti(NETWORK_32BIT_3), ymm),
             oxCC);
     ymm = cmp_merge<vtype>(
             ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);

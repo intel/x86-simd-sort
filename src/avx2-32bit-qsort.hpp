@@ -21,12 +21,12 @@ X86_SIMD_SORT_INLINE ymm_t bitonic_merge_ymm_32bit(ymm_t ymm)
     // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
     ymm = cmp_merge<vtype>(
             ymm,
-            vtype::permutexvar(_mm256_set_epi32(NETWORK_64BIT_4), ymm),
+            vtype::permutexvar(_mm256_set_epi32(NETWORK_32BIT_4), ymm),
             oxF0);
     // 2) half_cleaner[4]
     ymm = cmp_merge<vtype>(
             ymm,
-            vtype::permutexvar(_mm256_set_epi32(NETWORK_64BIT_3), ymm),
+            vtype::permutexvar(_mm256_set_epi32(NETWORK_32BIT_3), ymm),
             oxCC);
     // 3) half_cleaner[1]
     ymm = cmp_merge<vtype>(
@@ -37,7 +37,7 @@ X86_SIMD_SORT_INLINE ymm_t bitonic_merge_ymm_32bit(ymm_t ymm)
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE void bitonic_merge_two_ymm_32bit(ymm_t &ymm1, ymm_t &ymm2)
 {
-    const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
+    const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_2);
     // 1) First step of a merging network: coex of ymm1 and ymm2 reversed
     ymm2 = vtype::permutexvar(rev_index, ymm2);
     ymm_t ymm3 = vtype::min(ymm1, ymm2);
@@ -51,7 +51,7 @@ X86_SIMD_SORT_INLINE void bitonic_merge_two_ymm_32bit(ymm_t &ymm1, ymm_t &ymm2)
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE void bitonic_merge_four_ymm_32bit(ymm_t *ymm)
 {
-    const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
+    const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_2);
     // 1) First step of a merging network
     ymm_t ymm2r = vtype::permutexvar(rev_index, ymm[2]);
     ymm_t ymm3r = vtype::permutexvar(rev_index, ymm[3]);
@@ -72,7 +72,7 @@ X86_SIMD_SORT_INLINE void bitonic_merge_four_ymm_32bit(ymm_t *ymm)
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE void bitonic_merge_eight_ymm_32bit(ymm_t *ymm)
 {
-    const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
+    const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_2);
     ymm_t ymm4r = vtype::permutexvar(rev_index, ymm[4]);
     ymm_t ymm5r = vtype::permutexvar(rev_index, ymm[5]);
     ymm_t ymm6r = vtype::permutexvar(rev_index, ymm[6]);
@@ -105,7 +105,7 @@ X86_SIMD_SORT_INLINE void bitonic_merge_eight_ymm_32bit(ymm_t *ymm)
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_ymm_32bit(ymm_t *ymm)
 {
-    const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
+    const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_2);
     ymm_t ymm8r = vtype::permutexvar(rev_index, ymm[8]);
     ymm_t ymm9r = vtype::permutexvar(rev_index, ymm[9]);
     ymm_t ymm10r = vtype::permutexvar(rev_index, ymm[10]);
@@ -179,7 +179,7 @@ X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_ymm_32bit(ymm_t *ymm)
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE void bitonic_merge_32_ymm_32bit(ymm_t *ymm)
 {
-    const __m256i rev_index = _mm256_set_epi32(NETWORK_64BIT_2);
+    const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_2);
     ymm_t ymm16r = vtype::permutexvar(rev_index, ymm[16]);
     ymm_t ymm17r = vtype::permutexvar(rev_index, ymm[17]);
     ymm_t ymm18r = vtype::permutexvar(rev_index, ymm[18]);
