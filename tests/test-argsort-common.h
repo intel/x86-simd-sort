@@ -6,16 +6,17 @@
 #include "avx512-64bit-argsort.hpp"
 
 template <typename T>
-std::vector<int64_t> std_argsort(const std::vector<T> &array)
+std::vector<int64_t> std_argsort(const std::vector<T> &arr)
 {
-    std::vector<int64_t> indices(array.size());
+    std::vector<int64_t> indices(arr.size());
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(),
               indices.end(),
-              [&array](int left, int right) -> bool {
-                  // sort indices according to corresponding array sizeent
-                  return array[left] < array[right];
-              });
+              [&arr](int64_t left, int64_t right) -> bool {
+                    if ((!std::isnan(arr[left])) && (!std::isnan(arr[right]))) {return arr[left] < arr[right];}
+                    else if (std::isnan(arr[left])) {return false;}
+                    else {return true;}
+                });
 
     return indices;
 }

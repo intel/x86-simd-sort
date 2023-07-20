@@ -439,7 +439,7 @@ void avx512_argselect(double* arr, int64_t *arg, int64_t k, int64_t arrsize)
 {
     if (arrsize > 1) {
         if (has_nan<zmm_vector<double>>(arr, arrsize)) {
-            std_argselect_withnan(arr, arg, 0, arrsize);
+            std_argselect_withnan(arr, arg, k, 0, arrsize);
         }
         else {
             argselect_64bit_<zmm_vector<double>>(
@@ -471,7 +471,7 @@ void avx512_argselect(float* arr, int64_t *arg, int64_t k, int64_t arrsize)
 {
     if (arrsize > 1) {
         if (has_nan<ymm_vector<float>>(arr, arrsize)) {
-            std_argselect_withnan(arr, arg, 0, arrsize);
+            std_argselect_withnan(arr, arg, k, 0, arrsize);
         }
         else {
             argselect_64bit_<ymm_vector<float>>(
