@@ -1,51 +1,83 @@
-CXX		?= g++-12
-CXXFLAGS	+= -I$(SRCDIR) -I$(UTILS) -O3
-GTESTCFLAGS	= `pkg-config --cflags gtest_main`
-GTESTLDFLAGS	= `pkg-config --static --libs gtest_main`
-GBENCHCFLAGS	= `pkg-config --cflags benchmark`
-GBENCHLDFLAGS	= `pkg-config --static --libs benchmark`
-MARCHFLAG	= -march=sapphirerapids
-
-SRCDIR		= ./src
-TESTDIR		= ./tests
-BENCHDIR	= ./benchmarks
-UTILS		= ./utils
-SRCS		= $(wildcard $(SRCDIR)/*.hpp)
-TESTS		= $(wildcard $(TESTDIR)/*.cpp)
-BENCHS		= $(wildcard $(BENCHDIR)/*.cpp)
-TESTOBJS	= $(patsubst $(TESTDIR)/%.cpp,$(TESTDIR)/%.o,$(TESTS))
-BENCHOBJS	= $(patsubst $(BENCHDIR)/%.cpp,$(BENCHDIR)/%.o,$(BENCHS))
-
-# Compiling AVX512-FP16 instructions isn't possible for g++ < 12
-ifeq ($(shell expr `$(CXX) -dumpversion | cut -d '.' -f 1` \< 12), 1)
-	MARCHFLAG = -march=icelake-client
-	BENCHOBJS_SKIP += bench-qsortfp16.o
-	TESTOBJS_SKIP += test-qsortfp16.o
+# When unset, discover g++. Prioritise the latest version on the path.
+ifeq (, $(and $(strip $(CXX)), $(filter-out default undefined, $(origin CXX))))
+  override CXX	:= $(shell which g++-12 g++-11 g++-10 g++-9 g++-8 g++ 2>/dev/null | head -n 1)
+  ifeq (, $(strip $(CXX)))
+    $(error Could not locate the g++ compiler. Please manually specify its path using the CXX variable)
+  endif
 endif
 
-BENCHOBJS	:= $(filter-out $(addprefix $(BENCHDIR)/, $(BENCHOBJS_SKIP)) ,$(BENCHOBJS))
-TESTOBJS	:= $(filter-out $(addprefix $(TESTDIR)/, $(TESTOBJS_SKIP)) ,$(TESTOBJS))
+export CXX
+CXXFLAGS	+= $(OPTIMFLAG) $(MARCHFLAG)
+override CXXFLAGS += -I$(SRCDIR) -I$(UTILSDIR)
+GTESTCFLAGS	:= `pkg-config --cflags gtest_main`
+GTESTLDFLAGS	:= `pkg-config --static --libs gtest_main`
+GBENCHCFLAGS	:= `pkg-config --cflags benchmark`
+GBENCHLDFLAGS	:= `pkg-config --static --libs benchmark`
+OPTIMFLAG	:= -O3
+MARCHFLAG	:= -march=sapphirerapids
 
-all : test bench
+SRCDIR		:= ./src
+TESTDIR		:= ./tests
+BENCHDIR	:= ./benchmarks
+UTILSDIR	:= ./utils
 
-$(UTILS)/cpuinfo.o : $(UTILS)/cpuinfo.cpp
-	$(CXX) $(CXXFLAGS) -c $(UTILS)/cpuinfo.cpp -o $(UTILS)/cpuinfo.o
+SRCS		:= $(wildcard $(addprefix $(SRCDIR)/, *.hpp *.h))
+UTILSRCS	:= $(wildcard $(addprefix $(UTILSDIR)/, *.hpp *.h))
+TESTSRCS	:= $(wildcard $(addprefix $(TESTDIR)/, *.hpp *.h))
+BENCHSRCS	:= $(wildcard $(addprefix $(BENCHDIR)/, *.hpp *.h))
+UTILS		:= $(wildcard $(UTILSDIR)/*.cpp)
+TESTS		:= $(wildcard $(TESTDIR)/*.cpp)
+BENCHS		:= $(wildcard $(BENCHDIR)/*.cpp)
 
-$(TESTDIR)/%.o : $(TESTDIR)/%.cpp $(SRCS)
-	$(CXX) $(CXXFLAGS) $(MARCHFLAG) $(GTESTCFLAGS) -c $< -o $@
+test_cxx_flag	= $(shell 2>/dev/null $(CXX) -o /dev/null $(1) -c -x c++ /dev/null; echo $$?)
 
-test: $(TESTOBJS) $(UTILS)/cpuinfo.o $(SRCS)
-	$(CXX) $(TESTOBJS) $(UTILS)/cpuinfo.o $(MARCHFLAG) $(CXXFLAGS) -lgtest_main $(GTESTLDFLAGS) -o testexe
+# Compiling AVX512-FP16 instructions wasn't possible until GCC 12
+ifeq ($(call test_cxx_flag,-mavx512fp16), 1)
+  BENCHS_SKIP	+= bench-qsortfp16.cpp
+  TESTS_SKIP 	+= test-qsortfp16.cpp
+endif
 
-$(BENCHDIR)/%.o : $(BENCHDIR)/%.cpp $(SRCS)
-	$(CXX) $(CXXFLAGS) $(MARCHFLAG) $(GBENCHCFLAGS) -c $< -o $@
+# Sapphire Rapids was otherwise supported from GCC 11. Downgrade if required.
+ifeq ($(call test_cxx_flag,$(MARCHFLAG)), 1)
+  MARCHFLAG	:= -march=icelake-client
+endif
 
-bench: $(BENCHOBJS) $(UTILS)/cpuinfo.o
-	$(CXX) $(BENCHOBJS) $(UTILS)/cpuinfo.o $(MARCHFLAG) $(CXXFLAGS) -lbenchmark_main $(GBENCHLDFLAGS) -o benchexe
+BENCHOBJS	:= $(patsubst %.cpp, %.o, $(filter-out $(addprefix $(BENCHDIR)/, $(BENCHS_SKIP)), $(BENCHS)))
+TESTOBJS	:= $(patsubst %.cpp, %.o, $(filter-out $(addprefix $(TESTDIR)/, $(TESTS_SKIP)), $(TESTS)))
+UTILOBJS	:= $(UTILS:.cpp=.o)
 
+# Stops make from wondering if it needs to generate the .hpp files (.cpp and .h have equivalent rules by default) 
+%.hpp:
+
+.PHONY: all
+.DEFAULT_GOAL := all
+all: test bench
+
+.PHONY: test
+test: testexe
+
+.PHONY: bench
+bench: benchexe
+
+$(UTILOBJS): $(UTILSRCS)
+
+$(TESTOBJS): $(TESTSRCS) $(UTILSRCS) $(SRCS)
+$(TESTDIR)/%.o: override CXXFLAGS += $(GTESTCFLAGS)
+
+testexe: $(TESTOBJS) $(UTILOBJS)
+	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) $(LDFLAGS) -lgtest_main $(GTESTLDFLAGS) -o $@
+
+$(BENCHOBJS): $(BENCHSRCS) $(UTILSRCS) $(SRCS)
+$(BENCHDIR)/%.o: override CXXFLAGS += $(GBENCHCFLAGS)
+
+benchexe: $(BENCHOBJS) $(UTILOBJS)
+	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) $(LDFLAGS) -lbenchmark_main $(GBENCHLDFLAGS) -o $@
+
+.PHONY: meson
 meson:
 	meson setup --warnlevel 0 --buildtype plain builddir
 	cd builddir && ninja
 
+.PHONY: clean
 clean:
-	$(RM) -rf $(TESTDIR)/*.o $(BENCHDIR)/*.o $(UTILS)/*.o testexe benchexe builddir
+	$(RM) -rf $(TESTOBJS) $(BENCHOBJS) $(UTILOBJS) testexe benchexe builddir
