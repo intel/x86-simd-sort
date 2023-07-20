@@ -270,4 +270,3 @@ REGISTER_TYPED_TEST_SUITE_P(avx512argsort,
                             test_all_inf_array,
                             test_array_with_nan,
                             test_max_value_at_end_of_array);
-

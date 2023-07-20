@@ -1,7 +1,7 @@
+#include "test-qsort.hpp"
 #include "test-partial-qsort.hpp"
 #include "test-qselect.hpp"
 #include "test-qsort-fp.hpp"
-#include "test-qsort.hpp"
 
 using QSortTestTypes = testing::Types<uint16_t,
                                       int16_t,
