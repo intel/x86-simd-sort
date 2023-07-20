@@ -11,6 +11,20 @@
 #include "avx512-common-argsort.h"
 #include "avx512-64bit-keyvalue-networks.hpp"
 
+template <typename T>
+void std_argselect_withnan(T *arr, int64_t *arg, int64_t k, int64_t left, int64_t right)
+{
+    std::nth_element(arg + left,
+                     arg + k,
+                     arg + right,
+                     [arr](int64_t a, int64_t b) -> bool {
+                     if ((!std::isnan(arr[a])) && (!std::isnan(arr[b]))) {return arr[a] < arr[b];}
+                     else if (std::isnan(arr[a])) {return false;}
+                     else {return true;}
+                     });
+}
+
+
 /* argsort using std::sort */
 template <typename T>
 void std_argsort_withnan(T *arr, int64_t *arg, int64_t left, int64_t right)
@@ -425,8 +439,7 @@ void avx512_argselect(double* arr, int64_t *arg, int64_t k, int64_t arrsize)
 {
     if (arrsize > 1) {
         if (has_nan<zmm_vector<double>>(arr, arrsize)) {
-            /* FIXME: no need to do a full argsort */
-            std_argsort_withnan(arr, arg, 0, arrsize);
+            std_argselect_withnan(arr, arg, 0, arrsize);
         }
         else {
             argselect_64bit_<zmm_vector<double>>(
@@ -458,8 +471,7 @@ void avx512_argselect(float* arr, int64_t *arg, int64_t k, int64_t arrsize)
 {
     if (arrsize > 1) {
         if (has_nan<ymm_vector<float>>(arr, arrsize)) {
-            /* FIXME: no need to do a full argsort */
-            std_argsort_withnan(arr, arg, 0, arrsize);
+            std_argselect_withnan(arr, arg, 0, arrsize);
         }
         else {
             argselect_64bit_<ymm_vector<float>>(
