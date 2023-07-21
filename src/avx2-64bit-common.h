@@ -4,34 +4,33 @@
  * Authors: Raghuveer Devulapalli <raghuveer.devulapalli@intel.com>
  * ****************************************************************/
 
-#ifndef AVX2_32BIT_COMMON
-#define AVX2_32BIT_COMMON
+#ifndef AVX2_64BIT_COMMON
+#define AVX2_64BIT_COMMON
 #include "avx2-common-qsort.h"
+#include "avx2-64bit-emu-perm.hpp"
 
 /*
  * Constants used in sorting 8 elements in a ymm registers. Based on Bitonic
  * sorting network (see
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg)
  */
-// ymm                  7, 6, 5, 4, 3, 2, 1, 0
-#define NETWORK_32BIT_1 4, 5, 6, 7, 0, 1, 2, 3
-#define NETWORK_32BIT_2 0, 1, 2, 3, 4, 5, 6, 7
-#define NETWORK_32BIT_3 5, 4, 7, 6, 1, 0, 3, 2
-#define NETWORK_32BIT_4 3, 2, 1, 0, 7, 6, 5, 4
+// ymm                  3, 2, 1, 0
+#define NETWORK_64BIT_R 0, 1, 2, 3
+#define NETWORK_64BIT_1 1, 0, 3, 2
 
 
 // TODO actually fix the code instead of using conversions
 class avx2_mask_helper_lut_gen{
 public:
-    __m256i lut[256];
+    __m256i lut[16];
 
 private:
     void build_lut(){
-        for (int64_t i = 0; i <= 0xFF; i++){
-            int32_t entry[8];
-            for (int j = 0; j < 8; j++){
+        for (int64_t i = 0; i <= 0xF; i++){
+            int64_t entry[4];
+            for (int j = 0; j < 4; j++){
                 if (((i >> j) & 1) == 1)
-                    entry[j] = 0xFFFFFFFF;
+                    entry[j] = 0xFFFFFFFFFFFFFFFF;
                 else
                     entry[j] = 0;
             }
@@ -59,7 +58,7 @@ private:
     }
     
     int32_t converter(__m256i m){
-        return _mm256_movemask_ps(_mm256_castsi256_ps(m));
+        return _mm256_movemask_pd(_mm256_castsi256_pd(m));
     }
 };
 __m256i operator~(const avx2_mask_helper x){
@@ -68,24 +67,20 @@ __m256i operator~(const avx2_mask_helper x){
 
 // Emulators for intrinsics missing from AVX2 compared to AVX512
 template <typename T>
-T avx2_emu_reduce_max(typename ymm_vector<T>::ymm_t x){
+T avx2_emu_reduce_max_4(typename ymm_vector<T>::ymm_t x){
     using vtype = ymm_vector<T>;
-    typename vtype::ymm_t inter1 = vtype::max(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    typename vtype::ymm_t inter2 = vtype::permutevar(inter1, _mm256_set_epi32(3,2,1,0,3,2,1,0));
-    typename vtype::ymm_t inter3 =  vtype::max(inter2, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(inter2));
-    T can1 = vtype::template extract<0>(inter3);
-    T can2 = vtype::template extract<2>(inter3);
+    typename vtype::ymm_t inter1 = vtype::max(x, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(x));
+    T can1 = vtype::template extract<0>(inter1);
+    T can2 = vtype::template extract<2>(inter1);
     return std::max(can1, can2);
 }
 
 template <typename T>
-T avx2_emu_reduce_min(typename ymm_vector<T>::ymm_t x){
+T avx2_emu_reduce_min_4(typename ymm_vector<T>::ymm_t x){
     using vtype = ymm_vector<T>;
-    typename vtype::ymm_t inter1 = vtype::min(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    typename vtype::ymm_t inter2 = vtype::permutevar(inter1, _mm256_set_epi32(3,2,1,0,3,2,1,0));
-    typename vtype::ymm_t inter3 =  vtype::min(inter2, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(inter2));
-    T can1 = vtype::template extract<0>(inter3);
-    T can2 = vtype::template extract<2>(inter3);
+    typename vtype::ymm_t inter1 = vtype::min(x, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(x));
+    T can1 = vtype::template extract<0>(inter1);
+    T can2 = vtype::template extract<2>(inter1);
     return std::min(can1, can2);
 }
 
@@ -117,6 +112,20 @@ bool scalar_emu_fpclassify(T x, int mask){
 }
 
 template <typename T>
+typename ymm_vector<T>::ymm_t avx2_emu_max(typename ymm_vector<T>::ymm_t x, typename ymm_vector<T>::ymm_t y){
+    using vtype = ymm_vector<T>;
+    typename vtype::opmask_t nlt = vtype::ge(x,y);
+    return _mm256_castpd_si256(_mm256_blendv_pd(_mm256_castsi256_pd(y), _mm256_castsi256_pd(x), _mm256_castsi256_pd(nlt)));
+}
+
+template <typename T>
+typename ymm_vector<T>::ymm_t avx2_emu_min(typename ymm_vector<T>::ymm_t x, typename ymm_vector<T>::ymm_t y){
+    using vtype = ymm_vector<T>;
+    typename vtype::opmask_t nlt = vtype::ge(x,y);
+    return _mm256_castpd_si256(_mm256_blendv_pd(_mm256_castsi256_pd(x), _mm256_castsi256_pd(y), _mm256_castsi256_pd(nlt)));
+}
+
+template <typename T>
 typename ymm_vector<T>::opmask_t avx2_emu_fpclassify(typename ymm_vector<T>::ymm_t x, int mask){
     using vtype = ymm_vector<T>;
     T store[vtype::numlanes];
@@ -125,44 +134,44 @@ typename ymm_vector<T>::opmask_t avx2_emu_fpclassify(typename ymm_vector<T>::ymm
     
     for (int i = 0; i < vtype::numlanes; i++){
         bool flagged = scalar_emu_fpclassify(store[i]);
-        res[i] = 0xFFFFFFFF; // TODO is this right?
+        res[i] = 0xFFFFFFFFFFFFFFFF; // TODO is this right?
     }
     return vtype::loadu(res);
 }
 
-class avx2_compressstore_lut32_gen{
+class avx2_compressstore_lut64_gen{
 public:
-    __m256i permLut[256];
-    __m256i leftLut[256];
+    int32_t permLut[16];
+    __m256i leftLut[16];
 
 private:
     void build_lut(){
-        for (int64_t i = 0; i <= 0xFF; i++){
-            int32_t indices[8];
-            int32_t leftEntry[8] = {0,0,0,0,0,0,0,0};
-            int right = 7;
+        for (int64_t i = 0; i <= 0xF; i++){
+            int32_t indices[4];
+            int64_t leftEntry[4] = {0,0,0,0};
+            int right = 3;
             int left = 0;
-            for (int j = 0; j < 8; j++){
+            for (int j = 0; j < 4; j++){
                 bool ge = (i >> j) & 1;
                 if (ge){
                     indices[right] = j;
                     right--;
                 }else{
                     indices[left] = j;
-                    leftEntry[left] = 0xFFFFFFFF;
+                    leftEntry[left] = 0xFFFFFFFFFFFFFFFF;
                     left++;
                 }
             }
-            permLut[i] = _mm256_loadu_si256((__m256i *) &indices[0]);
+            permLut[i] = SHUFFLE_MASK(indices[3], indices[2], indices[1], indices[0]);
             leftLut[i] = _mm256_loadu_si256((__m256i *) &leftEntry[0]);
         }
     }
 public:
     
-    avx2_compressstore_lut32_gen(){build_lut();}
+    avx2_compressstore_lut64_gen(){build_lut();}
 };
 
-const avx2_compressstore_lut32_gen avx2_compressstore_lut32 = avx2_compressstore_lut32_gen();
+const avx2_compressstore_lut64_gen avx2_compressstore_lut64 = avx2_compressstore_lut64_gen();
 
 template <typename T>
 void avx2_emu_mask_compressstoreu(void * base_addr, typename ymm_vector<T>::opmask_t k, typename ymm_vector<T>::ymm_t reg){
@@ -191,10 +200,10 @@ int32_t avx2_double_compressstore(void * left_addr, void * right_addr, typename 
     T* rightStore = (T*) right_addr;
     
     int32_t shortMask = avx2_mask_helper(k);
-    const __m256i &perm = avx2_compressstore_lut32.permLut[shortMask];
-    const __m256i &left = avx2_compressstore_lut32.leftLut[shortMask];
+    const int32_t &perm = avx2_compressstore_lut64.permLut[shortMask];
+    const __m256i &left = avx2_compressstore_lut64.leftLut[shortMask];
     
-    typename vtype::ymm_t temp = vtype::permutevar(reg, perm);
+    typename vtype::ymm_t temp = avx2_emu_permute_64bit<vtype>(reg, perm);
 
     vtype::mask_storeu(leftStore, left, temp);
     vtype::mask_storeu(rightStore - vtype::numlanes, ~left, temp);
@@ -214,20 +223,20 @@ int64_t   avx2_emu_popcnt(__m256i reg){
 }
 
 template <>
-struct ymm_vector<int32_t> {
-    using type_t = int32_t;
+struct ymm_vector<int64_t> {
+    using type_t = int64_t;
     using ymm_t = __m256i;
     using ymmi_t = __m256i;
     using opmask_t = avx2_mask_helper;
-    static const uint8_t numlanes = 8;
+    static const uint8_t numlanes = 4;
 
     static type_t type_max()
     {
-        return X86_SIMD_SORT_MAX_INT32;
+        return X86_SIMD_SORT_MAX_INT64;
     }
     static type_t type_min()
     {
-        return X86_SIMD_SORT_MIN_INT32;
+        return X86_SIMD_SORT_MIN_INT64;
     }
     static ymm_t ymm_max()
     {
@@ -237,13 +246,9 @@ struct ymm_vector<int32_t> {
     static ymmi_t seti(int v1,
                        int v2,
                        int v3,
-                       int v4,
-                       int v5,
-                       int v6,
-                       int v7,
-                       int v8)
+                       int v4)
     {
-        return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
+        return _mm256_set_epi64x(v1, v2, v3, v4);
     }
     static opmask_t kxor_opmask(opmask_t x, opmask_t y)
     {
@@ -255,28 +260,28 @@ struct ymm_vector<int32_t> {
     }
     static opmask_t le(ymm_t x, ymm_t y)
     {
-        return ~_mm256_cmpgt_epi32(x, y);
+        return ~_mm256_cmpgt_epi64(x, y);
     }
     static opmask_t ge(ymm_t x, ymm_t y)
     {
         opmask_t equal = eq(x,y);
-        opmask_t greater = _mm256_cmpgt_epi32(x, y);
-        return _mm256_castps_si256(_mm256_or_ps(_mm256_castsi256_ps(equal), _mm256_castsi256_ps(greater)));
+        opmask_t greater = _mm256_cmpgt_epi64(x, y);
+        return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(equal), _mm256_castsi256_pd(greater)));
     }
     static opmask_t eq(ymm_t x, ymm_t y)
     {
-        return _mm256_cmpeq_epi32(x, y);
+        return _mm256_cmpeq_epi64(x, y);
     }
     template <int scale>
     static ymm_t
     mask_i64gather(ymm_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i32gather_epi32(src, base, index, mask, scale);
+        return _mm256_mask_i64gather_epi64(src, base, index, mask, scale);
     }
     template <int scale>
     static ymm_t i64gather(__m256i index, void const *base)
     {
-        return _mm256_i32gather_epi32((int const *) base, index, scale);
+        return _mm256_i64gather_epi64((long long int const *) base, index, scale);
     }
     static ymm_t loadu(void const *mem)
     {
@@ -284,7 +289,7 @@ struct ymm_vector<int32_t> {
     }
     static ymm_t max(ymm_t x, ymm_t y)
     {
-        return _mm256_max_epi32(x, y);
+        return avx2_emu_max<type_t>(x, y);
     }
     static void mask_compressstoreu(void *mem, opmask_t mask, ymm_t x)
     {
@@ -292,58 +297,59 @@ struct ymm_vector<int32_t> {
     }
     static ymm_t maskz_loadu(opmask_t mask, void const *mem)
     {
-        return _mm256_maskload_epi32((const int *) mem, mask);
+        return _mm256_maskload_epi64((const long long int *) mem, mask);
     }
     static ymm_t mask_loadu(ymm_t x, opmask_t mask, void const *mem)
     {
-        ymm_t dst = _mm256_maskload_epi32((type_t *) mem, mask);
+        ymm_t dst = _mm256_maskload_epi64((long long int *) mem, mask);
         return mask_mov(x, mask, dst);
     }
     static ymm_t mask_mov(ymm_t x, opmask_t mask, ymm_t y)
     {
-        return _mm256_castps_si256(_mm256_blendv_ps(_mm256_castsi256_ps(x), _mm256_castsi256_ps(y), _mm256_castsi256_ps(mask)));
+        return _mm256_castpd_si256(_mm256_blendv_pd(_mm256_castsi256_pd(x), _mm256_castsi256_pd(y), _mm256_castsi256_pd(mask)));
     }
     static void mask_storeu(void *mem, opmask_t mask, ymm_t x)
     {
-        return _mm256_maskstore_epi32((type_t *) mem, mask, x);
+        return _mm256_maskstore_epi64((long long int *) mem, mask, x);
     }
     static ymm_t min(ymm_t x, ymm_t y)
     {
-        return _mm256_min_epi32(x, y);
+        return avx2_emu_min<type_t>(x, y);
     }
-    static ymm_t permutexvar(__m256i idx, ymm_t ymm)
+    template <int32_t idx>
+    static ymm_t permutexvar(ymm_t ymm)
     {
-        return _mm256_permutevar8x32_epi32(ymm, idx);
-        //return avx2_emu_permutexvar_epi32(idx, ymm);
+        return _mm256_permute4x64_epi64(ymm, idx);
     }
-    static ymm_t permutevar(ymm_t ymm, __m256i idx)
+    template <int32_t idx>
+    static ymm_t permutevar(ymm_t ymm)
     {
-        return _mm256_permutevar8x32_epi32 (ymm, idx);
+        return _mm256_permute4x64_epi64(ymm, idx);
     }
     static ymm_t reverse(ymm_t ymm){
-        const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_2);
-        return permutexvar(rev_index, ymm);
+        const int32_t rev_index = SHUFFLE_MASK(0,1,2,3);
+        return permutexvar<rev_index>(ymm);
     }
     template <int index>
     static type_t extract(ymm_t v){
-        return _mm256_extract_epi32(v, index);
+        return _mm256_extract_epi64(v, index);
     }
     static type_t reducemax(ymm_t v)
     {
-        return avx2_emu_reduce_max<type_t>(v);
+        return avx2_emu_reduce_max_4<type_t>(v);
     }
     static type_t reducemin(ymm_t v)
     {
-        return avx2_emu_reduce_min<type_t>(v);
+        return avx2_emu_reduce_min_4<type_t>(v);
     }
     static ymm_t set1(type_t v)
     {
-        return _mm256_set1_epi32(v);
+        return _mm256_set1_epi64x(v);
     }
     template <uint8_t mask>
     static ymm_t shuffle(ymm_t ymm)
     {
-        return _mm256_shuffle_epi32(ymm, mask);
+        return _mm256_castpd_si256(_mm256_permute_pd(_mm256_castsi256_pd(ymm), mask));
     }
     static void storeu(void *mem, ymm_t x)
     {
@@ -351,16 +357,16 @@ struct ymm_vector<int32_t> {
     }
 };
 template <>
-struct ymm_vector<uint32_t> {
-    using type_t = uint32_t;
+struct ymm_vector<uint64_t> {
+    using type_t = uint64_t;
     using ymm_t = __m256i;
     using ymmi_t = __m256i;
     using opmask_t = avx2_mask_helper;
-    static const uint8_t numlanes = 8;
+    static const uint8_t numlanes = 4;
 
     static type_t type_max()
     {
-        return X86_SIMD_SORT_MAX_UINT32;
+        return X86_SIMD_SORT_MAX_UINT64;
     }
     static type_t type_min()
     {
@@ -368,30 +374,26 @@ struct ymm_vector<uint32_t> {
     }
     static ymm_t ymm_max()
     {
-        return _mm256_set1_epi32(type_max());
+        return _mm256_set1_epi64x(type_max());
     }
 
     static ymmi_t seti(int v1,
                        int v2,
                        int v3,
-                       int v4,
-                       int v5,
-                       int v6,
-                       int v7,
-                       int v8)
+                       int v4)
     {
-        return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
+        return _mm256_set_epi64x(v1, v2, v3, v4);
     }
     template <int scale>
     static ymm_t
     mask_i64gather(ymm_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i32gather_epi32(src, base, index, mask, scale);
+        return _mm256_mask_i64gather_epi64(src, base, index, mask, scale);
     }
     template <int scale>
     static ymm_t i64gather(__m256i index, void const *base)
     {
-        return _mm256_i32gather_epi32((int const *) base, index, scale);
+        return _mm256_i64gather_epi64((long long int const *) base, index, scale);
     }
     static opmask_t knot_opmask(opmask_t x)
     {
@@ -404,7 +406,7 @@ struct ymm_vector<uint32_t> {
     }
     static opmask_t eq(ymm_t x, ymm_t y)
     {
-        return _mm256_cmpeq_epi32(x, y);
+        return _mm256_cmpeq_epi64(x, y);
     }
     static ymm_t loadu(void const *mem)
     {
@@ -412,7 +414,7 @@ struct ymm_vector<uint32_t> {
     }
     static ymm_t max(ymm_t x, ymm_t y)
     {
-        return _mm256_max_epu32(x, y);
+        return avx2_emu_max<type_t>(x, y);
     }
     static void mask_compressstoreu(void *mem, opmask_t mask, ymm_t x)
     {
@@ -420,53 +422,55 @@ struct ymm_vector<uint32_t> {
     }
     static ymm_t mask_loadu(ymm_t x, opmask_t mask, void const *mem)
     {
-        ymm_t dst = _mm256_maskload_epi32((const int *) mem, mask);
+        ymm_t dst = _mm256_maskload_epi64((const long long int *) mem, mask);
         return mask_mov(x, mask, dst);
     }
     static ymm_t mask_mov(ymm_t x, opmask_t mask, ymm_t y)
     {
-        return _mm256_castps_si256(_mm256_blendv_ps(_mm256_castsi256_ps(x), _mm256_castsi256_ps(y), _mm256_castsi256_ps(mask)));
+        return _mm256_castpd_si256(_mm256_blendv_pd(_mm256_castsi256_pd(x), _mm256_castsi256_pd(y), _mm256_castsi256_pd(mask)));
     }
     static void mask_storeu(void *mem, opmask_t mask, ymm_t x)
     {
-        return _mm256_maskstore_epi32((int *) mem, mask, x);
+        return _mm256_maskstore_epi64((long long int *) mem, mask, x);
     }
     static ymm_t min(ymm_t x, ymm_t y)
     {
-        return _mm256_min_epu32(x, y);
+        return avx2_emu_min<type_t>(x, y);
     }
-    static ymm_t permutexvar(__m256i idx, ymm_t ymm)
+    template <int32_t idx>
+    static ymm_t permutexvar(ymm_t ymm)
     {
-        return _mm256_permutevar8x32_epi32(ymm, idx);
+        return _mm256_permute4x64_epi64(ymm, idx);
     }
-    static ymm_t permutevar(ymm_t ymm, __m256i idx)
+    template <int32_t idx>
+    static ymm_t permutevar(ymm_t ymm)
     {
-        return _mm256_permutevar8x32_epi32 (ymm, idx);
+        return _mm256_permute4x64_epi64(ymm, idx);
     }
     static ymm_t reverse(ymm_t ymm){
-        const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_2);
-        return permutexvar(rev_index, ymm);
+        const int32_t rev_index = SHUFFLE_MASK(0,1,2,3);
+        return permutexvar<rev_index>(ymm);
     }
     template <int index>
     static type_t extract(ymm_t v){
-        return _mm256_extract_epi32(v, index);
+        return _mm256_extract_epi64(v, index);
     }
     static type_t reducemax(ymm_t v)
     {
-        return avx2_emu_reduce_max<type_t>(v);
+        return avx2_emu_reduce_max_4<type_t>(v);
     }
     static type_t reducemin(ymm_t v)
     {
-        return avx2_emu_reduce_min<type_t>(v);
+        return avx2_emu_reduce_min_4<type_t>(v);
     }
     static ymm_t set1(type_t v)
     {
-        return _mm256_set1_epi32(v);
+        return _mm256_set1_epi64x(v);
     }
     template <uint8_t mask>
     static ymm_t shuffle(ymm_t ymm)
     {
-        return _mm256_shuffle_epi32(ymm, mask);
+        return _mm256_castpd_si256(_mm256_permute_pd(_mm256_castsi256_pd(ymm), mask));
     }
     static void storeu(void *mem, ymm_t x)
     {
@@ -474,41 +478,37 @@ struct ymm_vector<uint32_t> {
     }
 };
 template <>
-struct ymm_vector<float> {
-    using type_t = float;
-    using ymm_t = __m256;
+struct ymm_vector<double> {
+    using type_t = double;
+    using ymm_t = __m256d;
     using ymmi_t = __m256i;
     using opmask_t = avx2_mask_helper;
-    static const uint8_t numlanes = 8;
+    static const uint8_t numlanes = 4;
 
     static type_t type_max()
     {
-        return X86_SIMD_SORT_INFINITYF;
+        return X86_SIMD_SORT_INFINITY;
     }
     static type_t type_min()
     {
-        return -X86_SIMD_SORT_INFINITYF;
+        return -X86_SIMD_SORT_INFINITY;
     }
     static ymm_t ymm_max()
     {
-        return _mm256_set1_ps(type_max());
+        return _mm256_set1_pd(type_max());
     }
 
     static ymmi_t seti(int v1,
                        int v2,
                        int v3,
-                       int v4,
-                       int v5,
-                       int v6,
-                       int v7,
-                       int v8)
+                       int v4)
     {
-        return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
+        return _mm256_set_epi64x(v1, v2, v3, v4);
     }
 
     static ymm_t maskz_loadu(opmask_t mask, void const *mem)
     {
-        return _mm256_maskload_ps((const float *) mem, mask);
+        return _mm256_maskload_pd((const double *) mem, mask);
     }
     static opmask_t knot_opmask(opmask_t x)
     {
@@ -516,11 +516,11 @@ struct ymm_vector<float> {
     }
     static opmask_t ge(ymm_t x, ymm_t y)
     {
-        return _mm256_castps_si256(_mm256_cmp_ps(x, y, _CMP_GE_OQ));
+        return _mm256_castpd_si256(_mm256_cmp_pd(x, y, _CMP_GE_OQ));
     }
     static opmask_t eq(ymm_t x, ymm_t y)
     {
-        return _mm256_castps_si256(_mm256_cmp_ps(x, y, _CMP_EQ_OQ));
+        return _mm256_castpd_si256(_mm256_cmp_pd(x, y, _CMP_EQ_OQ));
     }
     template <int type>
     static opmask_t fpclass(ymm_t x)
@@ -531,20 +531,20 @@ struct ymm_vector<float> {
     static ymm_t
     mask_i64gather(ymm_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i32gather_ps(src, base, index, _mm256_castsi256_ps(mask), scale);;
+        return _mm256_mask_i64gather_pd(src, base, index, _mm256_castsi256_pd(mask), scale);;
     }
     template <int scale>
     static ymm_t i64gather(__m256i index, void const *base)
     {
-        return _mm256_i32gather_ps((float *) base, index, scale);
+        return _mm256_i64gather_pd((double *) base, index, scale);
     }
     static ymm_t loadu(void const *mem)
     {
-        return _mm256_loadu_ps((float const *) mem);
+        return _mm256_loadu_pd((double const *) mem);
     }
     static ymm_t max(ymm_t x, ymm_t y)
     {
-        return _mm256_max_ps(x, y);
+        return _mm256_max_pd(x, y);
     }
     static void mask_compressstoreu(void *mem, opmask_t mask, ymm_t x)
     {
@@ -552,80 +552,82 @@ struct ymm_vector<float> {
     }
     static ymm_t mask_loadu(ymm_t x, opmask_t mask, void const *mem)
     {
-        ymm_t dst = _mm256_maskload_ps((type_t *) mem, mask);
+        ymm_t dst = _mm256_maskload_pd((type_t *) mem, mask);
         return mask_mov(x, mask, dst);
     }
     static ymm_t mask_mov(ymm_t x, opmask_t mask, ymm_t y)
     {
-        return _mm256_blendv_ps(x, y, _mm256_castsi256_ps(mask));
+        return _mm256_blendv_pd(x, y, _mm256_castsi256_pd(mask));
     }
     static void mask_storeu(void *mem, opmask_t mask, ymm_t x)
     {
-        return _mm256_maskstore_ps((type_t *) mem, mask, x);
+        return _mm256_maskstore_pd((type_t *) mem, mask, x);
     }
     static ymm_t min(ymm_t x, ymm_t y)
     {
-        return _mm256_min_ps(x, y);
+        return _mm256_min_pd(x, y);
     }
-    static ymm_t permutexvar(__m256i idx, ymm_t ymm)
+    template <int32_t idx>
+    static ymm_t permutexvar(ymm_t ymm)
     {
-        return _mm256_permutevar8x32_ps(ymm, idx);
+        return _mm256_permute4x64_pd(ymm, idx);
     }
-    static ymm_t permutevar(ymm_t ymm, __m256i idx)
+    template <int32_t idx>
+    static ymm_t permutevar(ymm_t ymm)
     {
-        return _mm256_permutevar8x32_ps(ymm, idx);
+        return _mm256_permute4x64_pd(ymm, idx);
     }
     static ymm_t reverse(ymm_t ymm){
-        const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_2);
-        return permutexvar(rev_index, ymm);
+        const int32_t rev_index = SHUFFLE_MASK(0,1,2,3);
+        return permutexvar<rev_index>(ymm);
     }
     template <int index>
     static type_t extract(ymm_t v){
-        int32_t x = _mm256_extract_epi32(_mm256_castps_si256(v), index);
-        float y;
+        int64_t x = _mm256_extract_epi64(_mm256_castpd_si256(v), index);
+        double y;
         std::memcpy(&y, &x, sizeof(y));
         return y;
     }
     static type_t reducemax(ymm_t v)
     {
-        return avx2_emu_reduce_max<type_t>(v);
+        return avx2_emu_reduce_max_4<type_t>(v);
     }
     static type_t reducemin(ymm_t v)
     {
-        return avx2_emu_reduce_min<type_t>(v);
+        return avx2_emu_reduce_min_4<type_t>(v);
     }
     static ymm_t set1(type_t v)
     {
-        return _mm256_set1_ps(v);
+        return _mm256_set1_pd(v);
     }
     template <uint8_t mask>
     static ymm_t shuffle(ymm_t ymm)
     {
-        return _mm256_castsi256_ps(_mm256_shuffle_epi32(_mm256_castps_si256(ymm), mask));
+        return _mm256_permute_pd(ymm, mask);
     }
     static void storeu(void *mem, ymm_t x)
     {
-        _mm256_storeu_ps((float *) mem, x);
+        _mm256_storeu_pd((double *) mem, x);
     }
 };
-X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(float *arr, int64_t arrsize)
+X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(double *arr, int64_t arrsize)
 {
     int64_t nan_count = 0;
-    __mmask8 loadmask = 0xFF;
+    __mmask8 loadmask = 0xF;
     while (arrsize > 0) {
-        if (arrsize < 8) { loadmask = (0x01 << arrsize) - 0x01; }
-        __m256 in_ymm = ymm_vector<float>::maskz_loadu(loadmask, arr);
-        __m256i nanmask = _mm256_castps_si256(_mm256_cmp_ps(in_ymm, in_ymm, _CMP_NEQ_UQ));
+        if (arrsize < 4) { loadmask = ((0x01 << arrsize) - 0x01) & 0xF; }
+        __m256d in_ymm = ymm_vector<double>::maskz_loadu(loadmask, arr);
+        __m256i nanmask = _mm256_castpd_si256(_mm256_cmp_pd(in_ymm, in_ymm, _CMP_NEQ_UQ));
         nan_count += _popcnt32(avx2_mask_helper(nanmask));
-        ymm_vector<float>::mask_storeu(arr, nanmask, YMM_MAX_FLOAT);
-        arr += 8;
-        arrsize -= 8;
+        ymm_vector<double>::mask_storeu(arr, nanmask, YMM_MAX_DOUBLE);
+        arr += 4;
+        arrsize -= 4;
     }
     return nan_count;
 }
 
 X86_SIMD_SORT_INLINE void
-replace_inf_with_nan(float *arr, int64_t arrsize, int64_t nan_count)
+replace_inf_with_nan(double *arr, int64_t arrsize, int64_t nan_count)
 {
     for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
         arr[ii] = std::nan("1");
@@ -639,26 +641,16 @@ replace_inf_with_nan(float *arr, int64_t arrsize, int64_t nan_count)
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE ymm_t sort_ymm_32bit(ymm_t ymm)
 {
-    const typename vtype::opmask_t oxAA = _mm256_set_epi32(0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0);
-    const typename vtype::opmask_t oxCC = _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0);
-    const typename vtype::opmask_t oxF0 = _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0);
-    
-    const typename vtype::ymmi_t rev_index = vtype::seti(NETWORK_32BIT_2);
+    const typename vtype::opmask_t oxAA = _mm256_set_epi64x(0xFFFFFFFFFFFFFFFF, 0, 0xFFFFFFFFFFFFFFFF, 0);
+    const typename vtype::opmask_t oxCC = _mm256_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0, 0);
     ymm = cmp_merge<vtype>(
-            ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
+            ymm, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
     ymm = cmp_merge<vtype>(
             ymm,
-            vtype::permutexvar(vtype::seti(NETWORK_32BIT_1), ymm),
+            vtype::template permutexvar<SHUFFLE_MASK(0,1,2,3)>(ymm),
             oxCC);
     ymm = cmp_merge<vtype>(
-            ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
-    ymm = cmp_merge<vtype>(ymm, vtype::permutexvar(rev_index, ymm), oxF0);
-    ymm = cmp_merge<vtype>(
-            ymm,
-            vtype::permutexvar(vtype::seti(NETWORK_32BIT_3), ymm),
-            oxCC);
-    ymm = cmp_merge<vtype>(
-            ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
+            ymm, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
     return ymm;
 }
 
@@ -668,20 +660,16 @@ X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
                                             const int64_t right)
 {
     // median of 8
-    int64_t size = (right - left) / 8;
+    int64_t size = (right - left) / 4;
     using ymm_t = typename vtype::ymm_t;
-    __m256i rand_index = _mm256_set_epi32(left + size,
+    __m256i rand_index = _mm256_set_epi64x(left + size,
                                           left + 2 * size,
                                           left + 3 * size,
-                                          left + 4 * size,
-                                          left + 5 * size,
-                                          left + 6 * size,
-                                          left + 7 * size,
-                                          left + 8 * size);
+                                          left + 4 * size);
     ymm_t rand_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
     // pivot will never be a nan, since there are no nan's!
     ymm_t sort = sort_ymm_32bit<vtype>(rand_vec);
-    return ((type_t *)&sort)[4];
+    return ((type_t *)&sort)[2];
 }
 
 #endif

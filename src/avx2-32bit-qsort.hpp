@@ -8,6 +8,7 @@
 #define AVX2_QSORT_32BIT
 
 #include "avx2-32bit-common.h"
+#include "avx2-network-qsort.hpp"
 
 // Assumes ymm is bitonic and performs a recursive half cleaner
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
@@ -739,7 +740,8 @@ qsort_32bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
      * Base case: use bitonic networks to sort arrays <= 128
      */
     if (right + 1 - left <= 256) {
-        sort_256_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
+        sort_n<vtype, 256>(arr + left, (int32_t)(right + 1 - left));
+        //sort_128_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
         return;
     }
 
@@ -772,7 +774,8 @@ static void qselect_32bit_(type_t *arr,
      * Base case: use bitonic networks to sort arrays <= 128
      */
     if (right + 1 - left <= 128) {
-        sort_128_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
+        sort_n<vtype, 128>(arr + left, (int32_t)(right + 1 - left));
+        //sort_128_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
         return;
     }
 
