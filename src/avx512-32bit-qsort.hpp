@@ -715,7 +715,10 @@ replace_inf_with_nan(float *arr, int64_t arrsize, int64_t nan_count)
 }
 
 template <>
-void avx512_qselect<int32_t>(int32_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+void avx512_qselect<int32_t>(int32_t *arr,
+                             int64_t k,
+                             int64_t arrsize,
+                             bool hasnan)
 {
     if (arrsize > 1) {
         qselect_32bit_<zmm_vector<int32_t>, int32_t>(
@@ -724,7 +727,10 @@ void avx512_qselect<int32_t>(int32_t *arr, int64_t k, int64_t arrsize, bool hasn
 }
 
 template <>
-void avx512_qselect<uint32_t>(uint32_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+void avx512_qselect<uint32_t>(uint32_t *arr,
+                              int64_t k,
+                              int64_t arrsize,
+                              bool hasnan)
 {
     if (arrsize > 1) {
         qselect_32bit_<zmm_vector<uint32_t>, uint32_t>(
@@ -737,11 +743,11 @@ void avx512_qselect<float>(float *arr, int64_t k, int64_t arrsize, bool hasnan)
 {
     int64_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
-         indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     }
     if (indx_last_elem >= k) {
         qselect_32bit_<zmm_vector<float>, float>(
-            arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
+                arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }
 

@@ -26,15 +26,17 @@ TYPED_TEST_P(avx512_sort_fp, test_random_nan)
         /* Random array */
         arr = get_uniform_rand_array<TypeParam>(size);
         for (auto ii = 1; ii <= num_nans; ++ii) {
-            arr[size-ii] = std::numeric_limits<TypeParam>::quiet_NaN();
+            arr[size - ii] = std::numeric_limits<TypeParam>::quiet_NaN();
         }
         sortedarr = arr;
-        std::sort(sortedarr.begin(), sortedarr.end()-3);
+        std::sort(sortedarr.begin(), sortedarr.end() - 3);
         std::random_shuffle(arr.begin(), arr.end());
         avx512_qsort<TypeParam>(arr.data(), arr.size());
         for (auto ii = 1; ii <= num_nans; ++ii) {
-            if (!std::isnan(arr[size-ii])) {
-                ASSERT_TRUE(false) << "NAN's aren't sorted to the end. Arr size = " << size;
+            if (!std::isnan(arr[size - ii])) {
+                ASSERT_TRUE(false)
+                        << "NAN's aren't sorted to the end. Arr size = "
+                        << size;
             }
         }
         if (!std::is_sorted(arr.begin(), arr.end() - num_nans)) {
