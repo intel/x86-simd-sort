@@ -6,53 +6,8 @@
 template <typename T>
 class avx512argselect : public ::testing::Test {
 };
+
 TYPED_TEST_SUITE_P(avx512argselect);
-
-template <typename T>
-T std_min_element(std::vector<T> arr,
-                  std::vector<int64_t> arg,
-                  int64_t left,
-                  int64_t right)
-{
-    std::vector<int64_t>::iterator res = std::min_element(
-            arg.begin() + left,
-            arg.begin() + right,
-            [arr](int64_t a, int64_t b) -> bool {
-                if ((!std::isnan(arr[a])) && (!std::isnan(arr[b]))) {
-                    return arr[a] < arr[b];
-                }
-                else if (std::isnan(arr[a])) {
-                    return false;
-                }
-                else {
-                    return true;
-                }
-            });
-    return arr[*res];
-}
-
-template <typename T>
-T std_max_element(std::vector<T> arr,
-                  std::vector<int64_t> arg,
-                  int64_t left,
-                  int64_t right)
-{
-    std::vector<int64_t>::iterator res = std::max_element(
-            arg.begin() + left,
-            arg.begin() + right,
-            [arr](int64_t a, int64_t b) -> bool {
-                if ((!std::isnan(arr[a])) && (!std::isnan(arr[b]))) {
-                    return arr[a] > arr[b];
-                }
-                else if (std::isnan(arr[a])) {
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            });
-    return arr[*res];
-}
 
 TYPED_TEST_P(avx512argselect, test_random)
 {

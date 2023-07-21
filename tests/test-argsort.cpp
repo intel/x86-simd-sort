@@ -1,6 +1,6 @@
+#include "test-argsort-common.h"
 #include "test-argsort.hpp"
 #include "test-argselect.hpp"
-#include "test-argsort-common.h"
 
 using ArgTestTypes
         = testing::Types<int32_t, uint32_t, float, uint64_t, int64_t, double>;
