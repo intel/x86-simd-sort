@@ -141,28 +141,30 @@ typename ymm_vector<T>::opmask_t avx2_emu_fpclassify(typename ymm_vector<T>::ymm
 
 class avx2_compressstore_lut64_gen{
 public:
-    int32_t permLut[16];
+    __m256i permLut[16];
     __m256i leftLut[16];
 
 private:
     void build_lut(){
         for (int64_t i = 0; i <= 0xF; i++){
-            int32_t indices[4];
+            int32_t indices[8];
             int64_t leftEntry[4] = {0,0,0,0};
-            int right = 3;
+            int right = 7;
             int left = 0;
             for (int j = 0; j < 4; j++){
                 bool ge = (i >> j) & 1;
                 if (ge){
-                    indices[right] = j;
-                    right--;
+                    indices[right]   = 2*j+1;
+                    indices[right-1] = 2*j;
+                    right-=2;
                 }else{
-                    indices[left] = j;
-                    leftEntry[left] = 0xFFFFFFFFFFFFFFFF;
-                    left++;
+                    indices[left+1] = 2*j+1;
+                    indices[left]   = 2*j;
+                    leftEntry[left/2] = 0xFFFFFFFFFFFFFFFF;
+                    left+=2;
                 }
             }
-            permLut[i] = SHUFFLE_MASK(indices[3], indices[2], indices[1], indices[0]);
+            permLut[i] = _mm256_loadu_si256((__m256i *) &indices[0]);
             leftLut[i] = _mm256_loadu_si256((__m256i *) &leftEntry[0]);
         }
     }
@@ -192,6 +194,14 @@ void avx2_emu_mask_compressstoreu(void * base_addr, typename ymm_vector<T>::opma
 	}
 }
 
+__m256i avx2_emu_permute_64bit(__m256i x, __m256i mask){
+    return _mm256_permutevar8x32_epi32(x, mask);
+}
+
+__m256d avx2_emu_permute_64bit(__m256d x, __m256i mask){
+    return _mm256_castsi256_pd(_mm256_permutevar8x32_epi32(_mm256_castpd_si256(x), mask));
+}
+
 template <typename T>
 int32_t avx2_double_compressstore(void * left_addr, void * right_addr, typename ymm_vector<T>::opmask_t k, typename ymm_vector<T>::ymm_t reg){
     using vtype = ymm_vector<T>;
@@ -200,10 +210,10 @@ int32_t avx2_double_compressstore(void * left_addr, void * right_addr, typename 
     T* rightStore = (T*) right_addr;
     
     int32_t shortMask = avx2_mask_helper(k);
-    const int32_t &perm = avx2_compressstore_lut64.permLut[shortMask];
+    const __m256i &perm = avx2_compressstore_lut64.permLut[shortMask];
     const __m256i &left = avx2_compressstore_lut64.leftLut[shortMask];
     
-    typename vtype::ymm_t temp = avx2_emu_permute_64bit<vtype>(reg, perm);
+    typename vtype::ymm_t temp = avx2_emu_permute_64bit(reg, perm);
 
     vtype::mask_storeu(leftStore, left, temp);
     vtype::mask_storeu(rightStore - vtype::numlanes, ~left, temp);
@@ -401,8 +411,14 @@ struct ymm_vector<uint64_t> {
     }
     static opmask_t ge(ymm_t x, ymm_t y)
     {
-        ymm_t maxi = max(x,y);
-        return eq(maxi, x);
+        // TODO real implementation
+        uint64_t _x[4];
+        uint64_t _y[4];
+        storeu(_x, x);
+        storeu(_y, y);
+        uint64_t res[4];
+        for (int i = 0; i < 4; i++){res[i] = _x[i] >= _y[i] ? 0xFFFFFFFFFFFFFFFF : 0;}
+        return loadu(res);
     }
     static opmask_t eq(ymm_t x, ymm_t y)
     {

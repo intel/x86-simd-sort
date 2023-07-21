@@ -49,9 +49,8 @@ qsort_32bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
     /*
      * Base case: use bitonic networks to sort arrays <= 128
      */
-    if (right + 1 - left <= 256) {
-        sort_n<vtype, 256>(arr + left, (int32_t)(right + 1 - left));
-        //sort_128_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
+    if (right + 1 - left <= 512) {
+        sort_n<vtype, 512>(arr + left, (int32_t)(right + 1 - left));
         return;
     }
 
@@ -85,7 +84,6 @@ static void qselect_32bit_(type_t *arr,
      */
     if (right + 1 - left <= 128) {
         sort_n<vtype, 128>(arr + left, (int32_t)(right + 1 - left));
-        //sort_128_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
         return;
     }
 
