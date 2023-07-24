@@ -1,4 +1,5 @@
 #include "avx2-32bit-qsort.hpp"
+#include "avx2-64bit-qsort.hpp"
 #include "cpuinfo.h"
 #include "rand_array.h"
 #include <gtest/gtest.h>
@@ -123,7 +124,7 @@ TYPED_TEST_P(avx2_sort, test_max_value_at_end_of_array)
 REGISTER_TYPED_TEST_SUITE_P(avx2_sort,
                             test_random, test_reverse, test_constant, test_small_range, test_max_value_at_end_of_array);
 
-using Types = testing::Types<float, int32_t, uint32_t>;
+using Types = testing::Types<float, int32_t, uint32_t, double, int64_t, uint64_t>;
 INSTANTIATE_TYPED_TEST_SUITE_P(T, avx2_sort, Types);
 
 template <typename T>

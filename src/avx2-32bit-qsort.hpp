@@ -10,31 +10,6 @@
 #include "avx2-32bit-common.h"
 #include "avx2-network-qsort.hpp"
 
-// Assumes ymm is bitonic and performs a recursive half cleaner
-template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE ymm_t bitonic_merge_ymm_32bit(ymm_t ymm)
-{
-    
-    const typename vtype::opmask_t oxAA = _mm256_set_epi32(0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0);
-    const typename vtype::opmask_t oxCC = _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0);
-    const typename vtype::opmask_t oxF0 = _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0);
-
-    // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
-    ymm = cmp_merge<vtype>(
-            ymm,
-            vtype::permutexvar(_mm256_set_epi32(NETWORK_32BIT_4), ymm),
-            oxF0);
-    // 2) half_cleaner[4]
-    ymm = cmp_merge<vtype>(
-            ymm,
-            vtype::permutexvar(_mm256_set_epi32(NETWORK_32BIT_3), ymm),
-            oxCC);
-    // 3) half_cleaner[1]
-    ymm = cmp_merge<vtype>(
-            ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
-    return ymm;
-}
-
 template <typename vtype, typename type_t>
 static void
 qsort_32bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)

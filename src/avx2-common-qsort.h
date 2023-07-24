@@ -170,9 +170,6 @@ static inline ymm_t cmp_merge(ymm_t in1, ymm_t in2, opmask_t mask)
     return vtype::mask_mov(min, mask, max); // 0 -> min, 1 -> max
 }
 
-template <typename T>
-int32_t avx2_double_compressstore(void * base_addr, typename ymm_vector<T>::opmask_t k, typename ymm_vector<T>::ymm_t reg);
-
 /*
  * Parition one YMM register based on the pivot and returns the
  * number of elements that are greater than or equal to the pivot.
@@ -189,7 +186,7 @@ static inline int32_t partition_vec(type_t *arr,
     /* which elements are larger than or equal to the pivot */
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
     
-    int32_t amount_ge_pivot = avx2_double_compressstore<type_t>(arr+left, arr+right, ge_mask, curr_vec);
+    int32_t amount_ge_pivot = vtype::double_compressstore(arr+left, arr+right, ge_mask, curr_vec);
     
     *smallest_vec = vtype::min(curr_vec, *smallest_vec);
     *biggest_vec = vtype::max(curr_vec, *biggest_vec);

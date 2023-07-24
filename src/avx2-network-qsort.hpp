@@ -1,9 +1,6 @@
 #ifndef AVX2_NETWORK_QSORT
 #define AVX2_NETWORK_QSORT
 
-template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE ymm_t bitonic_merge_ymm_32bit(ymm_t ymm);
-
 template <typename vtype, int64_t numVecs, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE void bitonic_clean_n_vec(ymm_t *ymm)
 {
@@ -45,7 +42,7 @@ X86_SIMD_SORT_INLINE void bitonic_merge_n_vec(ymm_t *ymm)
     // Now do bitonic_merge_ymm_32bit
     #pragma GCC unroll 64
     for (int i = 0; i < numVecs; i++){
-        ymm[i] = bitonic_merge_ymm_32bit<vtype>(ymm[i]);
+        ymm[i] = vtype::bitonic_merge(ymm[i]);
     }
 }
 
@@ -91,7 +88,7 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
     // Sort each loaded vector
     #pragma GCC unroll 64
     for (int i = 0; i < numVecs; i++){
-        vecs[i] = sort_ymm_32bit<vtype>(vecs[i]);
+        vecs[i] = vtype::sort_vec(vecs[i]);
     }
     
     // Run the full merger

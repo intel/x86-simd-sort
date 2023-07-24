@@ -1,4 +1,5 @@
 #include "avx2-32bit-qsort.hpp"
+#include "avx2-64bit-qsort.hpp"
 #include "cpuinfo.h"
 #include "rand_array.h"
 #include <benchmark/benchmark.h>
@@ -69,12 +70,6 @@ template <typename T, class... Args>
 static void avx2qsort(benchmark::State &state, Args &&...args)
 {
     auto args_tuple = std::make_tuple(std::move(args)...);
-    if (!cpu_has_avx512bw()) {
-        state.SkipWithMessage("Requires AVX512 BW ISA");
-    }
-    if ((sizeof(T) == 2) && (!cpu_has_avx512_vbmi2())) {
-        state.SkipWithMessage("Requires AVX512 VBMI2");
-    }
     // Perform setup here
     size_t ARRSIZE = std::get<0>(args_tuple);
     std::vector<T> arr;
@@ -112,13 +107,13 @@ static void avx2qsort(benchmark::State &state, Args &&...args)
     BENCH(avx2qsort, type)\
     BENCH(stdsort, type)
 
-//BENCH_BOTH_QSORT(uint64_t)
-//BENCH_BOTH_QSORT(int64_t)
-BENCH_BOTH_QSORT(uint32_t)
-BENCH_BOTH_QSORT(int32_t)
 //BENCH_BOTH_QSORT(uint16_t)
 //BENCH_BOTH_QSORT(int16_t)
+BENCH_BOTH_QSORT(uint32_t)
+BENCH_BOTH_QSORT(int32_t)
+BENCH_BOTH_QSORT(uint64_t)
+BENCH_BOTH_QSORT(int64_t)
 BENCH_BOTH_QSORT(float)
-//BENCH_BOTH_QSORT(double)
+BENCH_BOTH_QSORT(double)
 
 
