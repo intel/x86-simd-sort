@@ -35,7 +35,7 @@ qsort_64bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
     type_t pivot = get_pivot_64bit<vtype>(arr, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
-    int64_t pivot_index = partition_avx512_unrolled<vtype, 8>(
+    int64_t pivot_index = partition_avx2_unrolled<vtype, 8>(
             arr, left, right + 1, pivot, &smallest, &biggest);
 
     if (pivot != smallest)
@@ -69,7 +69,7 @@ static void qselect_64bit_(type_t *arr,
     type_t pivot = get_pivot_64bit<vtype>(arr, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
-    int64_t pivot_index = partition_avx512_unrolled<vtype, 8>(
+    int64_t pivot_index = partition_avx2_unrolled<vtype, 8>(
             arr, left, right + 1, pivot, &smallest, &biggest);
     if ((pivot != smallest) && (pos < pivot_index))
         qselect_64bit_<vtype>(arr, pos, left, pivot_index - 1, max_iters - 1);

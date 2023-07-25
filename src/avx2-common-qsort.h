@@ -93,11 +93,9 @@ struct ymm_vector;
 // Regular quicksort routines:
 template <typename T>
 void avx2_qsort(T *arr, int64_t arrsize);
-void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize);
 
 template <typename T>
 void avx2_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false);
-void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false);
 
 template <typename T>
 inline void avx2_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
@@ -105,15 +103,6 @@ inline void avx2_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan =
     avx2_qselect<T>(arr, k - 1, arrsize, hasnan);
     avx2_qsort<T>(arr, k - 1);
 }
-inline void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false)
-{
-    avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
-    avx512_qsort_fp16(arr, k - 1);
-}
-
-// key-value sort routines
-template <typename T>
-void avx512_qsort_kv(T *keys, uint64_t *indexes, int64_t arrsize);
 
 template <typename T>
 bool is_a_nan(T elem)
@@ -197,7 +186,7 @@ static inline int32_t partition_vec(type_t *arr,
  * first element that is greater than or equal to the pivot.
  */
 template <typename vtype, typename type_t>
-static inline int64_t partition_avx512(type_t *arr,
+static inline int64_t partition_avx2(type_t *arr,
                                        int64_t left,
                                        int64_t right,
                                        type_t pivot,
@@ -301,7 +290,7 @@ static inline int64_t partition_avx512(type_t *arr,
 template <typename vtype,
           int num_unroll,
           typename type_t = typename vtype::type_t>
-static inline int64_t partition_avx512_unrolled(type_t *arr,
+static inline int64_t partition_avx2_unrolled(type_t *arr,
                                                 int64_t left,
                                                 int64_t right,
                                                 type_t pivot,
@@ -309,7 +298,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
                                                 type_t *biggest)
 {
     if (right - left <= 2 * num_unroll * vtype::numlanes) {
-        return partition_avx512<vtype>(
+        return partition_avx2<vtype>(
                 arr, left, right, pivot, smallest, biggest);
     }
     /* make array length divisible by 8*vtype::numlanes , shortening the array */
@@ -499,7 +488,7 @@ template <typename vtype1,
           typename type_t2 = typename vtype2::type_t,
           typename ymm_t1 = typename vtype1::ymm_t,
           typename ymm_t2 = typename vtype2::ymm_t>
-static inline int64_t partition_avx512(type_t1 *keys,
+static inline int64_t partition_avx2(type_t1 *keys,
                                        type_t2 *indexes,
                                        int64_t left,
                                        int64_t right,
