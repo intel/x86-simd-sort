@@ -3,11 +3,87 @@
 #include "cpuinfo.h"
 #include "rand_array.h"
 #include <gtest/gtest.h>
+#include <cmath>
+#include <limits>
+
+void add_random_infs(std::vector<float> &arr){
+    const int arrSize = arr.size();
+    if (arrSize == 0) return;
+    static std::random_device r;
+    static std::default_random_engine e1(r());
+    e1.seed(42);
+    e1.discard(1000);
+    std::uniform_int_distribution<int64_t> uniform_dist(0, arrSize-1);
+    
+    int64_t numNans = uniform_dist(e1);
+    
+    for (int64_t i = 0; i < numNans; i++){
+        int64_t index = uniform_dist(e1);
+        arr.insert(arr.begin() + index, std::numeric_limits<float>::infinity());
+    }
+}
+
+void add_random_infs(std::vector<double> &arr){
+    const int arrSize = arr.size();
+    if (arrSize == 0) return;
+    static std::random_device r;
+    static std::default_random_engine e1(r());
+    e1.seed(42);
+    e1.discard(1000);
+    std::uniform_int_distribution<int64_t> uniform_dist(0, arrSize-1);
+    
+    int64_t numNans = uniform_dist(e1);
+    
+    for (int64_t i = 0; i < numNans; i++){
+        int64_t index = uniform_dist(e1);
+        arr.insert(arr.begin() + index, std::numeric_limits<double>::infinity());
+    }
+}
+
+void add_random_nans(std::vector<float> &arr){
+    const int arrSize = arr.size();
+    if (arrSize == 0) return;
+    static std::random_device r;
+    static std::default_random_engine e1(r());
+    e1.seed(42);
+    e1.discard(1000);
+    std::uniform_int_distribution<int64_t> uniform_dist(0, arrSize-1);
+    
+    int64_t numNans = uniform_dist(e1);
+    
+    for (int64_t i = 0; i < numNans; i++){
+        int64_t index = uniform_dist(e1);
+        arr.insert(arr.begin() + index, std::nanf(""));
+    }
+}
+
+void add_random_nans(std::vector<double> &arr){
+    const int arrSize = arr.size();
+    if (arrSize == 0) return;
+    static std::random_device r;
+    static std::default_random_engine e1(r());
+    e1.seed(42);
+    e1.discard(1000);
+    std::uniform_int_distribution<int64_t> uniform_dist(0, arrSize-1);
+    
+    int64_t numNans = uniform_dist(e1);
+    
+    for (int64_t i = 0; i < numNans; i++){
+        int64_t index = uniform_dist(e1);
+        arr.insert(arr.begin() + index, std::nan(""));
+    }
+}
+
 
 template <typename T>
 class avx2_sort : public ::testing::Test {
 };
 TYPED_TEST_SUITE_P(avx2_sort);
+
+template <typename T>
+class avx2_float_sort : public ::testing::Test {
+};
+TYPED_TEST_SUITE_P(avx2_float_sort);
 
 TYPED_TEST_P(avx2_sort, test_random)
 {
@@ -25,6 +101,48 @@ TYPED_TEST_P(avx2_sort, test_random)
         std::sort(sortedarr.begin(), sortedarr.end());
         avx2_qsort<TypeParam>(arr.data(), arr.size());
         ASSERT_EQ(sortedarr, arr) << "Array size = " << arrsizes[ii];
+        arr.clear();
+        sortedarr.clear();
+    }
+}
+
+TYPED_TEST_P(avx2_float_sort, test_random_with_specials)
+{
+    std::vector<int64_t> arrsizes;
+    for (int64_t ii = 0; ii < 1024; ++ii) {
+        arrsizes.push_back((TypeParam)ii);
+    }
+    std::vector<TypeParam> arr;
+    std::vector<TypeParam> sortedarr;
+    for (size_t ii = 0; ii < arrsizes.size(); ++ii) {
+        /* Random array */
+        arr = get_uniform_rand_array<TypeParam>(arrsizes[ii]);
+        
+        // Add infinities to both, and nans to only the array given to avx sort
+        add_random_infs(arr);
+        sortedarr = arr;
+        add_random_nans(arr);
+        
+        /* Sort with std::sort for comparison */
+        std::sort(sortedarr.begin(), sortedarr.end());
+        
+        // Sort with AVX
+        avx2_qsort<TypeParam>(arr.data(), arr.size());
+        
+        // Validate non NaN part
+        for (int i = 0; i < sortedarr.size(); i++){
+            if (arr[i] != sortedarr[i]){
+                FAIL() << "Array not sorted correctly\n";
+            }
+        }
+        
+        // Validate NaNs
+        for (int i = sortedarr.size(); i < arr.size(); i++){
+            if (!std::isnan(arr[i])){
+                FAIL() << "End of array is not all NaNs\n";
+            }
+        }
+        
         arr.clear();
         sortedarr.clear();
     }
@@ -123,9 +241,14 @@ TYPED_TEST_P(avx2_sort, test_max_value_at_end_of_array)
 
 REGISTER_TYPED_TEST_SUITE_P(avx2_sort,
                             test_random, test_reverse, test_constant, test_small_range, test_max_value_at_end_of_array);
+REGISTER_TYPED_TEST_SUITE_P(avx2_float_sort, test_random_with_specials);
 
 using Types = testing::Types<float, int32_t, uint32_t, double, int64_t, uint64_t>;
 INSTANTIATE_TYPED_TEST_SUITE_P(T, avx2_sort, Types);
+
+using FloatTypes = testing::Types<float, double>;
+INSTANTIATE_TYPED_TEST_SUITE_P(T, avx2_float_sort, FloatTypes);
+
 
 template <typename T>
 class avx2_select : public ::testing::Test {
