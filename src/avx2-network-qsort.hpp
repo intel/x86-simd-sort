@@ -59,9 +59,6 @@ X86_SIMD_SORT_INLINE void bitonic_fullmerge_n_vec(ymm_t *ymm)
     }
 }
 
-template <typename vtype, typename ymm_t = typename vtype::ymm_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_ymm_32bit(ymm_t *ymm);
-
 template <typename vtype, int numVecs, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
 {
