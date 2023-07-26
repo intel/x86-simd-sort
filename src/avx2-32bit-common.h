@@ -412,11 +412,6 @@ struct ymm_vector<float> {
     {
         return _mm256_castps_si256(_mm256_cmp_ps(x, y, _CMP_EQ_OQ));
     }
-    template <int type>
-    static opmask_t fpclass(ymm_t x)
-    {
-        return avx2_emu_fpclassify32<type_t>(x, type);
-    }
     template <int scale>
     static ymm_t
     mask_i64gather(ymm_t src, opmask_t mask, __m256i index, void const *base)

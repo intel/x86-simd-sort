@@ -195,40 +195,6 @@ T avx2_emu_reduce_min64(typename ymm_vector<T>::ymm_t x)
     return std::min<T>(can1, can2);
 }
 
-// TODO this is not perfect! does not distinguish types of NaNs, types of zeros, types of infinities
-template <typename T>
-bool scalar_emu_fpclassify(T x, int mask)
-{
-    int classification = std::fpclassify(x);
-    int unmasked = 0;
-
-    switch (classification) {
-        case FP_INFINITE: unmasked |= 0x08 | 0x10; break;
-        case FP_ZERO: unmasked |= 0x02 | 0x04; break;
-        case FP_NAN: unmasked |= 0x01 | 0x80; break;
-        case FP_SUBNORMAL: unmasked |= 0x20; break;
-    }
-    if (x < 0) unmasked |= 0x40;
-
-    return (unmasked & mask) != 0;
-}
-
-template <typename T>
-typename ymm_vector<T>::opmask_t
-avx2_emu_fpclassify32(typename ymm_vector<T>::ymm_t x, int mask)
-{
-    using vtype = ymm_vector<T>;
-    T store[vtype::numlanes];
-    vtype::storeu(&store[0], x);
-    int32_t res[vtype::numlanes];
-
-    for (int i = 0; i < vtype::numlanes; i++) {
-        bool flagged = scalar_emu_fpclassify(store[i]);
-        res[i] = 0xFFFFFFFF;
-    }
-    return vtype::loadu(res);
-}
-
 template <typename T>
 typename ymm_vector<T>::opmask_t
 avx2_emu_fpclassify64(typename ymm_vector<T>::ymm_t x, int mask)
