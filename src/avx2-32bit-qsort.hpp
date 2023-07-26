@@ -10,8 +10,8 @@
 #include "avx2-32bit-common.h"
 #include "avx2-network-qsort.hpp"
 
-namespace x86_simd_sort{
-namespace avx2{
+namespace x86_simd_sort {
+namespace avx2 {
 
 template <typename vtype, typename type_t>
 static void
@@ -76,11 +76,14 @@ static void qselect_32bit_(type_t *arr,
         qselect_32bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
-}
-}
+} // namespace avx2
+} // namespace x86_simd_sort
 
 template <>
-void avx2_qselect<int32_t>(int32_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
+void avx2_qselect<int32_t>(int32_t *arr,
+                           int64_t k,
+                           int64_t arrsize,
+                           bool /*hasnan*/)
 {
     using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
@@ -90,7 +93,10 @@ void avx2_qselect<int32_t>(int32_t *arr, int64_t k, int64_t arrsize, bool /*hasn
 }
 
 template <>
-void avx2_qselect<uint32_t>(uint32_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
+void avx2_qselect<uint32_t>(uint32_t *arr,
+                            int64_t k,
+                            int64_t arrsize,
+                            bool /*hasnan*/)
 {
     using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
@@ -105,11 +111,11 @@ void avx2_qselect<float>(float *arr, int64_t k, int64_t arrsize, bool hasnan)
     using namespace x86_simd_sort::avx2;
     int64_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
-         indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     }
     if (indx_last_elem >= k) {
         qselect_32bit_<ymm_vector<float>, float>(
-            arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
+                arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }
 

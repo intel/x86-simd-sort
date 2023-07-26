@@ -10,11 +10,11 @@
 #include "avx2-64bit-common.h"
 #include "avx2-network-qsort.hpp"
 
-#define PERMUTE_MASK_IMPL(a,b,c,d) (SHUFFLE_MASK(a,b,c,d))
+#define PERMUTE_MASK_IMPL(a, b, c, d) (SHUFFLE_MASK(a, b, c, d))
 #define PERMUTE_MASK(...) PERMUTE_MASK_IMPL(__VA_ARGS__)
 
-namespace x86_simd_sort{
-namespace avx2{
+namespace x86_simd_sort {
+namespace avx2 {
 
 template <typename vtype, typename type_t>
 static void
@@ -80,11 +80,14 @@ static void qselect_64bit_(type_t *arr,
         qselect_64bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
-}
-}
+} // namespace avx2
+} // namespace x86_simd_sort
 
 template <>
-void avx2_qselect<int64_t>(int64_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
+void avx2_qselect<int64_t>(int64_t *arr,
+                           int64_t k,
+                           int64_t arrsize,
+                           bool /*hasnan*/)
 {
     using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
@@ -94,7 +97,10 @@ void avx2_qselect<int64_t>(int64_t *arr, int64_t k, int64_t arrsize, bool /*hasn
 }
 
 template <>
-void avx2_qselect<uint64_t>(uint64_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
+void avx2_qselect<uint64_t>(uint64_t *arr,
+                            int64_t k,
+                            int64_t arrsize,
+                            bool /*hasnan*/)
 {
     using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
@@ -109,11 +115,11 @@ void avx2_qselect<double>(double *arr, int64_t k, int64_t arrsize, bool hasnan)
     using namespace x86_simd_sort::avx2;
     int64_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
-         indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     }
     if (indx_last_elem >= k) {
         qselect_64bit_<ymm_vector<double>, double>(
-            arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
+                arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }
 

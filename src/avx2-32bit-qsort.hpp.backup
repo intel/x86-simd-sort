@@ -784,7 +784,10 @@ static void qselect_64bit_(type_t *arr,
 }
 
 template <>
-void avx512_qselect<int64_t>(int64_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+void avx512_qselect<int64_t>(int64_t *arr,
+                             int64_t k,
+                             int64_t arrsize,
+                             bool hasnan)
 {
     if (arrsize > 1) {
         qselect_64bit_<zmm_vector<int64_t>, int64_t>(
@@ -793,7 +796,10 @@ void avx512_qselect<int64_t>(int64_t *arr, int64_t k, int64_t arrsize, bool hasn
 }
 
 template <>
-void avx512_qselect<uint64_t>(uint64_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+void avx512_qselect<uint64_t>(uint64_t *arr,
+                              int64_t k,
+                              int64_t arrsize,
+                              bool hasnan)
 {
     if (arrsize > 1) {
         qselect_64bit_<zmm_vector<uint64_t>, uint64_t>(
@@ -802,15 +808,18 @@ void avx512_qselect<uint64_t>(uint64_t *arr, int64_t k, int64_t arrsize, bool ha
 }
 
 template <>
-void avx512_qselect<double>(double *arr, int64_t k, int64_t arrsize, bool hasnan)
+void avx512_qselect<double>(double *arr,
+                            int64_t k,
+                            int64_t arrsize,
+                            bool hasnan)
 {
     int64_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
-         indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     }
     if (indx_last_elem >= k) {
         qselect_64bit_<zmm_vector<double>, double>(
-            arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
+                arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }
 

@@ -84,8 +84,8 @@
 #define X86_SIMD_SORT_FINLINE static
 #endif
 
-#define LIKELY(x)       __builtin_expect((x),1)
-#define UNLIKELY(x)     __builtin_expect((x),0)
+#define LIKELY(x) __builtin_expect((x), 1)
+#define UNLIKELY(x) __builtin_expect((x), 0)
 
 // Regular quicksort routines:
 template <typename T>
@@ -95,14 +95,15 @@ template <typename T>
 void avx2_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false);
 
 template <typename T>
-inline void avx2_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+inline void
+avx2_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
 {
     avx2_qselect<T>(arr, k - 1, arrsize, hasnan);
     avx2_qsort<T>(arr, k - 1);
 }
 
-namespace x86_simd_sort{
-namespace avx2{
+namespace x86_simd_sort {
+namespace avx2 {
 
 template <typename type>
 struct ymm_vector;
@@ -118,7 +119,7 @@ bool is_a_nan(T elem)
  * in the array which is not a nan
  */
 template <typename T>
-int64_t move_nans_to_end_of_array(T* arr, int64_t arrsize)
+int64_t move_nans_to_end_of_array(T *arr, int64_t arrsize)
 {
     int64_t jj = arrsize - 1;
     int64_t ii = 0;
@@ -133,7 +134,7 @@ int64_t move_nans_to_end_of_array(T* arr, int64_t arrsize)
             ii += 1;
         }
     }
-    return arrsize-count-1;
+    return arrsize - count - 1;
 }
 
 template <typename vtype, typename T = typename vtype::type_t>
@@ -177,9 +178,10 @@ static inline int32_t partition_vec(type_t *arr,
 {
     /* which elements are larger than or equal to the pivot */
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
-    
-    int32_t amount_ge_pivot = vtype::double_compressstore(arr+left, arr+right, ge_mask, curr_vec);
-    
+
+    int32_t amount_ge_pivot = vtype::double_compressstore(
+            arr + left, arr + right, ge_mask, curr_vec);
+
     *smallest_vec = vtype::min(curr_vec, *smallest_vec);
     *biggest_vec = vtype::max(curr_vec, *biggest_vec);
     return amount_ge_pivot;
@@ -190,11 +192,11 @@ static inline int32_t partition_vec(type_t *arr,
  */
 template <typename vtype, typename type_t>
 static inline int64_t partition_avx2(type_t *arr,
-                                       int64_t left,
-                                       int64_t right,
-                                       type_t pivot,
-                                       type_t *smallest,
-                                       type_t *biggest)
+                                     int64_t left,
+                                     int64_t right,
+                                     type_t pivot,
+                                     type_t *smallest,
+                                     type_t *biggest)
 {
     /* make array length divisible by vtype::numlanes , shortening the array */
     for (int32_t i = (right - left) % vtype::numlanes; i > 0; --i) {
@@ -294,11 +296,11 @@ template <typename vtype,
           int num_unroll,
           typename type_t = typename vtype::type_t>
 static inline int64_t partition_avx2_unrolled(type_t *arr,
-                                                int64_t left,
-                                                int64_t right,
-                                                type_t pivot,
-                                                type_t *smallest,
-                                                type_t *biggest)
+                                              int64_t left,
+                                              int64_t right,
+                                              type_t pivot,
+                                              type_t *smallest,
+                                              type_t *biggest)
 {
     if (right - left <= 2 * num_unroll * vtype::numlanes) {
         return partition_avx2<vtype>(
@@ -492,12 +494,12 @@ template <typename vtype1,
           typename ymm_t1 = typename vtype1::ymm_t,
           typename ymm_t2 = typename vtype2::ymm_t>
 static inline int64_t partition_avx2(type_t1 *keys,
-                                       type_t2 *indexes,
-                                       int64_t left,
-                                       int64_t right,
-                                       type_t1 pivot,
-                                       type_t1 *smallest,
-                                       type_t1 *biggest)
+                                     type_t2 *indexes,
+                                     int64_t left,
+                                     int64_t right,
+                                     type_t1 pivot,
+                                     type_t1 *smallest,
+                                     type_t1 *biggest)
 {
     /* make array length divisible by vtype1::numlanes , shortening the array */
     for (int32_t i = (right - left) % vtype1::numlanes; i > 0; --i) {
@@ -615,7 +617,7 @@ static inline int64_t partition_avx2(type_t1 *keys,
     *biggest = vtype1::reducemax(max_vec);
     return l_store;
 }
-}
-}
+} // namespace avx2
+} // namespace x86_simd_sort
 
 #endif // AVX512_QSORT_COMMON
