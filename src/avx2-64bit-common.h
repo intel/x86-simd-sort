@@ -263,16 +263,15 @@ struct ymm_vector<uint64_t> {
     }
     static opmask_t ge(ymm_t x, ymm_t y)
     {
-        // TODO real implementation
-        uint64_t _x[4];
-        uint64_t _y[4];
-        storeu(_x, x);
-        storeu(_y, y);
-        uint64_t res[4];
-        for (int i = 0; i < 4; i++) {
-            res[i] = _x[i] >= _y[i] ? 0xFFFFFFFFFFFFFFFF : 0;
-        }
-        return loadu(res);
+        opmask_t equal = eq(x, y);
+
+        const __m256i offset = _mm256_set1_epi64x(0x8000000000000000);
+        x = _mm256_add_epi64(x, offset);
+        y = _mm256_add_epi64(y, offset);
+
+        opmask_t greater = _mm256_cmpgt_epi64(x, y);
+        return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(equal),
+                                                _mm256_castsi256_pd(greater)));
     }
     static opmask_t eq(ymm_t x, ymm_t y)
     {
