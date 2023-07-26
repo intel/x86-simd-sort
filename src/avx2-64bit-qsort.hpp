@@ -13,6 +13,9 @@
 #define PERMUTE_MASK_IMPL(a,b,c,d) (SHUFFLE_MASK(a,b,c,d))
 #define PERMUTE_MASK(...) PERMUTE_MASK_IMPL(__VA_ARGS__)
 
+namespace x86_simd_sort{
+namespace avx2{
+
 template <typename vtype, typename type_t>
 static void
 qsort_64bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
@@ -77,9 +80,13 @@ static void qselect_64bit_(type_t *arr,
         qselect_64bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
+}
+}
+
 template <>
 void avx2_qselect<int64_t>(int64_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         qselect_64bit_<ymm_vector<int64_t>, int64_t>(
                 arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
@@ -89,6 +96,7 @@ void avx2_qselect<int64_t>(int64_t *arr, int64_t k, int64_t arrsize, bool /*hasn
 template <>
 void avx2_qselect<uint64_t>(uint64_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         qselect_64bit_<ymm_vector<uint64_t>, uint64_t>(
                 arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
@@ -98,6 +106,7 @@ void avx2_qselect<uint64_t>(uint64_t *arr, int64_t k, int64_t arrsize, bool /*ha
 template <>
 void avx2_qselect<double>(double *arr, int64_t k, int64_t arrsize, bool hasnan)
 {
+    using namespace x86_simd_sort::avx2;
     int64_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
          indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
@@ -111,6 +120,7 @@ void avx2_qselect<double>(double *arr, int64_t k, int64_t arrsize, bool hasnan)
 template <>
 void avx2_qsort<int64_t>(int64_t *arr, int64_t arrsize)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         qsort_64bit_<ymm_vector<int64_t>, int64_t>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
@@ -120,6 +130,7 @@ void avx2_qsort<int64_t>(int64_t *arr, int64_t arrsize)
 template <>
 void avx2_qsort<uint64_t>(uint64_t *arr, int64_t arrsize)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         qsort_64bit_<ymm_vector<uint64_t>, uint64_t>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
@@ -129,6 +140,7 @@ void avx2_qsort<uint64_t>(uint64_t *arr, int64_t arrsize)
 template <>
 void avx2_qsort<double>(double *arr, int64_t arrsize)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         int64_t nan_count = replace_nan_with_inf(arr, arrsize);
         qsort_64bit_<ymm_vector<double>, double>(

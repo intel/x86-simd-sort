@@ -1,6 +1,9 @@
 #ifndef AVX2_NETWORK_QSORT
 #define AVX2_NETWORK_QSORT
 
+namespace x86_simd_sort{
+namespace avx2{
+
 template <typename vtype, int64_t numVecs, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE void bitonic_clean_n_vec(ymm_t *ymm)
 {
@@ -108,6 +111,8 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
 template <typename vtype, int64_t maxN>
 X86_SIMD_SORT_INLINE void sort_n(typename vtype::type_t *arr, int N){
     sort_n_vec<vtype, maxN / vtype::numlanes>(arr, N);
+}
+}
 }
 
 #endif

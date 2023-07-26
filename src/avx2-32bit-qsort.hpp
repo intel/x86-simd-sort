@@ -10,6 +10,9 @@
 #include "avx2-32bit-common.h"
 #include "avx2-network-qsort.hpp"
 
+namespace x86_simd_sort{
+namespace avx2{
+
 template <typename vtype, typename type_t>
 static void
 qsort_32bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
@@ -73,9 +76,13 @@ static void qselect_32bit_(type_t *arr,
         qselect_32bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
+}
+}
+
 template <>
 void avx2_qselect<int32_t>(int32_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         qselect_32bit_<ymm_vector<int32_t>, int32_t>(
                 arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
@@ -85,6 +92,7 @@ void avx2_qselect<int32_t>(int32_t *arr, int64_t k, int64_t arrsize, bool /*hasn
 template <>
 void avx2_qselect<uint32_t>(uint32_t *arr, int64_t k, int64_t arrsize, bool /*hasnan*/)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         qselect_32bit_<ymm_vector<uint32_t>, uint32_t>(
                 arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
@@ -94,6 +102,7 @@ void avx2_qselect<uint32_t>(uint32_t *arr, int64_t k, int64_t arrsize, bool /*ha
 template <>
 void avx2_qselect<float>(float *arr, int64_t k, int64_t arrsize, bool hasnan)
 {
+    using namespace x86_simd_sort::avx2;
     int64_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
          indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
@@ -107,6 +116,7 @@ void avx2_qselect<float>(float *arr, int64_t k, int64_t arrsize, bool hasnan)
 template <>
 void avx2_qsort<int32_t>(int32_t *arr, int64_t arrsize)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         qsort_32bit_<ymm_vector<int32_t>, int32_t>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
@@ -116,6 +126,7 @@ void avx2_qsort<int32_t>(int32_t *arr, int64_t arrsize)
 template <>
 void avx2_qsort<uint32_t>(uint32_t *arr, int64_t arrsize)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         qsort_32bit_<ymm_vector<uint32_t>, uint32_t>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
@@ -125,6 +136,7 @@ void avx2_qsort<uint32_t>(uint32_t *arr, int64_t arrsize)
 template <>
 void avx2_qsort<float>(float *arr, int64_t arrsize)
 {
+    using namespace x86_simd_sort::avx2;
     if (arrsize > 1) {
         int64_t nan_count = replace_nan_with_inf(arr, arrsize);
         qsort_32bit_<ymm_vector<float>, float>(

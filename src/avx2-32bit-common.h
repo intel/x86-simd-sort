@@ -20,6 +20,9 @@
 #define NETWORK_32BIT_3 5, 4, 7, 6, 1, 0, 3, 2
 #define NETWORK_32BIT_4 3, 2, 1, 0, 7, 6, 5, 4
 
+namespace x86_simd_sort{
+namespace avx2{
+
 // Assumes ymm is bitonic and performs a recursive half cleaner
 template <typename vtype, typename ymm_t = typename vtype::ymm_t>
 X86_SIMD_SORT_INLINE ymm_t bitonic_merge_ymm_32bit(ymm_t ymm)
@@ -543,5 +546,6 @@ X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
     ymm_t sort = sort_ymm_32bit<vtype>(rand_vec);
     return ((type_t *)&sort)[4];
 }
-
+}
+}
 #endif

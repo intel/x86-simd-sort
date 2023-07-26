@@ -87,9 +87,6 @@
 #define LIKELY(x)       __builtin_expect((x),1)
 #define UNLIKELY(x)     __builtin_expect((x),0)
 
-template <typename type>
-struct ymm_vector;
-
 // Regular quicksort routines:
 template <typename T>
 void avx2_qsort(T *arr, int64_t arrsize);
@@ -103,6 +100,12 @@ inline void avx2_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan =
     avx2_qselect<T>(arr, k - 1, arrsize, hasnan);
     avx2_qsort<T>(arr, k - 1);
 }
+
+namespace x86_simd_sort{
+namespace avx2{
+
+template <typename type>
+struct ymm_vector;
 
 template <typename T>
 bool is_a_nan(T elem)
@@ -612,4 +615,7 @@ static inline int64_t partition_avx2(type_t1 *keys,
     *biggest = vtype1::reducemax(max_vec);
     return l_store;
 }
+}
+}
+
 #endif // AVX512_QSORT_COMMON

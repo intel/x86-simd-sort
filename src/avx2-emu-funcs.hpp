@@ -1,6 +1,9 @@
 #ifndef AVX2_EMU_FUNCS
 #define AVX2_EMU_FUNCS
 
+namespace x86_simd_sort{
+namespace avx2{
+
 class avx2_mask_helper_lut_gen32{
 public:
     __m256i lut[256];
@@ -366,6 +369,8 @@ typename ymm_vector<T>::ymm_t avx2_emu_min(typename ymm_vector<T>::ymm_t x, type
     using vtype = ymm_vector<T>;
     typename vtype::opmask_t nlt = vtype::ge(x,y);
     return _mm256_castpd_si256(_mm256_blendv_pd(_mm256_castsi256_pd(x), _mm256_castsi256_pd(y), _mm256_castsi256_pd(nlt)));
+}
+}
 }
 
 #endif
