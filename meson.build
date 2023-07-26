@@ -4,6 +4,7 @@ project('x86-simd-sort', 'cpp',
         default_options : ['cpp_std=c++17'])
 cpp = meson.get_compiler('cpp')
 src = include_directories('src')
+lib = include_directories('lib')
 bench = include_directories('benchmarks')
 utils = include_directories('utils')
 tests = include_directories('tests')
@@ -19,8 +20,15 @@ int main() {
 '''
 cancompilefp16 = cpp.compiles(fp16code, args:'-march=sapphirerapids')
 
+subdir('lib')
 subdir('tests')
 subdir('benchmarks')
+
+libsimdsort = shared_library('x86simdsort',
+                             'lib/x86simdsort.cpp',
+                             include_directories : [lib],
+                             link_whole : [libtargets],
+                            )
 
 testexe = executable('testexe',
                      include_directories : [src, utils],

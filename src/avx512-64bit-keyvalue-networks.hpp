@@ -1,4 +1,5 @@
-
+#ifndef AVX512_KEYVALUE_NETWORKS
+#define AVX512_KEYVALUE_NETWORKS
 template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
@@ -455,3 +456,4 @@ X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_zmm_64bit(reg_t *key_zmm,
     index_zmm[14] = index_reg_t15;
     index_zmm[15] = index_reg_t16;
 }
+#endif // AVX512_KEYVALUE_NETWORKS
