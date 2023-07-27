@@ -6,6 +6,7 @@
  *          Serge Sans Paille <serge.guelton@telecom-bretagne.eu>
  *          Liu Zhuan <zhuan.liu@intel.com>
  *          Tang Xi <xi.tang@intel.com>
+ *          Matthew Sterrett <matthew.sterrett@intel.com>
  * ****************************************************************/
 
 #ifndef AVX2_QSORT_COMMON
