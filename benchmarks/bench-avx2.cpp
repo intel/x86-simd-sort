@@ -119,12 +119,6 @@ BENCH_BOTH_QSORT(double)
 template <typename T>
 static void avx2_qselect(benchmark::State &state)
 {
-    if (!cpu_has_avx512bw()) {
-        state.SkipWithMessage("Requires AVX512 BW ISA");
-    }
-    if ((sizeof(T) == 2) && (!cpu_has_avx512_vbmi2())) {
-        state.SkipWithMessage("Requires AVX512 VBMI2 ISA");
-    }
     // Perform setup here
     int64_t K = state.range(0);
     size_t ARRSIZE = 10000;
