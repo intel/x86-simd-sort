@@ -147,7 +147,7 @@ bool comparison_func(const T &a, const T &b)
  * COEX == Compare and Exchange two registers by swapping min and max values
  */
 template <typename vtype, typename mm_t>
-static void COEX(mm_t &a, mm_t &b)
+static inline void COEX(mm_t &a, mm_t &b)
 {
     mm_t temp = a;
     a = vtype::min(a, b);
