@@ -22,5 +22,5 @@ libbench += static_library('bench_avx2',
     files('bench-avx2.cpp', ),
     dependencies: gbench_dep,
     include_directories : [src, utils],
-    cpp_args : ['-O3', '-march=alderlake'],
+    cpp_args : ['-O3', '-march=haswell'],
     )

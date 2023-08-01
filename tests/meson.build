@@ -34,5 +34,5 @@ libtests += static_library('tests_qsort_avx2',
   files('test-avx2.cpp', ),
   dependencies: gtest_dep,
   include_directories : [src, utils],
-  cpp_args : ['-O3', '-march=alderlake'],
+  cpp_args : ['-O3', '-march=haswell'],
   )
