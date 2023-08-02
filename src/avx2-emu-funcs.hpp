@@ -1,36 +1,102 @@
 #ifndef AVX2_EMU_FUNCS
 #define AVX2_EMU_FUNCS
 
+#include <array>
+#include <utility>
+
 namespace x86_simd_sort {
 namespace avx2 {
 
-class avx2_mask_helper_lut_gen32 {
-public:
-    __m256i lut[256];
-
-private:
-    void build_lut()
-    {
-        for (int64_t i = 0; i <= 0xFF; i++) {
-            int32_t entry[8];
-            for (int j = 0; j < 8; j++) {
-                if (((i >> j) & 1) == 1)
-                    entry[j] = 0xFFFFFFFF;
-                else
-                    entry[j] = 0;
-            }
-            lut[i] = _mm256_loadu_si256((__m256i *)&entry[0]);
+constexpr auto avx2_mask_helper_lut32 = [] {
+    std::array<std::array<int32_t, 8>, 256> lut {};
+    for (int64_t i = 0; i <= 0xFF; i++) {
+        std::array<int32_t, 8> entry {};
+        for (int j = 0; j < 8; j++) {
+            if (((i >> j) & 1) == 1)
+                entry[j] = 0xFFFFFFFF;
+            else
+                entry[j] = 0;
         }
+        lut[i] = entry;
     }
+    return lut;
+}();
 
-public:
-    avx2_mask_helper_lut_gen32()
-    {
-        build_lut();
+constexpr auto avx2_mask_helper_lut64 = [] {
+    std::array<std::array<int64_t, 4>, 16> lut {};
+    for (int64_t i = 0; i <= 0xF; i++) {
+        std::array<int64_t, 4> entry {};
+        for (int j = 0; j < 4; j++) {
+            if (((i >> j) & 1) == 1)
+                entry[j] = 0xFFFFFFFFFFFFFFFF;
+            else
+                entry[j] = 0;
+        }
+        lut[i] = entry;
     }
-};
-avx2_mask_helper_lut_gen32 avx2_mask_helper_lut32
-        = avx2_mask_helper_lut_gen32();
+    return lut;
+}();
+
+constexpr auto avx2_compressstore_lut32_gen = [] {
+    std::array<std::array<std::array<int32_t, 8>, 256>, 2> lutPair {};
+    auto &permLut = lutPair[0];
+    auto &leftLut = lutPair[1];
+    for (int64_t i = 0; i <= 0xFF; i++) {
+        std::array<int32_t, 8> indices {};
+        std::array<int32_t, 8> leftEntry = {0, 0, 0, 0, 0, 0, 0, 0};
+        int right = 7;
+        int left = 0;
+        for (int j = 0; j < 8; j++) {
+            bool ge = (i >> j) & 1;
+            if (ge) {
+                indices[right] = j;
+                right--;
+            }
+            else {
+                indices[left] = j;
+                leftEntry[left] = 0xFFFFFFFF;
+                left++;
+            }
+        }
+        permLut[i] = indices;
+        leftLut[i] = leftEntry;
+    }
+    return lutPair;
+}();
+constexpr auto avx2_compressstore_lut32_perm = avx2_compressstore_lut32_gen[0];
+constexpr auto avx2_compressstore_lut32_left = avx2_compressstore_lut32_gen[1];
+
+constexpr auto avx2_compressstore_lut64_gen = [] {
+    std::array<std::array<int32_t, 8>, 16> permLut {};
+    std::array<std::array<int64_t, 4>, 16> leftLut {};
+    for (int64_t i = 0; i <= 0xF; i++) {
+        std::array<int32_t, 8> indices {};
+        std::array<int64_t, 4> leftEntry = {0, 0, 0, 0};
+        int right = 7;
+        int left = 0;
+        for (int j = 0; j < 4; j++) {
+            bool ge = (i >> j) & 1;
+            if (ge) {
+                indices[right] = 2 * j + 1;
+                indices[right - 1] = 2 * j;
+                right -= 2;
+            }
+            else {
+                indices[left + 1] = 2 * j + 1;
+                indices[left] = 2 * j;
+                leftEntry[left / 2] = 0xFFFFFFFFFFFFFFFF;
+                left += 2;
+            }
+        }
+        permLut[i] = indices;
+        leftLut[i] = leftEntry;
+    }
+    return std::make_pair(permLut, leftLut);
+}();
+constexpr auto avx2_compressstore_lut64_perm
+        = avx2_compressstore_lut64_gen.first;
+constexpr auto avx2_compressstore_lut64_left
+        = avx2_compressstore_lut64_gen.second;
 
 struct avx2_mask_helper32 {
     __m256i mask;
@@ -60,7 +126,8 @@ struct avx2_mask_helper32 {
 private:
     __m256i converter(int m)
     {
-        return avx2_mask_helper_lut32.lut[m];
+        return _mm256_loadu_si256(
+                (const __m256i *)avx2_mask_helper_lut32[m].data());
     }
 
     int32_t converter(__m256i m)
@@ -72,34 +139,6 @@ __m256i operator~(const avx2_mask_helper32 x)
 {
     return ~x.mask;
 }
-
-class avx2_mask_helper_lut_gen64 {
-public:
-    __m256i lut[16];
-
-private:
-    void build_lut()
-    {
-        for (int64_t i = 0; i <= 0xF; i++) {
-            int64_t entry[4];
-            for (int j = 0; j < 4; j++) {
-                if (((i >> j) & 1) == 1)
-                    entry[j] = 0xFFFFFFFFFFFFFFFF;
-                else
-                    entry[j] = 0;
-            }
-            lut[i] = _mm256_loadu_si256((__m256i *)&entry[0]);
-        }
-    }
-
-public:
-    avx2_mask_helper_lut_gen64()
-    {
-        build_lut();
-    }
-};
-avx2_mask_helper_lut_gen64 avx2_mask_helper_lut64
-        = avx2_mask_helper_lut_gen64();
 
 struct avx2_mask_helper64 {
     __m256i mask;
@@ -129,7 +168,8 @@ struct avx2_mask_helper64 {
 private:
     __m256i converter(int m)
     {
-        return avx2_mask_helper_lut64.lut[m];
+        return _mm256_loadu_si256(
+                (const __m256i *)avx2_mask_helper_lut64[m].data());
     }
 
     int32_t converter(__m256i m)
@@ -222,87 +262,6 @@ __m256d avx2_emu_permute_64bit(__m256d x, __m256i mask)
             _mm256_permutevar8x32_epi32(_mm256_castpd_si256(x), mask));
 }
 
-class avx2_compressstore_lut32_gen {
-public:
-    __m256i permLut[256];
-    __m256i leftLut[256];
-
-private:
-    void build_lut()
-    {
-        for (int64_t i = 0; i <= 0xFF; i++) {
-            int32_t indices[8];
-            int32_t leftEntry[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-            int right = 7;
-            int left = 0;
-            for (int j = 0; j < 8; j++) {
-                bool ge = (i >> j) & 1;
-                if (ge) {
-                    indices[right] = j;
-                    right--;
-                }
-                else {
-                    indices[left] = j;
-                    leftEntry[left] = 0xFFFFFFFF;
-                    left++;
-                }
-            }
-            permLut[i] = _mm256_loadu_si256((__m256i *)&indices[0]);
-            leftLut[i] = _mm256_loadu_si256((__m256i *)&leftEntry[0]);
-        }
-    }
-
-public:
-    avx2_compressstore_lut32_gen()
-    {
-        build_lut();
-    }
-};
-
-class avx2_compressstore_lut64_gen {
-public:
-    __m256i permLut[16];
-    __m256i leftLut[16];
-
-private:
-    void build_lut()
-    {
-        for (int64_t i = 0; i <= 0xF; i++) {
-            int32_t indices[8];
-            int64_t leftEntry[4] = {0, 0, 0, 0};
-            int right = 7;
-            int left = 0;
-            for (int j = 0; j < 4; j++) {
-                bool ge = (i >> j) & 1;
-                if (ge) {
-                    indices[right] = 2 * j + 1;
-                    indices[right - 1] = 2 * j;
-                    right -= 2;
-                }
-                else {
-                    indices[left + 1] = 2 * j + 1;
-                    indices[left] = 2 * j;
-                    leftEntry[left / 2] = 0xFFFFFFFFFFFFFFFF;
-                    left += 2;
-                }
-            }
-            permLut[i] = _mm256_loadu_si256((__m256i *)&indices[0]);
-            leftLut[i] = _mm256_loadu_si256((__m256i *)&leftEntry[0]);
-        }
-    }
-
-public:
-    avx2_compressstore_lut64_gen()
-    {
-        build_lut();
-    }
-};
-
-const avx2_compressstore_lut32_gen avx2_compressstore_lut32
-        = avx2_compressstore_lut32_gen();
-const avx2_compressstore_lut64_gen avx2_compressstore_lut64
-        = avx2_compressstore_lut64_gen();
-
 template <typename T>
 void avx2_emu_mask_compressstoreu(void *base_addr,
                                   typename ymm_vector<T>::opmask_t k,
@@ -356,8 +315,10 @@ int32_t avx2_double_compressstore32(void *left_addr,
     T *rightStore = (T *)right_addr;
 
     int32_t shortMask = avx2_mask_helper32(k);
-    const __m256i &perm = avx2_compressstore_lut32.permLut[shortMask];
-    const __m256i &left = avx2_compressstore_lut32.leftLut[shortMask];
+    const __m256i &perm = _mm256_loadu_si256(
+            (const __m256i *)avx2_compressstore_lut32_perm[shortMask].data());
+    const __m256i &left = _mm256_loadu_si256(
+            (const __m256i *)avx2_compressstore_lut32_left[shortMask].data());
 
     typename vtype::ymm_t temp = vtype::permutevar(reg, perm);
 
@@ -379,8 +340,10 @@ int32_t avx2_double_compressstore64(void *left_addr,
     T *rightStore = (T *)right_addr;
 
     int32_t shortMask = avx2_mask_helper64(k);
-    const __m256i &perm = avx2_compressstore_lut64.permLut[shortMask];
-    const __m256i &left = avx2_compressstore_lut64.leftLut[shortMask];
+    const __m256i &perm = _mm256_loadu_si256(
+            (const __m256i *)avx2_compressstore_lut64_perm[shortMask].data());
+    const __m256i &left = _mm256_loadu_si256(
+            (const __m256i *)avx2_compressstore_lut64_left[shortMask].data());
 
     typename vtype::ymm_t temp = avx2_emu_permute_64bit(reg, perm);
 
