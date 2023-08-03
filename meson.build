@@ -10,7 +10,7 @@ gtest_dep = dependency('gtest_main', required : true, static: true)
 gbench_dep = dependency('benchmark', required : true, static: true)
 
 fp16code = '''#include<immintrin.h>
-int main() { 
+int main() {
   __m512h temp = _mm512_set1_ph(1.0f);
   __m512h var2 = _mm512_min_ph(temp, temp);
   return 0;
@@ -18,7 +18,6 @@ int main() {
 '''
 cancompilefp16 = cpp.compiles(fp16code, args:'-march=sapphirerapids')
 
-subdir('utils')
 subdir('tests')
 subdir('benchmarks')
 
