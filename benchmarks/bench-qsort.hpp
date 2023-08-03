@@ -80,8 +80,8 @@ static void avx512qsort(benchmark::State &state, Args &&...args)
     }
 }
 
-#define BENCH_BOTH_QSORT(type)\
-    BENCH(avx512qsort, type)\
+#define BENCH_BOTH_QSORT(type) \
+    BENCH(avx512qsort, type) \
     BENCH(stdsort, type)
 
 BENCH_BOTH_QSORT(uint64_t)
