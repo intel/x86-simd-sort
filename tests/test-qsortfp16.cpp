@@ -4,14 +4,14 @@
  * *******************************************/
 
 #include "avx512fp16-16bit-qsort.hpp"
-#include "cpuinfo.h"
+
 #include "rand_array.h"
 #include <gtest/gtest.h>
 #include <vector>
 
 TEST(avx512_qsort_float16, test_arrsizes)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii < 1024; ++ii) {
             arrsizes.push_back(ii);
@@ -41,7 +41,7 @@ TEST(avx512_qsort_float16, test_arrsizes)
 
 TEST(avx512_qsort_float16, test_special_floats)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         const int arrsize = 1111;
         std::vector<_Float16> arr;
         std::vector<_Float16> sortedarr;
@@ -75,7 +75,7 @@ TEST(avx512_qsort_float16, test_special_floats)
 
 TEST(avx512_qselect_float16, test_arrsizes)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii < 1024; ++ii) {
             arrsizes.push_back(ii);
@@ -120,7 +120,7 @@ TEST(avx512_qselect_float16, test_arrsizes)
 
 TEST(avx512_partial_qsort_float16, test_ranges)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         int64_t arrsize = 1024;
         int64_t nranges = 500;
 

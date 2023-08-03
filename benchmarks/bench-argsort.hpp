@@ -52,7 +52,7 @@ template <typename T, class... Args>
 static void avx512argsort(benchmark::State &state, Args &&...args)
 {
     auto args_tuple = std::make_tuple(std::move(args)...);
-    if (!cpu_has_avx512bw()) {
+    if (!__builtin_cpu_supports("avx512bw")) {
         state.SkipWithMessage("Requires AVX512 BW ISA");
     }
     // Perform setup here

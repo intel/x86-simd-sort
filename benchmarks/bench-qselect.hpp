@@ -3,10 +3,10 @@
 template <typename T>
 static void avx512_qselect(benchmark::State &state)
 {
-    if (!cpu_has_avx512bw()) {
+    if (!__builtin_cpu_supports("avx512bw")) {
         state.SkipWithMessage("Requires AVX512 BW ISA");
     }
-    if ((sizeof(T) == 2) && (!cpu_has_avx512_vbmi2())) {
+    if ((sizeof(T) == 2) && (!__builtin_cpu_supports("avx512vbmi2"))) {
         state.SkipWithMessage("Requires AVX512 VBMI2 ISA");
     }
     // Perform setup here

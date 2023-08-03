@@ -10,8 +10,8 @@ TYPED_TEST_P(avx512_partial_sort, test_ranges)
     int64_t arrsize = 1024;
     int64_t nranges = 500;
 
-    if (cpu_has_avx512bw()) {
-        if ((sizeof(TypeParam) == 2) && (!cpu_has_avx512_vbmi2())) {
+    if (__builtin_cpu_supports("avx512bw")) {
+        if ((sizeof(TypeParam) == 2) && (!__builtin_cpu_supports("avx512vbmi2"))) {
             GTEST_SKIP() << "Skipping this test, it requires avx512_vbmi2";
         }
         std::vector<TypeParam> arr;

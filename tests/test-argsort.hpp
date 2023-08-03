@@ -10,7 +10,7 @@ TYPED_TEST_SUITE_P(avx512argsort);
 
 TYPED_TEST_P(avx512argsort, test_random)
 {
-    if (cpu_has_avx512bw()) {
+    if (__builtin_cpu_supports("avx512bw")) {
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii <= 1024; ++ii) {
             arrsizes.push_back(ii);
@@ -39,7 +39,7 @@ TYPED_TEST_P(avx512argsort, test_random)
 
 TYPED_TEST_P(avx512argsort, test_constant)
 {
-    if (cpu_has_avx512bw()) {
+    if (__builtin_cpu_supports("avx512bw")) {
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii <= 1024; ++ii) {
             arrsizes.push_back(ii);
@@ -71,7 +71,7 @@ TYPED_TEST_P(avx512argsort, test_constant)
 
 TYPED_TEST_P(avx512argsort, test_small_range)
 {
-    if (cpu_has_avx512bw()) {
+    if (__builtin_cpu_supports("avx512bw")) {
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii <= 1024; ++ii) {
             arrsizes.push_back(ii);
@@ -100,7 +100,7 @@ TYPED_TEST_P(avx512argsort, test_small_range)
 
 TYPED_TEST_P(avx512argsort, test_sorted)
 {
-    if (cpu_has_avx512bw()) {
+    if (__builtin_cpu_supports("avx512bw")) {
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii <= 1024; ++ii) {
             arrsizes.push_back(ii);
@@ -129,7 +129,7 @@ TYPED_TEST_P(avx512argsort, test_sorted)
 
 TYPED_TEST_P(avx512argsort, test_reverse)
 {
-    if (cpu_has_avx512bw()) {
+    if (__builtin_cpu_supports("avx512bw")) {
         std::vector<int64_t> arrsizes;
         for (int64_t ii = 0; ii <= 1024; ++ii) {
             arrsizes.push_back(ii);
@@ -159,7 +159,7 @@ TYPED_TEST_P(avx512argsort, test_reverse)
 
 TYPED_TEST_P(avx512argsort, test_array_with_nan)
 {
-    if (!cpu_has_avx512bw()) {
+    if (!__builtin_cpu_supports("avx512bw")) {
         GTEST_SKIP() << "Skipping this test, it requires avx512bw ISA";
     }
     if (!std::is_floating_point<TypeParam>::value) {
@@ -193,7 +193,7 @@ TYPED_TEST_P(avx512argsort, test_array_with_nan)
 
 TYPED_TEST_P(avx512argsort, test_max_value_at_end_of_array)
 {
-    if (!cpu_has_avx512bw()) {
+    if (!__builtin_cpu_supports("avx512bw")) {
         GTEST_SKIP() << "Skipping this test, it requires avx512bw ISA";
     }
     std::vector<int64_t> arrsizes;
@@ -224,7 +224,7 @@ TYPED_TEST_P(avx512argsort, test_max_value_at_end_of_array)
 
 TYPED_TEST_P(avx512argsort, test_all_inf_array)
 {
-    if (!cpu_has_avx512bw()) {
+    if (!__builtin_cpu_supports("avx512bw")) {
         GTEST_SKIP() << "Skipping this test, it requires avx512bw ISA";
     }
     std::vector<int64_t> arrsizes;

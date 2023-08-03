@@ -13,7 +13,7 @@ TYPED_TEST_SUITE_P(avx512_sort_fp);
 TYPED_TEST_P(avx512_sort_fp, test_random_nan)
 {
     const int num_nans = 3;
-    if (!cpu_has_avx512bw()) {
+    if (!__builtin_cpu_supports("avx512bw")) {
         GTEST_SKIP() << "Skipping this test, it requires avx512bw";
     }
     std::vector<int64_t> arrsizes;

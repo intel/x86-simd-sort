@@ -4,7 +4,7 @@
  * *******************************************/
 
 #include "avx512-64bit-keyvaluesort.hpp"
-#include "cpuinfo.h"
+
 #include "rand_array.h"
 #include <gtest/gtest.h>
 #include <vector>
@@ -30,7 +30,7 @@ TYPED_TEST_SUITE_P(KeyValueSort);
 
 TYPED_TEST_P(KeyValueSort, test_64bit_random_data)
 {
-    if (cpu_has_avx512bw()) {
+    if (__builtin_cpu_supports("avx512bw")) {
         std::vector<int64_t> keysizes;
         for (int64_t ii = 0; ii < 1024; ++ii) {
             keysizes.push_back((TypeParam)ii);

@@ -24,14 +24,14 @@ subdir('benchmarks')
 testexe = executable('testexe',
                      include_directories : [src, utils],
                      dependencies : gtest_dep,
-                     link_whole : [libtests, libcpuinfo]
+                     link_whole : [libtests]
                     )
 
 benchexe = executable('benchexe',
                       include_directories : [src, utils, bench],
                       dependencies : [gbench_dep],
                       link_args: ['-lbenchmark_main'],
-                      link_whole : [libbench, libcpuinfo],
+                      link_whole : [libbench],
                      )
 
 summary({

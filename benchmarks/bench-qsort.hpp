@@ -41,10 +41,10 @@ template <typename T, class... Args>
 static void avx512qsort(benchmark::State &state, Args &&...args)
 {
     auto args_tuple = std::make_tuple(std::move(args)...);
-    if (!cpu_has_avx512bw()) {
+    if (!__builtin_cpu_supports("avx512bw")) {
         state.SkipWithMessage("Requires AVX512 BW ISA");
     }
-    if ((sizeof(T) == 2) && (!cpu_has_avx512_vbmi2())) {
+    if ((sizeof(T) == 2) && (!__builtin_cpu_supports("avx512vbmi2"))) {
         state.SkipWithMessage("Requires AVX512 VBMI2");
     }
     // Perform setup here

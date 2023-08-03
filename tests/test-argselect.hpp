@@ -11,7 +11,7 @@ TYPED_TEST_SUITE_P(avx512argselect);
 
 TYPED_TEST_P(avx512argselect, test_random)
 {
-    if (cpu_has_avx512bw()) {
+    if (__builtin_cpu_supports("avx512bw")) {
         const int arrsize = 1024;
         auto arr = get_uniform_rand_array<TypeParam>(arrsize);
         std::vector<int64_t> sorted_inx;

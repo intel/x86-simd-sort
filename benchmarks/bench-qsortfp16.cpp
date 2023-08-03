@@ -1,12 +1,12 @@
 #include "avx512fp16-16bit-qsort.hpp"
-#include "cpuinfo.h"
+
 #include "rand_array.h"
 #include <benchmark/benchmark.h>
 
 template <typename T>
 static void avx512_qsort(benchmark::State &state)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         // Perform setup here
         size_t ARRSIZE = state.range(0);
         std::vector<T> arr;
@@ -35,7 +35,7 @@ static void avx512_qsort(benchmark::State &state)
 template <typename T>
 static void stdsort(benchmark::State &state)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         // Perform setup here
         size_t ARRSIZE = state.range(0);
         std::vector<T> arr;
@@ -67,7 +67,7 @@ BENCHMARK(stdsort<_Float16>)->Arg(10000)->Arg(1000000);
 template <typename T>
 static void avx512_qselect(benchmark::State &state)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         // Perform setup here
         int64_t K = state.range(0);
         size_t ARRSIZE = 10000;
@@ -98,7 +98,7 @@ static void avx512_qselect(benchmark::State &state)
 template <typename T>
 static void stdnthelement(benchmark::State &state)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         // Perform setup here
         int64_t K = state.range(0);
         size_t ARRSIZE = 10000;
@@ -133,7 +133,7 @@ BENCHMARK(stdnthelement<_Float16>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
 template <typename T>
 static void avx512_partial_qsort(benchmark::State &state)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         // Perform setup here
         int64_t K = state.range(0);
         size_t ARRSIZE = 10000;
@@ -164,7 +164,7 @@ static void avx512_partial_qsort(benchmark::State &state)
 template <typename T>
 static void stdpartialsort(benchmark::State &state)
 {
-    if (cpu_has_avx512fp16()) {
+    if (__builtin_cpu_supports("avx512fp16")) {
         // Perform setup here
         int64_t K = state.range(0);
         size_t ARRSIZE = 10000;
