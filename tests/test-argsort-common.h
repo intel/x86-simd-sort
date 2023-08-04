@@ -1,5 +1,5 @@
 #include "avx512-64bit-argsort.hpp"
-#include "cpuinfo.h"
+
 #include "rand_array.h"
 #include <algorithm>
 #include <gtest/gtest.h>

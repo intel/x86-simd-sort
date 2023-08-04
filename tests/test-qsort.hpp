@@ -12,8 +12,9 @@ TYPED_TEST_SUITE_P(avx512_sort);
 
 TYPED_TEST_P(avx512_sort, test_random)
 {
-    if (cpu_has_avx512bw()) {
-        if ((sizeof(TypeParam) == 2) && (!cpu_has_avx512_vbmi2())) {
+    if (__builtin_cpu_supports("avx512bw")) {
+        if ((sizeof(TypeParam) == 2)
+            && (!__builtin_cpu_supports("avx512vbmi2"))) {
             GTEST_SKIP() << "Skipping this test, it requires avx512_vbmi2";
         }
         std::vector<int64_t> arrsizes;
@@ -41,8 +42,9 @@ TYPED_TEST_P(avx512_sort, test_random)
 
 TYPED_TEST_P(avx512_sort, test_reverse)
 {
-    if (cpu_has_avx512bw()) {
-        if ((sizeof(TypeParam) == 2) && (!cpu_has_avx512_vbmi2())) {
+    if (__builtin_cpu_supports("avx512bw")) {
+        if ((sizeof(TypeParam) == 2)
+            && (!__builtin_cpu_supports("avx512vbmi2"))) {
             GTEST_SKIP() << "Skipping this test, it requires avx512_vbmi2";
         }
         std::vector<int64_t> arrsizes;
@@ -72,8 +74,9 @@ TYPED_TEST_P(avx512_sort, test_reverse)
 
 TYPED_TEST_P(avx512_sort, test_constant)
 {
-    if (cpu_has_avx512bw()) {
-        if ((sizeof(TypeParam) == 2) && (!cpu_has_avx512_vbmi2())) {
+    if (__builtin_cpu_supports("avx512bw")) {
+        if ((sizeof(TypeParam) == 2)
+            && (!__builtin_cpu_supports("avx512vbmi2"))) {
             GTEST_SKIP() << "Skipping this test, it requires avx512_vbmi2";
         }
         std::vector<int64_t> arrsizes;
@@ -103,8 +106,9 @@ TYPED_TEST_P(avx512_sort, test_constant)
 
 TYPED_TEST_P(avx512_sort, test_small_range)
 {
-    if (cpu_has_avx512bw()) {
-        if ((sizeof(TypeParam) == 2) && (!cpu_has_avx512_vbmi2())) {
+    if (__builtin_cpu_supports("avx512bw")) {
+        if ((sizeof(TypeParam) == 2)
+            && (!__builtin_cpu_supports("avx512vbmi2"))) {
             GTEST_SKIP() << "Skipping this test, it requires avx512_vbmi2";
         }
         std::vector<int64_t> arrsizes;
@@ -131,10 +135,10 @@ TYPED_TEST_P(avx512_sort, test_small_range)
 
 TYPED_TEST_P(avx512_sort, test_max_value_at_end_of_array)
 {
-    if (!cpu_has_avx512bw()) {
+    if (!__builtin_cpu_supports("avx512bw")) {
         GTEST_SKIP() << "Skipping this test, it requires avx512bw ISA";
     }
-    if ((sizeof(TypeParam) == 2) && (!cpu_has_avx512_vbmi2())) {
+    if ((sizeof(TypeParam) == 2) && (!__builtin_cpu_supports("avx512vbmi2"))) {
         GTEST_SKIP() << "Skipping this test, it requires avx512_vbmi2";
     }
     std::vector<int64_t> arrsizes;
