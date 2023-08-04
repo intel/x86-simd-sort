@@ -19,13 +19,26 @@ template <typename T>
 void avx512_argsort(T *arr, int64_t *arg, int64_t arrsize);
 
 template <typename T>
-std::vector<int64_t> avx512_argsort(T *arr, int64_t arrsize);
-
-template <typename T>
 void avx512_argselect(T *arr, int64_t *arg, int64_t k, int64_t arrsize);
 
 template <typename T>
-std::vector<int64_t> avx512_argselect(T *arr, int64_t k, int64_t arrsize);
+std::vector<int64_t> avx512_argsort(T *arr, int64_t arrsize)
+{
+    std::vector<int64_t> indices(arrsize);
+    std::iota(indices.begin(), indices.end(), 0);
+    avx512_argsort<T>(arr, indices.data(), arrsize);
+    return indices;
+}
+
+template <typename T>
+std::vector<int64_t> avx512_argselect(T *arr, int64_t k, int64_t arrsize)
+{
+    std::vector<int64_t> indices(arrsize);
+    std::iota(indices.begin(), indices.end(), 0);
+    avx512_argselect<T>(arr, indices.data(), k, arrsize);
+    return indices;
+}
+
 /*
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.

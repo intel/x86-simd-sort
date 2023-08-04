@@ -427,15 +427,6 @@ void avx512_argsort(float *arr, int64_t *arg, int64_t arrsize)
     }
 }
 
-template <typename T>
-std::vector<int64_t> avx512_argsort(T *arr, int64_t arrsize)
-{
-    std::vector<int64_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx512_argsort<T>(arr, indices.data(), arrsize);
-    return indices;
-}
-
 /* argselect methods for 32-bit and 64-bit dtypes */
 template <typename T>
 void avx512_argselect(T *arr, int64_t *arg, int64_t k, int64_t arrsize)
@@ -492,13 +483,5 @@ void avx512_argselect(float *arr, int64_t *arg, int64_t k, int64_t arrsize)
     }
 }
 
-template <typename T>
-std::vector<int64_t> avx512_argselect(T *arr, int64_t k, int64_t arrsize)
-{
-    std::vector<int64_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx512_argselect<T>(arr, indices.data(), k, arrsize);
-    return indices;
-}
 
 #endif // AVX512_ARGSORT_64BIT
