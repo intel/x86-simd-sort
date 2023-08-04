@@ -824,31 +824,20 @@ void avx512_qselect<double>(double *arr,
 }
 
 template <>
-void avx512_qsort<int64_t>(int64_t *arr, int64_t arrsize)
+void qsort_<zmm_vector<int64_t>>(int64_t* arr, int64_t left, int64_t right, int64_t maxiters)
 {
-    if (arrsize > 1) {
-        qsort_64bit_<zmm_vector<int64_t>, int64_t>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
+    qsort_64bit_<zmm_vector<int64_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void avx512_qsort<uint64_t>(uint64_t *arr, int64_t arrsize)
+void qsort_<zmm_vector<uint64_t>>(uint64_t* arr, int64_t left, int64_t right, int64_t maxiters)
 {
-    if (arrsize > 1) {
-        qsort_64bit_<zmm_vector<uint64_t>, uint64_t>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
+    qsort_64bit_<zmm_vector<uint64_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void avx512_qsort<double>(double *arr, int64_t arrsize)
+void qsort_<zmm_vector<double>>(double* arr, int64_t left, int64_t right, int64_t maxiters)
 {
-    if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf(arr, arrsize);
-        qsort_64bit_<zmm_vector<double>, double>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        replace_inf_with_nan(arr, arrsize, nan_count);
-    }
+    qsort_64bit_<zmm_vector<double>>(arr, left, right, maxiters);
 }
 #endif // AVX512_QSORT_64BIT

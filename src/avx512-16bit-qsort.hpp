@@ -377,8 +377,9 @@ bool comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
     //return npy_half_to_float(a) < npy_half_to_float(b);
 }
 
-X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(uint16_t *arr,
-                                                  int64_t arrsize)
+template<>
+int64_t
+replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr, int64_t arrsize)
 {
     int64_t nan_count = 0;
     __mmask16 loadmask = 0xFFFF;
@@ -394,15 +395,6 @@ X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(uint16_t *arr,
         arrsize -= 16;
     }
     return nan_count;
-}
-
-X86_SIMD_SORT_INLINE void
-replace_inf_with_nan(uint16_t *arr, int64_t arrsize, int64_t nan_count)
-{
-    for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
-        arr[ii] = 0xFFFF;
-        nan_count -= 1;
-    }
 }
 
 template <>
@@ -442,27 +434,21 @@ void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
 }
 
 template <>
-void avx512_qsort(int16_t *arr, int64_t arrsize)
+void qsort_<zmm_vector<int16_t>>(int16_t* arr, int64_t left, int64_t right, int64_t maxiters)
 {
-    if (arrsize > 1) {
-        qsort_16bit_<zmm_vector<int16_t>, int16_t>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
+    qsort_16bit_<zmm_vector<int16_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void avx512_qsort(uint16_t *arr, int64_t arrsize)
+void qsort_<zmm_vector<uint16_t>>(uint16_t* arr, int64_t left, int64_t right, int64_t maxiters)
 {
-    if (arrsize > 1) {
-        qsort_16bit_<zmm_vector<uint16_t>, uint16_t>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
+    qsort_16bit_<zmm_vector<uint16_t>>(arr, left, right, maxiters);
 }
 
 void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize)
 {
     if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf(arr, arrsize);
+        int64_t nan_count = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(arr, arrsize);
         qsort_16bit_<zmm_vector<float16>, uint16_t>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);

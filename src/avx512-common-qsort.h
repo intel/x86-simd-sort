@@ -94,35 +94,50 @@ struct zmm_vector;
 template <typename type>
 struct ymm_vector;
 
-// Regular quicksort routines:
-template <typename T>
-void avx512_qsort(T *arr, int64_t arrsize);
-void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize);
-
-template <typename T>
-void avx512_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false);
-void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false);
-
-template <typename T>
-inline void avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
-{
-    avx512_qselect<T>(arr, k - 1, arrsize, hasnan);
-    avx512_qsort<T>(arr, k - 1);
-}
-inline void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false)
-{
-    avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
-    avx512_qsort_fp16(arr, k - 1);
-}
-
-// key-value sort routines
-template <typename T>
-void avx512_qsort_kv(T *keys, uint64_t *indexes, int64_t arrsize);
-
 template <typename T>
 bool is_a_nan(T elem)
 {
     return std::isnan(elem);
+}
+
+template <typename vtype, typename type_t>
+int64_t replace_nan_with_inf(type_t *arr, int64_t arrsize)
+{
+    int64_t nan_count = 0;
+    using opmask_t = typename vtype::opmask_t;
+    using zmm_t = typename vtype::zmm_t;
+    bool found_nan = false;
+    opmask_t loadmask = 0xFF;
+    zmm_t in;
+    while (arrsize > 0) {
+        if (arrsize < vtype::numlanes) {
+            loadmask = (0x01 << arrsize) - 0x01;
+            in = vtype::maskz_loadu(loadmask, arr);
+        }
+        else {
+            in = vtype::loadu(arr);
+        }
+        opmask_t nanmask = vtype::template fpclass<0x01 | 0x80>(in);
+        nan_count += _mm_popcnt_u32((int32_t)nanmask);
+        vtype::mask_storeu(arr, nanmask, vtype::zmm_max());
+        arr += vtype::numlanes;
+        arrsize -= vtype::numlanes;
+    }
+    return nan_count;
+}
+
+template<typename type_t>
+void replace_inf_with_nan(type_t *arr, int64_t arrsize, int64_t nan_count)
+{
+    for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
+        if constexpr (std::is_floating_point_v<type_t>) {
+            arr[ii] = std::numeric_limits<type_t>::quiet_NaN();
+        }
+        else {
+            arr[ii] = 0xFFFF;
+        }
+        nan_count -= 1;
+    }
 }
 
 /*
@@ -628,4 +643,48 @@ static inline int64_t partition_avx512(type_t1 *keys,
     *biggest = vtype1::reducemax(max_vec);
     return l_store;
 }
+
+template <typename vtype, typename type_t>
+void qsort_(type_t* arr, int64_t left, int64_t right, int64_t maxiters);
+
+// Regular quicksort routines:
+template <typename T>
+void avx512_qsort(T *arr, int64_t arrsize)
+{
+    if (arrsize > 1) {
+        if constexpr (std::is_floating_point_v<T>) {
+            int64_t nan_count = replace_nan_with_inf<zmm_vector<T>>(arr, arrsize);
+            qsort_<zmm_vector<T>, T>(
+                    arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+            replace_inf_with_nan(arr, arrsize, nan_count);
+        }
+        else {
+            qsort_<zmm_vector<T>, T>(
+                    arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        }
+    }
+}
+
+void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize);
+
+template <typename T>
+void avx512_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false);
+void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false);
+
+template <typename T>
+inline void avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+{
+    avx512_qselect<T>(arr, k - 1, arrsize, hasnan);
+    avx512_qsort<T>(arr, k - 1);
+}
+inline void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+{
+    avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
+    avx512_qsort_fp16(arr, k - 1);
+}
+
+// key-value sort routines
+template <typename T>
+void avx512_qsort_kv(T *keys, uint64_t *indexes, int64_t arrsize);
+
 #endif // AVX512_QSORT_COMMON

@@ -463,7 +463,7 @@ template <>
 void avx512_qsort_kv<double>(double *keys, uint64_t *indexes, int64_t arrsize)
 {
     if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf(keys, arrsize);
+        int64_t nan_count = replace_nan_with_inf<zmm_vector<double>>(keys, arrsize);
         qsort_64bit_<zmm_vector<double>, zmm_vector<uint64_t>>(
                 keys, indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(keys, arrsize, nan_count);
