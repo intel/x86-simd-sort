@@ -1,5 +1,15 @@
 libtargets = []
 
+if cpp.has_argument('-march=haswell')
+  libtargets += static_library('libavx',
+    files(
+      'x86simdsort-avx2.cpp',
+      ),
+    include_directories : [src],
+    cpp_args : ['-march=haswell', flags_hide_symbols],
+    )
+endif
+
 if cpp.has_argument('-march=skylake-avx512')
   libtargets += static_library('libskx',
     files(

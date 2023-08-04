@@ -38,6 +38,20 @@
 #include "xss-pivot-selection.hpp"
 #include "xss-network-qsort.hpp"
 
+namespace xss{
+namespace avx2{
+template <typename type>
+struct ymm_vector;
+
+inline int64_t replace_nan_with_inf(float *arr, int64_t arrsize);
+}
+}
+
+// key-value sort routines
+template <typename T1, typename T2>
+void avx512_qsort_kv(T1 *keys, T2 *indexes, int64_t arrsize);
+
+>>>>>>> d6479e7 (Core AVX2 code logic):src/xss-common-qsort.h
 template <typename T>
 bool is_a_nan(T elem)
 {
@@ -167,7 +181,7 @@ X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
  * number of elements that are greater than or equal to the pivot.
  */
 template <typename vtype, typename type_t, typename reg_t>
-X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
+X86_SIMD_SORT_INLINE arrsize_t partition_vec_avx512(type_t *l_store,
                                              type_t *r_store,
                                              const reg_t curr_vec,
                                              const reg_t pivot_vec,
@@ -186,6 +200,50 @@ X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
 
     return amount_ge_pivot;
 }
+/*
+ * Parition one YMM register based on the pivot and returns the
+ * number of elements that are greater than or equal to the pivot.
+ */
+template <typename vtype, typename type_t, typename reg_t = typename vtype::reg_t>
+X86_SIMD_SORT_INLINE arrsize_t partition_vec_avx2(type_t *l_store,
+                                             type_t *r_store,
+                                             const reg_t curr_vec,
+                                             const reg_t pivot_vec,
+                                             reg_t &smallest_vec,
+                                             reg_t &biggest_vec)
+{
+    /* which elements are larger than or equal to the pivot */
+    typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
+
+    int32_t amount_ge_pivot = vtype::double_compressstore(
+            arr + left, arr + left + unpartitioned, ge_mask, curr_vec);
+
+    left += (vtype::numlanes - amount_ge_pivot);
+    unpartitioned -= vtype::numlanes;
+
+    smallest_vec = vtype::min(curr_vec, smallest_vec);
+    biggest_vec = vtype::max(curr_vec, biggest_vec);
+}
+
+// Generic function dispatches to AVX2 or AVX512 code
+template <typename vtype, typename type_t, typename reg_t = typename vtype::reg_t>
+X86_SIMD_SORT_INLINE void partition_vec(type_t *arr,
+                                        arrsize_t &left,
+                                        arrsize_t &unpartitioned,
+                                        const reg_t curr_vec,
+                                        const reg_t pivot_vec,
+                                        reg_t &smallest_vec,
+                                        reg_t &biggest_vec)
+{
+    if constexpr (sizeof(reg_t) == 64){
+        partition_vec_avx512<vtype>(arr, left, unpartitioned, curr_vec, pivot_vec, smallest_vec, biggest_vec);
+    }else if constexpr (sizeof(reg_t) == 32){
+        partition_vec_avx2<vtype>(arr, left, unpartitioned, curr_vec, pivot_vec, smallest_vec, biggest_vec);
+    }else{
+        static_assert(sizeof(reg_t) == -1, "should not reach here");
+    }
+}
+
 /*
  * Parition an array based on the pivot and returns the index of the
  * first element that is greater than or equal to the pivot.
@@ -467,8 +525,7 @@ template <typename vtype, int maxN>
 void sort_n(typename vtype::type_t *arr, int N);
 
 template <typename vtype, typename type_t>
-static void
-qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
+static void qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -557,6 +614,28 @@ X86_SIMD_SORT_INLINE void avx512_qsort(T *arr, arrsize_t arrsize)
 }
 
 template <typename T>
+void avx2_qsort(T *arr, int64_t arrsize)
+{
+    using vtype = xss::avx2::ymm_vector<T>;
+    if (arrsize > 1) {
+        /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
+        if constexpr (std::is_floating_point_v<T>) {
+            int64_t nan_count
+                    = xss::avx2::replace_nan_with_inf(arr, arrsize);
+            qsort_<vtype, T>(
+                    arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+            replace_inf_with_nan(arr, arrsize, nan_count);
+        }
+        else {
+            qsort_<vtype, T>(
+                    arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        }
+    }
+}
+
+void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize);
+
+template <typename T>
 X86_SIMD_SORT_INLINE void
 avx512_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
 {
@@ -575,6 +654,27 @@ avx512_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
 }
 
 template <typename T>
+void avx2_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+{
+    int64_t indx_last_elem = arrsize - 1;
+    /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
+    if constexpr (std::is_floating_point_v<T>) {
+        if (UNLIKELY(hasnan)) {
+            indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        }
+    }
+    if (indx_last_elem >= k) {
+        qselect_<xss::avx2::ymm_vector<T>, T>(
+                arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
+    }
+}
+
+void avx512_qselect_fp16(uint16_t *arr,
+                         int64_t k,
+                         int64_t arrsize,
+                         bool hasnan = false);
+
+template <typename T>
 X86_SIMD_SORT_INLINE void avx512_partial_qsort(T *arr,
                                                arrsize_t k,
                                                arrsize_t arrsize,
@@ -582,6 +682,21 @@ X86_SIMD_SORT_INLINE void avx512_partial_qsort(T *arr,
 {
     avx512_qselect<T>(arr, k - 1, arrsize, hasnan);
     avx512_qsort<T>(arr, k - 1);
+}
+
+template <typename T>
+inline void avx2_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+{
+    avx2_qselect<T>(arr, k - 1, arrsize, hasnan);
+    avx2_qsort<T>(arr, k - 1);
+}
+inline void avx512_partial_qsort_fp16(uint16_t *arr,
+                                      int64_t k,
+                                      int64_t arrsize,
+                                      bool hasnan = false)
+{
+    avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
+    avx512_qsort_fp16(arr, k - 1);
 }
 
 #endif // AVX512_QSORT_COMMON

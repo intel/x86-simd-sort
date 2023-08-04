@@ -2,7 +2,7 @@ template <typename vtype, typename mm_t>
 X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b);
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
+X86_SIMD_SORT_INLINE type_t get_pivot_avx512_16bit(type_t *arr,
                                             const arrsize_t left,
                                             const arrsize_t right)
 {
@@ -46,7 +46,7 @@ X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
+X86_SIMD_SORT_INLINE type_t get_pivot_avx512_32bit(type_t *arr,
                                             const arrsize_t left,
                                             const arrsize_t right)
 {
@@ -76,7 +76,7 @@ X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
+X86_SIMD_SORT_INLINE type_t get_pivot_avx512_64bit(type_t *arr,
                                             const arrsize_t left,
                                             const arrsize_t right)
 {
@@ -96,19 +96,49 @@ X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
     return ((type_t *)&sort)[4];
 }
 
+template <typename vtype, int maxN>
+X86_SIMD_SORT_INLINE void sort_n(typename vtype::type_t *arr, int N);
+
+template <typename vtype, typename type_t>
+X86_SIMD_SORT_INLINE type_t get_pivot_scalar(type_t *arr,
+                                      const arrsize_t left,
+                                      const arrsize_t right)
+{
+    type_t samples[vtype::numlanes];
+    
+    arrsize_t delta = (right - left) / vtype::numlanes;
+    
+    for (int i = 0; i < vtype::numlanes; i++){
+        samples[i] = arr[left + i * delta];
+    }
+    
+    sort_n<vtype, vtype::numlanes>(samples, vtype::numlanes);
+    
+    return samples[vtype::numlanes / 2];
+}
+
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot(type_t *arr,
                                       const arrsize_t left,
                                       const arrsize_t right)
 {
-    if constexpr (vtype::numlanes == 8)
-        return get_pivot_64bit<vtype>(arr, left, right);
-    else if constexpr (vtype::numlanes == 16)
-        return get_pivot_32bit<vtype>(arr, left, right);
-    else if constexpr (vtype::numlanes == 32)
-        return get_pivot_16bit<vtype>(arr, left, right);
-    else
-        return arr[right];
+    using reg_t = typename vtype::reg_t;
+    if constexpr (sizeof(reg_t) == 64){ // AVX512
+        if constexpr (vtype::numlanes == 8)
+            return get_pivot_avx512_64bit<vtype>(arr, left, right);
+        else if constexpr (vtype::numlanes == 16)
+            return get_pivot_avx512_32bit<vtype>(arr, left, right);
+        else if constexpr (vtype::numlanes == 32)
+            return get_pivot_avx512_16bit<vtype>(arr, left, right);
+        else
+            static_assert(vtype::numlanes == -1, "should not reach here");
+    }else if constexpr (sizeof(reg_t) == 32) { // AVX2
+        if constexpr (vtype::numlanes == 8){
+            return get_pivot_scalar<vtype>(arr, left, right);
+        }
+    }else{
+        static_assert(sizeof(reg_t) == -1, "should not reach here");
+    }
 }
 
 template <typename vtype, typename type_t>

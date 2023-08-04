@@ -140,9 +140,9 @@ DISPATCH(argselect, _Float16, "none")
     DISPATCH(func, uint64_t, ISA_64BIT) \
     DISPATCH(func, double, ISA_64BIT)
 
-DISPATCH_ALL(qsort, ("avx512_icl"), ("avx512_skx"), ("avx512_skx"))
-DISPATCH_ALL(qselect, ("avx512_icl"), ("avx512_skx"), ("avx512_skx"))
-DISPATCH_ALL(partial_qsort, ("avx512_icl"), ("avx512_skx"), ("avx512_skx"))
+DISPATCH_ALL(qsort, ("avx512_icl"), ("avx512_skx","avx2"), ("avx512_skx"))
+DISPATCH_ALL(qselect, ("avx512_icl"), ("avx512_skx","avx2"), ("avx512_skx"))
+DISPATCH_ALL(partial_qsort, ("avx512_icl"), ("avx512_skx","avx2"), ("avx512_skx"))
 DISPATCH_ALL(argsort, "none", "avx512_skx", "avx512_skx")
 DISPATCH_ALL(argselect, "none", "avx512_skx", "avx512_skx")
 
