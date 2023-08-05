@@ -166,6 +166,19 @@ void avx512_qselect(_Float16 *arr, int64_t k, int64_t arrsize, bool hasnan)
 }
 
 template <>
+void avx512_partial_qsort(_Float16 *arr, int64_t k, int64_t arrsize, bool hasnan)
+{
+    if (LIKELY(k > 0)) {
+        int64_t indx_last_elem = arrsize - 1;
+        if (UNLIKELY(hasnan)) {
+            indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        }
+        qselsort_16bit_<zmm_vector<_Float16>, _Float16>(
+            arr, k - 1, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
+    }
+}
+
+template <>
 void avx512_qsort(_Float16 *arr, int64_t arrsize)
 {
     if (arrsize > 1) {

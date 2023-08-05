@@ -104,16 +104,8 @@ void avx512_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false);
 void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false);
 
 template <typename T>
-inline void avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
-{
-    avx512_qselect<T>(arr, k - 1, arrsize, hasnan);
-    avx512_qsort<T>(arr, k - 1);
-}
-inline void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false)
-{
-    avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
-    avx512_qsort_fp16(arr, k - 1);
-}
+void avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false);
+void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false);
 
 // key-value sort routines
 template <typename T>

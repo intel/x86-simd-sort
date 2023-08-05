@@ -442,6 +442,36 @@ void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
 }
 
 template <>
+void avx512_partial_qsort(int16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+{
+    if (arrsize > 1) {
+        qselsort_16bit_<zmm_vector<int16_t>, int16_t>(
+                arr, k - 1, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+template <>
+void avx512_partial_qsort(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+{
+    if (arrsize > 1) {
+        qselsort_16bit_<zmm_vector<uint16_t>, uint16_t>(
+                arr, k - 1, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+    }
+}
+
+void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+{
+    if (LIKELY(k > 0)) {
+        int64_t indx_last_elem = arrsize - 1;
+        if (UNLIKELY(hasnan)) {
+            indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        }
+        qselsort_16bit_<zmm_vector<float16>, uint16_t>(
+            arr, k - 1, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
+    }
+}
+
+template <>
 void avx512_qsort(int16_t *arr, int64_t arrsize)
 {
     if (arrsize > 1) {
