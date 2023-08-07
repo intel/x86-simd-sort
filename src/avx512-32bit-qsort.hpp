@@ -256,6 +256,10 @@ struct zmm_vector<float> {
     {
         return _mm512_cmp_ps_mask(x, y, _CMP_GE_OQ);
     }
+    static opmask_t get_partial_loadmask(int size)
+    {
+        return (0x0001 << size) - 0x0001;
+    }
     template <int type>
     static opmask_t fpclass(zmm_t x)
     {

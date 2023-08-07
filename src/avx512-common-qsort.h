@@ -100,18 +100,17 @@ bool is_a_nan(T elem)
     return std::isnan(elem);
 }
 
-template <typename vtype, typename type_t>
-int64_t replace_nan_with_inf(type_t *arr, int64_t arrsize)
+template <typename vtype, typename T>
+int64_t replace_nan_with_inf(T *arr, int64_t arrsize)
 {
     int64_t nan_count = 0;
     using opmask_t = typename vtype::opmask_t;
     using zmm_t = typename vtype::zmm_t;
-    bool found_nan = false;
-    opmask_t loadmask = 0xFF;
+    opmask_t loadmask;
     zmm_t in;
     while (arrsize > 0) {
         if (arrsize < vtype::numlanes) {
-            loadmask = (0x01 << arrsize) - 0x01;
+            loadmask = vtype::get_partial_loadmask(arrsize);
             in = vtype::maskz_loadu(loadmask, arr);
         }
         else {
@@ -124,6 +123,33 @@ int64_t replace_nan_with_inf(type_t *arr, int64_t arrsize)
         arrsize -= vtype::numlanes;
     }
     return nan_count;
+}
+
+template <typename vtype, typename type_t>
+bool has_nan(type_t *arr, int64_t arrsize)
+{
+    using opmask_t = typename vtype::opmask_t;
+    using zmm_t = typename vtype::zmm_t;
+    bool found_nan = false;
+    opmask_t loadmask;
+    zmm_t in;
+    while (arrsize > 0) {
+        if (arrsize < vtype::numlanes) {
+            loadmask = vtype::get_partial_loadmask(arrsize);
+            in = vtype::maskz_loadu(loadmask, arr);
+        }
+        else {
+            in = vtype::loadu(arr);
+        }
+        opmask_t nanmask = vtype::template fpclass<0x01 | 0x80>(in);
+        arr += vtype::numlanes;
+        arrsize -= vtype::numlanes;
+        if (nanmask != 0x00) {
+            found_nan = true;
+            break;
+        }
+    }
+    return found_nan;
 }
 
 template<typename type_t>

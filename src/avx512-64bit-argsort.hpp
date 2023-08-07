@@ -344,33 +344,6 @@ static void argselect_64bit_(type_t *arr,
                 arr, arg, pos, pivot_index, right, max_iters - 1);
 }
 
-template <typename vtype, typename type_t>
-bool has_nan(type_t *arr, int64_t arrsize)
-{
-    using opmask_t = typename vtype::opmask_t;
-    using zmm_t = typename vtype::zmm_t;
-    bool found_nan = false;
-    opmask_t loadmask = 0xFF;
-    zmm_t in;
-    while (arrsize > 0) {
-        if (arrsize < vtype::numlanes) {
-            loadmask = (0x01 << arrsize) - 0x01;
-            in = vtype::maskz_loadu(loadmask, arr);
-        }
-        else {
-            in = vtype::loadu(arr);
-        }
-        opmask_t nanmask = vtype::template fpclass<0x01 | 0x80>(in);
-        arr += vtype::numlanes;
-        arrsize -= vtype::numlanes;
-        if (nanmask != 0x00) {
-            found_nan = true;
-            break;
-        }
-    }
-    return found_nan;
-}
-
 /* argsort methods for 32-bit and 64-bit dtypes */
 template <typename T>
 void avx512_argsort(T *arr, int64_t *arg, int64_t arrsize)
