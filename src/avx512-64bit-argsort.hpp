@@ -348,113 +348,57 @@ static void argselect_64bit_(type_t *arr,
 template <typename T>
 void avx512_argsort(T *arr, int64_t *arg, int64_t arrsize)
 {
+    using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
+                                              ymm_vector<T>,
+                                              zmm_vector<T>>::type;
     if (arrsize > 1) {
-        argsort_64bit_<zmm_vector<T>>(
+        if constexpr (std::is_floating_point_v<T>) {
+            if (has_nan<vectype>(arr, arrsize)) {
+                std_argsort_withnan(arr, arg, 0, arrsize);
+                return;
+            }
+        }
+        argsort_64bit_<vectype>(
                 arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
 
-template <>
-void avx512_argsort(double *arr, int64_t *arg, int64_t arrsize)
+template <typename T>
+std::vector<int64_t> avx512_argsort(T *arr, int64_t arrsize)
 {
-    if (arrsize > 1) {
-        if (has_nan<zmm_vector<double>>(arr, arrsize)) {
-            std_argsort_withnan(arr, arg, 0, arrsize);
-        }
-        else {
-            argsort_64bit_<zmm_vector<double>>(
-                    arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        }
-    }
-}
-
-template <>
-void avx512_argsort(int32_t *arr, int64_t *arg, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        argsort_64bit_<ymm_vector<int32_t>>(
-                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-void avx512_argsort(uint32_t *arr, int64_t *arg, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        argsort_64bit_<ymm_vector<uint32_t>>(
-                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-void avx512_argsort(float *arr, int64_t *arg, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        if (has_nan<ymm_vector<float>>(arr, arrsize)) {
-            std_argsort_withnan(arr, arg, 0, arrsize);
-        }
-        else {
-            argsort_64bit_<ymm_vector<float>>(
-                    arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        }
-    }
+    std::vector<int64_t> indices(arrsize);
+    std::iota(indices.begin(), indices.end(), 0);
+    avx512_argsort<T>(arr, indices.data(), arrsize);
+    return indices;
 }
 
 /* argselect methods for 32-bit and 64-bit dtypes */
 template <typename T>
 void avx512_argselect(T *arr, int64_t *arg, int64_t k, int64_t arrsize)
 {
+    using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
+                                              ymm_vector<T>,
+                                              zmm_vector<T>>::type;
+
     if (arrsize > 1) {
-        argselect_64bit_<zmm_vector<T>>(
+        if constexpr (std::is_floating_point_v<T>) {
+            if (has_nan<vectype>(arr, arrsize)) {
+                std_argselect_withnan(arr, arg, k, 0, arrsize);
+                return;
+            }
+        }
+        argselect_64bit_<vectype>(
                 arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
     }
 }
 
-template <>
-void avx512_argselect(double *arr, int64_t *arg, int64_t k, int64_t arrsize)
+template <typename T>
+std::vector<int64_t> avx512_argselect(T *arr, int64_t k, int64_t arrsize)
 {
-    if (arrsize > 1) {
-        if (has_nan<zmm_vector<double>>(arr, arrsize)) {
-            std_argselect_withnan(arr, arg, k, 0, arrsize);
-        }
-        else {
-            argselect_64bit_<zmm_vector<double>>(
-                    arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        }
-    }
+    std::vector<int64_t> indices(arrsize);
+    std::iota(indices.begin(), indices.end(), 0);
+    avx512_argselect<T>(arr, indices.data(), k, arrsize);
+    return indices;
 }
-
-template <>
-void avx512_argselect(int32_t *arr, int64_t *arg, int64_t k, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        argselect_64bit_<ymm_vector<int32_t>>(
-                arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-void avx512_argselect(uint32_t *arr, int64_t *arg, int64_t k, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        argselect_64bit_<ymm_vector<uint32_t>>(
-                arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-void avx512_argselect(float *arr, int64_t *arg, int64_t k, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        if (has_nan<ymm_vector<float>>(arr, arrsize)) {
-            std_argselect_withnan(arr, arg, k, 0, arrsize);
-        }
-        else {
-            argselect_64bit_<ymm_vector<float>>(
-                    arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        }
-    }
-}
-
 
 #endif // AVX512_ARGSORT_64BIT
