@@ -135,18 +135,18 @@ bool is_a_nan<_Float16>(_Float16 elem)
     return (temp.i_ & 0x7c00) == 0x7c00;
 }
 
-template <>
-void avx512_qselect(_Float16 *arr, int64_t k, int64_t arrsize, bool hasnan)
+template<>
+void replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
 {
-    int64_t indx_last_elem = arrsize - 1;
-    if (UNLIKELY(hasnan)) {
-        indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
-    }
-    if (indx_last_elem >= k) {
-        qselect_16bit_<zmm_vector<_Float16>, _Float16>(
-                arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
-    }
+    memset(arr + arrsize - nan_count, 0xFF, nan_count * 2);
 }
+
+template <>
+void qselect_<zmm_vector<_Float16>>(_Float16* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+{
+    qselect_16bit_<zmm_vector<_Float16>>(arr, k, left, right, maxiters);
+}
+
 
 template <>
 void qsort_<zmm_vector<_Float16>>(_Float16* arr, int64_t left, int64_t right, int64_t maxiters)
@@ -154,12 +154,7 @@ void qsort_<zmm_vector<_Float16>>(_Float16* arr, int64_t left, int64_t right, in
     qsort_16bit_<zmm_vector<_Float16>>(arr, left, right, maxiters);
 }
 
-template<>
-void replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
-{
-    memset(arr + arrsize - nan_count, 0xFF, nan_count * 2);
-}
-
+/* Specialized template function for _Float16 qsort_*/
 template<>
 void avx512_qsort(_Float16 *arr, int64_t arrsize)
 {
