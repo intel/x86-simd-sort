@@ -726,9 +726,4 @@ inline void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize,
     avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
     avx512_qsort_fp16(arr, k - 1);
 }
-
-// key-value sort routines
-template <typename T>
-void avx512_qsort_kv(T *keys, uint64_t *indexes, int64_t arrsize);
-
 #endif // AVX512_QSORT_COMMON
