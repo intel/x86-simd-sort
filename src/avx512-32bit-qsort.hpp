@@ -704,38 +704,50 @@ static void qselect_32bit_(type_t *arr,
 
 /* Specialized template function for 32-bit qselect_ funcs*/
 template <>
-void qselect_<zmm_vector<int32_t>>(int32_t* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+void qselect_<zmm_vector<int32_t>>(
+        int32_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
     qselect_32bit_<zmm_vector<int32_t>>(arr, k, left, right, maxiters);
 }
 
 template <>
-void qselect_<zmm_vector<uint32_t>>(uint32_t* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+void qselect_<zmm_vector<uint32_t>>(
+        uint32_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
     qselect_32bit_<zmm_vector<uint32_t>>(arr, k, left, right, maxiters);
 }
 
 template <>
-void qselect_<zmm_vector<float>>(float* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+void qselect_<zmm_vector<float>>(
+        float *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
     qselect_32bit_<zmm_vector<float>>(arr, k, left, right, maxiters);
 }
 
 /* Specialized template function for 32-bit qsort_ funcs*/
 template <>
-void qsort_<zmm_vector<int32_t>>(int32_t* arr, int64_t left, int64_t right, int64_t maxiters)
+void qsort_<zmm_vector<int32_t>>(int32_t *arr,
+                                 int64_t left,
+                                 int64_t right,
+                                 int64_t maxiters)
 {
     qsort_32bit_<zmm_vector<int32_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void qsort_<zmm_vector<uint32_t>>(uint32_t* arr, int64_t left, int64_t right, int64_t maxiters)
+void qsort_<zmm_vector<uint32_t>>(uint32_t *arr,
+                                  int64_t left,
+                                  int64_t right,
+                                  int64_t maxiters)
 {
     qsort_32bit_<zmm_vector<uint32_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void qsort_<zmm_vector<float>>(float* arr, int64_t left, int64_t right, int64_t maxiters)
+void qsort_<zmm_vector<float>>(float *arr,
+                               int64_t left,
+                               int64_t right,
+                               int64_t maxiters)
 {
     qsort_32bit_<zmm_vector<float>>(arr, left, right, maxiters);
 }

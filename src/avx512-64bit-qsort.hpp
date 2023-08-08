@@ -785,38 +785,50 @@ static void qselect_64bit_(type_t *arr,
 
 /* Specialized template function for 64-bit qselect_ funcs*/
 template <>
-void qselect_<zmm_vector<int64_t>>(int64_t* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+void qselect_<zmm_vector<int64_t>>(
+        int64_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
     qselect_64bit_<zmm_vector<int64_t>>(arr, k, left, right, maxiters);
 }
 
 template <>
-void qselect_<zmm_vector<uint64_t>>(uint64_t* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+void qselect_<zmm_vector<uint64_t>>(
+        uint64_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
     qselect_64bit_<zmm_vector<uint64_t>>(arr, k, left, right, maxiters);
 }
 
 template <>
-void qselect_<zmm_vector<double>>(double* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+void qselect_<zmm_vector<double>>(
+        double *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
     qselect_64bit_<zmm_vector<double>>(arr, k, left, right, maxiters);
 }
 
 /* Specialized template function for 64-bit qsort_ funcs*/
 template <>
-void qsort_<zmm_vector<int64_t>>(int64_t* arr, int64_t left, int64_t right, int64_t maxiters)
+void qsort_<zmm_vector<int64_t>>(int64_t *arr,
+                                 int64_t left,
+                                 int64_t right,
+                                 int64_t maxiters)
 {
     qsort_64bit_<zmm_vector<int64_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void qsort_<zmm_vector<uint64_t>>(uint64_t* arr, int64_t left, int64_t right, int64_t maxiters)
+void qsort_<zmm_vector<uint64_t>>(uint64_t *arr,
+                                  int64_t left,
+                                  int64_t right,
+                                  int64_t maxiters)
 {
     qsort_64bit_<zmm_vector<uint64_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void qsort_<zmm_vector<double>>(double* arr, int64_t left, int64_t right, int64_t maxiters)
+void qsort_<zmm_vector<double>>(double *arr,
+                                int64_t left,
+                                int64_t right,
+                                int64_t maxiters)
 {
     qsort_64bit_<zmm_vector<double>>(arr, left, right, maxiters);
 }

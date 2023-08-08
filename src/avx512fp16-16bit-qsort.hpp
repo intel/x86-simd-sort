@@ -75,8 +75,7 @@ struct zmm_vector<_Float16> {
     }
     static zmm_t maskz_loadu(opmask_t mask, void const *mem)
     {
-        return _mm512_castsi512_ph(
-                _mm512_maskz_loadu_epi16(mask, mem));
+        return _mm512_castsi512_ph(_mm512_maskz_loadu_epi16(mask, mem));
     }
     static zmm_t mask_loadu(zmm_t x, opmask_t mask, void const *mem)
     {
@@ -135,31 +134,36 @@ bool is_a_nan<_Float16>(_Float16 elem)
     return (temp.i_ & 0x7c00) == 0x7c00;
 }
 
-template<>
+template <>
 void replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
 {
     memset(arr + arrsize - nan_count, 0xFF, nan_count * 2);
 }
 
 template <>
-void qselect_<zmm_vector<_Float16>>(_Float16* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+void qselect_<zmm_vector<_Float16>>(
+        _Float16 *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
     qselect_16bit_<zmm_vector<_Float16>>(arr, k, left, right, maxiters);
 }
 
-
 template <>
-void qsort_<zmm_vector<_Float16>>(_Float16* arr, int64_t left, int64_t right, int64_t maxiters)
+void qsort_<zmm_vector<_Float16>>(_Float16 *arr,
+                                  int64_t left,
+                                  int64_t right,
+                                  int64_t maxiters)
 {
     qsort_16bit_<zmm_vector<_Float16>>(arr, left, right, maxiters);
 }
 
 /* Specialized template function for _Float16 qsort_*/
-template<>
+template <>
 void avx512_qsort(_Float16 *arr, int64_t arrsize)
 {
     if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf<zmm_vector<_Float16>, _Float16>(arr, arrsize);
+        int64_t nan_count
+                = replace_nan_with_inf<zmm_vector<_Float16>, _Float16>(arr,
+                                                                       arrsize);
         qsort_16bit_<zmm_vector<_Float16>, _Float16>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);

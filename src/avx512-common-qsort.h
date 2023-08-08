@@ -85,8 +85,8 @@
 #define X86_SIMD_SORT_FINLINE static
 #endif
 
-#define LIKELY(x)       __builtin_expect((x),1)
-#define UNLIKELY(x)     __builtin_expect((x),0)
+#define LIKELY(x) __builtin_expect((x), 1)
+#define UNLIKELY(x) __builtin_expect((x), 0)
 
 template <typename type>
 struct zmm_vector;
@@ -152,7 +152,7 @@ bool has_nan(type_t *arr, int64_t arrsize)
     return found_nan;
 }
 
-template<typename type_t>
+template <typename type_t>
 void replace_inf_with_nan(type_t *arr, int64_t arrsize, int64_t nan_count)
 {
     for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
@@ -171,7 +171,7 @@ void replace_inf_with_nan(type_t *arr, int64_t arrsize, int64_t nan_count)
  * in the array which is not a nan
  */
 template <typename T>
-int64_t move_nans_to_end_of_array(T* arr, int64_t arrsize)
+int64_t move_nans_to_end_of_array(T *arr, int64_t arrsize)
 {
     int64_t jj = arrsize - 1;
     int64_t ii = 0;
@@ -186,7 +186,7 @@ int64_t move_nans_to_end_of_array(T* arr, int64_t arrsize)
             ii += 1;
         }
     }
-    return arrsize-count-1;
+    return arrsize - count - 1;
 }
 
 template <typename vtype, typename T = typename vtype::type_t>
@@ -671,10 +671,14 @@ static inline int64_t partition_avx512(type_t1 *keys,
 }
 
 template <typename vtype, typename type_t>
-void qsort_(type_t* arr, int64_t left, int64_t right, int64_t maxiters);
+void qsort_(type_t *arr, int64_t left, int64_t right, int64_t maxiters);
 
 template <typename vtype, typename type_t>
-void qselect_(type_t* arr, int64_t pos, int64_t left, int64_t right, int64_t maxiters);
+void qselect_(type_t *arr,
+              int64_t pos,
+              int64_t left,
+              int64_t right,
+              int64_t maxiters);
 
 // Regular quicksort routines:
 template <typename T>
@@ -683,7 +687,8 @@ void avx512_qsort(T *arr, int64_t arrsize)
     if (arrsize > 1) {
         /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
         if constexpr (std::is_floating_point_v<T>) {
-            int64_t nan_count = replace_nan_with_inf<zmm_vector<T>>(arr, arrsize);
+            int64_t nan_count
+                    = replace_nan_with_inf<zmm_vector<T>>(arr, arrsize);
             qsort_<zmm_vector<T>, T>(
                     arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
             replace_inf_with_nan(arr, arrsize, nan_count);
@@ -713,15 +718,22 @@ void avx512_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
     }
 }
 
-void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false);
+void avx512_qselect_fp16(uint16_t *arr,
+                         int64_t k,
+                         int64_t arrsize,
+                         bool hasnan = false);
 
 template <typename T>
-inline void avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+inline void
+avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
 {
     avx512_qselect<T>(arr, k - 1, arrsize, hasnan);
     avx512_qsort<T>(arr, k - 1);
 }
-inline void avx512_partial_qsort_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+inline void avx512_partial_qsort_fp16(uint16_t *arr,
+                                      int64_t k,
+                                      int64_t arrsize,
+                                      bool hasnan = false)
 {
     avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
     avx512_qsort_fp16(arr, k - 1);

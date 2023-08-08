@@ -377,9 +377,9 @@ bool comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
     //return npy_half_to_float(a) < npy_half_to_float(b);
 }
 
-template<>
-int64_t
-replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr, int64_t arrsize)
+template <>
+int64_t replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr,
+                                                  int64_t arrsize)
 {
     int64_t nan_count = 0;
     __mmask16 loadmask = 0xFFFF;
@@ -405,13 +405,19 @@ bool is_a_nan<uint16_t>(uint16_t elem)
 
 /* Specialized template function for 16-bit qsort_ funcs*/
 template <>
-void qsort_<zmm_vector<int16_t>>(int16_t* arr, int64_t left, int64_t right, int64_t maxiters)
+void qsort_<zmm_vector<int16_t>>(int16_t *arr,
+                                 int64_t left,
+                                 int64_t right,
+                                 int64_t maxiters)
 {
     qsort_16bit_<zmm_vector<int16_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void qsort_<zmm_vector<uint16_t>>(uint16_t* arr, int64_t left, int64_t right, int64_t maxiters)
+void qsort_<zmm_vector<uint16_t>>(uint16_t *arr,
+                                  int64_t left,
+                                  int64_t right,
+                                  int64_t maxiters)
 {
     qsort_16bit_<zmm_vector<uint16_t>>(arr, left, right, maxiters);
 }
@@ -419,7 +425,8 @@ void qsort_<zmm_vector<uint16_t>>(uint16_t* arr, int64_t left, int64_t right, in
 void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize)
 {
     if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(arr, arrsize);
+        int64_t nan_count = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(
+                arr, arrsize);
         qsort_16bit_<zmm_vector<float16>, uint16_t>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);
@@ -428,13 +435,15 @@ void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize)
 
 /* Specialized template function for 16-bit qselect_ funcs*/
 template <>
-void qselect_<zmm_vector<int16_t>>(int16_t* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+void qselect_<zmm_vector<int16_t>>(
+        int16_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
     qselect_16bit_<zmm_vector<int16_t>>(arr, k, left, right, maxiters);
 }
 
 template <>
-void qselect_<zmm_vector<uint16_t>>(uint16_t* arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+void qselect_<zmm_vector<uint16_t>>(
+        uint16_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
     qselect_16bit_<zmm_vector<uint16_t>>(arr, k, left, right, maxiters);
 }

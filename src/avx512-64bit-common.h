@@ -40,14 +40,8 @@ struct ymm_vector<float> {
         return _mm256_set1_ps(type_max());
     }
 
-    static zmmi_t seti(int v1,
-                       int v2,
-                       int v3,
-                       int v4,
-                       int v5,
-                       int v6,
-                       int v7,
-                       int v8)
+    static zmmi_t
+    seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -93,7 +87,7 @@ struct ymm_vector<float> {
     }
     static zmm_t loadu(void const *mem)
     {
-        return _mm256_loadu_ps((float*) mem);
+        return _mm256_loadu_ps((float *)mem);
     }
     static zmm_t max(zmm_t x, zmm_t y)
     {
@@ -129,16 +123,22 @@ struct ymm_vector<float> {
     }
     static type_t reducemax(zmm_t v)
     {
-        __m128 v128 = _mm_max_ps(_mm256_castps256_ps128(v), _mm256_extractf32x4_ps (v, 1));
-        __m128 v64 =  _mm_max_ps(v128, _mm_shuffle_ps(v128, v128, _MM_SHUFFLE(1, 0, 3, 2)));
-        __m128 v32 = _mm_max_ps(v64, _mm_shuffle_ps(v64, v64, _MM_SHUFFLE(0, 0, 0, 1)));
+        __m128 v128 = _mm_max_ps(_mm256_castps256_ps128(v),
+                                 _mm256_extractf32x4_ps(v, 1));
+        __m128 v64 = _mm_max_ps(
+                v128, _mm_shuffle_ps(v128, v128, _MM_SHUFFLE(1, 0, 3, 2)));
+        __m128 v32 = _mm_max_ps(
+                v64, _mm_shuffle_ps(v64, v64, _MM_SHUFFLE(0, 0, 0, 1)));
         return _mm_cvtss_f32(v32);
     }
     static type_t reducemin(zmm_t v)
     {
-        __m128 v128 = _mm_min_ps(_mm256_castps256_ps128(v), _mm256_extractf32x4_ps(v, 1));
-        __m128 v64 =  _mm_min_ps(v128, _mm_shuffle_ps(v128, v128,_MM_SHUFFLE(1, 0, 3, 2)));
-        __m128 v32 = _mm_min_ps(v64, _mm_shuffle_ps(v64, v64,_MM_SHUFFLE(0, 0, 0, 1)));
+        __m128 v128 = _mm_min_ps(_mm256_castps256_ps128(v),
+                                 _mm256_extractf32x4_ps(v, 1));
+        __m128 v64 = _mm_min_ps(
+                v128, _mm_shuffle_ps(v128, v128, _MM_SHUFFLE(1, 0, 3, 2)));
+        __m128 v32 = _mm_min_ps(
+                v64, _mm_shuffle_ps(v64, v64, _MM_SHUFFLE(0, 0, 0, 1)));
         return _mm_cvtss_f32(v32);
     }
     static zmm_t set1(type_t v)
@@ -160,7 +160,7 @@ struct ymm_vector<float> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        _mm256_storeu_ps((float*)mem, x);
+        _mm256_storeu_ps((float *)mem, x);
     }
 };
 template <>
@@ -184,14 +184,8 @@ struct ymm_vector<uint32_t> {
         return _mm256_set1_epi32(type_max());
     }
 
-    static zmmi_t seti(int v1,
-                       int v2,
-                       int v3,
-                       int v4,
-                       int v5,
-                       int v6,
-                       int v7,
-                       int v8)
+    static zmmi_t
+    seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -228,7 +222,7 @@ struct ymm_vector<uint32_t> {
     }
     static zmm_t loadu(void const *mem)
     {
-        return _mm256_loadu_si256((__m256i*) mem);
+        return _mm256_loadu_si256((__m256i *)mem);
     }
     static zmm_t max(zmm_t x, zmm_t y)
     {
@@ -264,16 +258,22 @@ struct ymm_vector<uint32_t> {
     }
     static type_t reducemax(zmm_t v)
     {
-        __m128i v128 = _mm_max_epu32(_mm256_castsi256_si128(v), _mm256_extracti128_si256(v, 1));
-        __m128i v64 =  _mm_max_epu32(v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(1, 0, 3, 2)));
-        __m128i v32 = _mm_max_epu32(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));
+        __m128i v128 = _mm_max_epu32(_mm256_castsi256_si128(v),
+                                     _mm256_extracti128_si256(v, 1));
+        __m128i v64 = _mm_max_epu32(
+                v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(1, 0, 3, 2)));
+        __m128i v32 = _mm_max_epu32(
+                v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));
         return (type_t)_mm_cvtsi128_si32(v32);
     }
     static type_t reducemin(zmm_t v)
     {
-        __m128i v128 = _mm_min_epu32(_mm256_castsi256_si128(v), _mm256_extracti128_si256(v, 1));
-        __m128i v64 =  _mm_min_epu32(v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(1, 0, 3, 2)));
-        __m128i v32 = _mm_min_epu32(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));
+        __m128i v128 = _mm_min_epu32(_mm256_castsi256_si128(v),
+                                     _mm256_extracti128_si256(v, 1));
+        __m128i v64 = _mm_min_epu32(
+                v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(1, 0, 3, 2)));
+        __m128i v32 = _mm_min_epu32(
+                v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));
         return (type_t)_mm_cvtsi128_si32(v32);
     }
     static zmm_t set1(type_t v)
@@ -289,7 +289,7 @@ struct ymm_vector<uint32_t> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        _mm256_storeu_si256((__m256i*) mem, x);
+        _mm256_storeu_si256((__m256i *)mem, x);
     }
 };
 template <>
@@ -313,14 +313,8 @@ struct ymm_vector<int32_t> {
         return _mm256_set1_epi32(type_max());
     } // TODO: this should broadcast bits as is?
 
-    static zmmi_t seti(int v1,
-                       int v2,
-                       int v3,
-                       int v4,
-                       int v5,
-                       int v6,
-                       int v7,
-                       int v8)
+    static zmmi_t
+    seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -357,7 +351,7 @@ struct ymm_vector<int32_t> {
     }
     static zmm_t loadu(void const *mem)
     {
-        return _mm256_loadu_si256((__m256i*) mem);
+        return _mm256_loadu_si256((__m256i *)mem);
     }
     static zmm_t max(zmm_t x, zmm_t y)
     {
@@ -393,16 +387,22 @@ struct ymm_vector<int32_t> {
     }
     static type_t reducemax(zmm_t v)
     {
-        __m128i v128 = _mm_max_epi32(_mm256_castsi256_si128(v), _mm256_extracti128_si256(v, 1));
-        __m128i v64 =  _mm_max_epi32(v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(1, 0, 3, 2)));
-        __m128i v32 = _mm_max_epi32(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));
+        __m128i v128 = _mm_max_epi32(_mm256_castsi256_si128(v),
+                                     _mm256_extracti128_si256(v, 1));
+        __m128i v64 = _mm_max_epi32(
+                v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(1, 0, 3, 2)));
+        __m128i v32 = _mm_max_epi32(
+                v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));
         return (type_t)_mm_cvtsi128_si32(v32);
     }
     static type_t reducemin(zmm_t v)
     {
-        __m128i v128 = _mm_min_epi32(_mm256_castsi256_si128(v), _mm256_extracti128_si256(v, 1));
-        __m128i v64 =  _mm_min_epi32(v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(1, 0, 3, 2)));
-        __m128i v32 = _mm_min_epi32(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));
+        __m128i v128 = _mm_min_epi32(_mm256_castsi256_si128(v),
+                                     _mm256_extracti128_si256(v, 1));
+        __m128i v64 = _mm_min_epi32(
+                v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(1, 0, 3, 2)));
+        __m128i v32 = _mm_min_epi32(
+                v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));
         return (type_t)_mm_cvtsi128_si32(v32);
     }
     static zmm_t set1(type_t v)
@@ -418,7 +418,7 @@ struct ymm_vector<int32_t> {
     }
     static void storeu(void *mem, zmm_t x)
     {
-        _mm256_storeu_si256((__m256i*) mem, x);
+        _mm256_storeu_si256((__m256i *)mem, x);
     }
 };
 template <>
@@ -443,14 +443,8 @@ struct zmm_vector<int64_t> {
         return _mm512_set1_epi64(type_max());
     } // TODO: this should broadcast bits as is?
 
-    static zmmi_t seti(int v1,
-                       int v2,
-                       int v3,
-                       int v4,
-                       int v5,
-                       int v6,
-                       int v7,
-                       int v8)
+    static zmmi_t
+    seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -567,14 +561,8 @@ struct zmm_vector<uint64_t> {
         return _mm512_set1_epi64(type_max());
     }
 
-    static zmmi_t seti(int v1,
-                       int v2,
-                       int v3,
-                       int v4,
-                       int v5,
-                       int v6,
-                       int v7,
-                       int v8)
+    static zmmi_t
+    seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -679,14 +667,8 @@ struct zmm_vector<double> {
         return _mm512_set1_pd(type_max());
     }
 
-    static zmmi_t seti(int v1,
-                       int v2,
-                       int v3,
-                       int v4,
-                       int v5,
-                       int v6,
-                       int v7,
-                       int v8)
+    static zmmi_t
+    seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -793,16 +775,12 @@ X86_SIMD_SORT_INLINE zmm_t sort_zmm_64bit(zmm_t zmm)
     zmm = cmp_merge<vtype>(
             zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
     zmm = cmp_merge<vtype>(
-            zmm,
-            vtype::permutexvar(vtype::seti(NETWORK_64BIT_1), zmm),
-            0xCC);
+            zmm, vtype::permutexvar(vtype::seti(NETWORK_64BIT_1), zmm), 0xCC);
     zmm = cmp_merge<vtype>(
             zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
     zmm = cmp_merge<vtype>(zmm, vtype::permutexvar(rev_index, zmm), 0xF0);
     zmm = cmp_merge<vtype>(
-            zmm,
-            vtype::permutexvar(vtype::seti(NETWORK_64BIT_3), zmm),
-            0xCC);
+            zmm, vtype::permutexvar(vtype::seti(NETWORK_64BIT_3), zmm), 0xCC);
     zmm = cmp_merge<vtype>(
             zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
     return zmm;
