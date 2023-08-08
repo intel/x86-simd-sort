@@ -256,6 +256,15 @@ struct zmm_vector<float> {
     {
         return _mm512_cmp_ps_mask(x, y, _CMP_GE_OQ);
     }
+    static opmask_t get_partial_loadmask(int size)
+    {
+        return (0x0001 << size) - 0x0001;
+    }
+    template <int type>
+    static opmask_t fpclass(zmm_t x)
+    {
+        return _mm512_fpclass_ps_mask(x, type);
+    }
     template <int scale>
     static ymm_t i64gather(__m512i index, void const *base)
     {
@@ -278,6 +287,10 @@ struct zmm_vector<float> {
     static void mask_compressstoreu(void *mem, opmask_t mask, zmm_t x)
     {
         return _mm512_mask_compressstoreu_ps(mem, mask, x);
+    }
+    static zmm_t maskz_loadu(opmask_t mask, void const *mem)
+    {
+        return _mm512_maskz_loadu_ps(mask, mem);
     }
     static zmm_t mask_loadu(zmm_t x, opmask_t mask, void const *mem)
     {
@@ -689,95 +702,53 @@ static void qselect_32bit_(type_t *arr,
         qselect_32bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
-X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(float *arr, int64_t arrsize)
+/* Specialized template function for 32-bit qselect_ funcs*/
+template <>
+void qselect_<zmm_vector<int32_t>>(
+        int32_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
-    int64_t nan_count = 0;
-    __mmask16 loadmask = 0xFFFF;
-    while (arrsize > 0) {
-        if (arrsize < 16) { loadmask = (0x0001 << arrsize) - 0x0001; }
-        __m512 in_zmm = _mm512_maskz_loadu_ps(loadmask, arr);
-        __mmask16 nanmask = _mm512_cmp_ps_mask(in_zmm, in_zmm, _CMP_NEQ_UQ);
-        nan_count += _mm_popcnt_u32((int32_t)nanmask);
-        _mm512_mask_storeu_ps(arr, nanmask, ZMM_MAX_FLOAT);
-        arr += 16;
-        arrsize -= 16;
-    }
-    return nan_count;
-}
-
-X86_SIMD_SORT_INLINE void
-replace_inf_with_nan(float *arr, int64_t arrsize, int64_t nan_count)
-{
-    for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
-        arr[ii] = std::nanf("1");
-        nan_count -= 1;
-    }
+    qselect_32bit_<zmm_vector<int32_t>>(arr, k, left, right, maxiters);
 }
 
 template <>
-void avx512_qselect<int32_t>(int32_t *arr,
-                             int64_t k,
-                             int64_t arrsize,
-                             bool hasnan)
+void qselect_<zmm_vector<uint32_t>>(
+        uint32_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
-    if (arrsize > 1) {
-        qselect_32bit_<zmm_vector<int32_t>, int32_t>(
-                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
+    qselect_32bit_<zmm_vector<uint32_t>>(arr, k, left, right, maxiters);
 }
 
 template <>
-void avx512_qselect<uint32_t>(uint32_t *arr,
-                              int64_t k,
-                              int64_t arrsize,
-                              bool hasnan)
+void qselect_<zmm_vector<float>>(
+        float *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
 {
-    if (arrsize > 1) {
-        qselect_32bit_<zmm_vector<uint32_t>, uint32_t>(
-                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
+    qselect_32bit_<zmm_vector<float>>(arr, k, left, right, maxiters);
+}
+
+/* Specialized template function for 32-bit qsort_ funcs*/
+template <>
+void qsort_<zmm_vector<int32_t>>(int32_t *arr,
+                                 int64_t left,
+                                 int64_t right,
+                                 int64_t maxiters)
+{
+    qsort_32bit_<zmm_vector<int32_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void avx512_qselect<float>(float *arr, int64_t k, int64_t arrsize, bool hasnan)
+void qsort_<zmm_vector<uint32_t>>(uint32_t *arr,
+                                  int64_t left,
+                                  int64_t right,
+                                  int64_t maxiters)
 {
-    int64_t indx_last_elem = arrsize - 1;
-    if (UNLIKELY(hasnan)) {
-        indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
-    }
-    if (indx_last_elem >= k) {
-        qselect_32bit_<zmm_vector<float>, float>(
-                arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
-    }
+    qsort_32bit_<zmm_vector<uint32_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void avx512_qsort<int32_t>(int32_t *arr, int64_t arrsize)
+void qsort_<zmm_vector<float>>(float *arr,
+                               int64_t left,
+                               int64_t right,
+                               int64_t maxiters)
 {
-    if (arrsize > 1) {
-        qsort_32bit_<zmm_vector<int32_t>, int32_t>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
+    qsort_32bit_<zmm_vector<float>>(arr, left, right, maxiters);
 }
-
-template <>
-void avx512_qsort<uint32_t>(uint32_t *arr, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        qsort_32bit_<zmm_vector<uint32_t>, uint32_t>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-void avx512_qsort<float>(float *arr, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf(arr, arrsize);
-        qsort_32bit_<zmm_vector<float>, float>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        replace_inf_with_nan(arr, arrsize, nan_count);
-    }
-}
-
 #endif //AVX512_QSORT_32BIT

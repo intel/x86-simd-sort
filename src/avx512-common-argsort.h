@@ -15,17 +15,6 @@
 using argtype = zmm_vector<int64_t>;
 using argzmm_t = typename argtype::zmm_t;
 
-template <typename T>
-void avx512_argsort(T *arr, int64_t *arg, int64_t arrsize);
-
-template <typename T>
-std::vector<int64_t> avx512_argsort(T *arr, int64_t arrsize);
-
-template <typename T>
-void avx512_argselect(T *arr, int64_t *arg, int64_t k, int64_t arrsize);
-
-template <typename T>
-std::vector<int64_t> avx512_argselect(T *arr, int64_t k, int64_t arrsize);
 /*
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
@@ -45,7 +34,8 @@ static inline int32_t partition_vec(type_t *arg,
     int32_t amount_gt_pivot = _mm_popcnt_u32((int32_t)gt_mask);
     argtype::mask_compressstoreu(
             arg + left, vtype::knot_opmask(gt_mask), arg_vec);
-    argtype::mask_compressstoreu(arg + right - amount_gt_pivot, gt_mask, arg_vec);
+    argtype::mask_compressstoreu(
+            arg + right - amount_gt_pivot, gt_mask, arg_vec);
     *smallest_vec = vtype::min(curr_vec, *smallest_vec);
     *biggest_vec = vtype::max(curr_vec, *biggest_vec);
     return amount_gt_pivot;
@@ -236,7 +226,8 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
             right -= num_unroll * vtype::numlanes;
 #pragma GCC unroll 8
             for (int ii = 0; ii < num_unroll; ++ii) {
-                arg_vec[ii] = argtype::loadu(arg + right + ii * vtype::numlanes);
+                arg_vec[ii]
+                        = argtype::loadu(arg + right + ii * vtype::numlanes);
                 curr_vec[ii] = vtype::template i64gather<sizeof(type_t)>(
                         arg_vec[ii], arr);
             }

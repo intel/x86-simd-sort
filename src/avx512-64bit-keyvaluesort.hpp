@@ -439,34 +439,21 @@ void qsort_64bit_(type1_t *keys,
     }
 }
 
-template <>
-void avx512_qsort_kv<int64_t>(int64_t *keys, uint64_t *indexes, int64_t arrsize)
+template <typename T1, typename T2>
+void avx512_qsort_kv(T1 *keys, T2 *indexes, int64_t arrsize)
 {
     if (arrsize > 1) {
-        qsort_64bit_<zmm_vector<int64_t>, zmm_vector<uint64_t>>(
-                keys, indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-void avx512_qsort_kv<uint64_t>(uint64_t *keys,
-                               uint64_t *indexes,
-                               int64_t arrsize)
-{
-    if (arrsize > 1) {
-        qsort_64bit_<zmm_vector<uint64_t>, zmm_vector<uint64_t>>(
-                keys, indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-void avx512_qsort_kv<double>(double *keys, uint64_t *indexes, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf(keys, arrsize);
-        qsort_64bit_<zmm_vector<double>, zmm_vector<uint64_t>>(
-                keys, indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        replace_inf_with_nan(keys, arrsize, nan_count);
+        if constexpr (std::is_floating_point_v<T1>) {
+            int64_t nan_count
+                    = replace_nan_with_inf<zmm_vector<double>>(keys, arrsize);
+            qsort_64bit_<zmm_vector<T1>, zmm_vector<T2>>(
+                    keys, indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+            replace_inf_with_nan(keys, arrsize, nan_count);
+        }
+        else {
+            qsort_64bit_<zmm_vector<T1>, zmm_vector<T2>>(
+                    keys, indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        }
     }
 }
 #endif // AVX512_QSORT_64BIT_KV

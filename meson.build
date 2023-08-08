@@ -1,6 +1,7 @@
 project('x86-simd-sort', 'cpp',
-        version : '1.0.0',
-        license : 'BSD 3-clause')
+        version : '2.0.0',
+        license : 'BSD 3-clause',
+        default_options : ['cpp_std=c++17'])
 cpp = meson.get_compiler('cpp')
 src = include_directories('src')
 bench = include_directories('benchmarks')

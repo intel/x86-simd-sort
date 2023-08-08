@@ -377,7 +377,8 @@ bool comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
     //return npy_half_to_float(a) < npy_half_to_float(b);
 }
 
-X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(uint16_t *arr,
+template <>
+int64_t replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr,
                                                   int64_t arrsize)
 {
     int64_t nan_count = 0;
@@ -396,37 +397,55 @@ X86_SIMD_SORT_INLINE int64_t replace_nan_with_inf(uint16_t *arr,
     return nan_count;
 }
 
-X86_SIMD_SORT_INLINE void
-replace_inf_with_nan(uint16_t *arr, int64_t arrsize, int64_t nan_count)
-{
-    for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
-        arr[ii] = 0xFFFF;
-        nan_count -= 1;
-    }
-}
-
 template <>
 bool is_a_nan<uint16_t>(uint16_t elem)
 {
     return (elem & 0x7c00) == 0x7c00;
 }
 
+/* Specialized template function for 16-bit qsort_ funcs*/
 template <>
-void avx512_qselect(int16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+void qsort_<zmm_vector<int16_t>>(int16_t *arr,
+                                 int64_t left,
+                                 int64_t right,
+                                 int64_t maxiters)
 {
-    if (arrsize > 1) {
-        qselect_16bit_<zmm_vector<int16_t>, int16_t>(
-                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
+    qsort_16bit_<zmm_vector<int16_t>>(arr, left, right, maxiters);
 }
 
 template <>
-void avx512_qselect(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+void qsort_<zmm_vector<uint16_t>>(uint16_t *arr,
+                                  int64_t left,
+                                  int64_t right,
+                                  int64_t maxiters)
+{
+    qsort_16bit_<zmm_vector<uint16_t>>(arr, left, right, maxiters);
+}
+
+void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize)
 {
     if (arrsize > 1) {
-        qselect_16bit_<zmm_vector<uint16_t>, uint16_t>(
-                arr, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        int64_t nan_count = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(
+                arr, arrsize);
+        qsort_16bit_<zmm_vector<float16>, uint16_t>(
+                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+        replace_inf_with_nan(arr, arrsize, nan_count);
     }
+}
+
+/* Specialized template function for 16-bit qselect_ funcs*/
+template <>
+void qselect_<zmm_vector<int16_t>>(
+        int16_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+{
+    qselect_16bit_<zmm_vector<int16_t>>(arr, k, left, right, maxiters);
+}
+
+template <>
+void qselect_<zmm_vector<uint16_t>>(
+        uint16_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
+{
+    qselect_16bit_<zmm_vector<uint16_t>>(arr, k, left, right, maxiters);
 }
 
 void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
@@ -440,33 +459,4 @@ void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
                 arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }
-
-template <>
-void avx512_qsort(int16_t *arr, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        qsort_16bit_<zmm_vector<int16_t>, int16_t>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-template <>
-void avx512_qsort(uint16_t *arr, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        qsort_16bit_<zmm_vector<uint16_t>, uint16_t>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-    }
-}
-
-void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize)
-{
-    if (arrsize > 1) {
-        int64_t nan_count = replace_nan_with_inf(arr, arrsize);
-        qsort_16bit_<zmm_vector<float16>, uint16_t>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
-        replace_inf_with_nan(arr, arrsize, nan_count);
-    }
-}
-
 #endif // AVX512_QSORT_16BIT

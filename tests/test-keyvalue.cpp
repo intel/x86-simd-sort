@@ -54,7 +54,7 @@ TYPED_TEST_P(KeyValueSort, test_64bit_random_data)
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, uint64_t>);
-            avx512_qsort_kv<TypeParam>(keys.data(), values.data(), keys.size());
+            avx512_qsort_kv(keys.data(), values.data(), keys.size());
             for (size_t i = 0; i < keys.size(); i++) {
                 ASSERT_EQ(keys[i], sortedarr[i].key);
                 ASSERT_EQ(values[i], sortedarr[i].value);
