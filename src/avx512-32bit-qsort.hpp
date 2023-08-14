@@ -9,6 +9,7 @@
 #define AVX512_QSORT_32BIT
 
 #include "avx512-common-qsort.h"
+#include "xss-network-qsort.hpp"
 
 /*
  * Constants used in sorting 16 elements in a ZMM registers. Based on Bitonic
@@ -22,6 +23,12 @@
 #define NETWORK_32BIT_5 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 #define NETWORK_32BIT_6 11, 10, 9, 8, 15, 14, 13, 12, 3, 2, 1, 0, 7, 6, 5, 4
 #define NETWORK_32BIT_7 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8
+
+template <typename vtype, typename zmm_t>
+X86_SIMD_SORT_INLINE zmm_t sort_zmm_32bit(zmm_t zmm);
+
+template <typename vtype, typename zmm_t>
+X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_32bit(zmm_t zmm);
 
 template <>
 struct zmm_vector<int32_t> {
@@ -124,6 +131,19 @@ struct zmm_vector<int32_t> {
     {
         return _mm256_min_epi32(x, y);
     }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const auto rev_index = _mm512_set_epi32(NETWORK_32BIT_5);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_32bit<zmm_vector<type_t>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_32bit<zmm_vector<type_t>>(x);
+    }
 };
 template <>
 struct zmm_vector<uint32_t> {
@@ -225,6 +245,19 @@ struct zmm_vector<uint32_t> {
     static ymm_t min(ymm_t x, ymm_t y)
     {
         return _mm256_min_epu32(x, y);
+    }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const auto rev_index = _mm512_set_epi32(NETWORK_32BIT_5);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_32bit<zmm_vector<type_t>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_32bit<zmm_vector<type_t>>(x);
     }
 };
 template <>
@@ -342,6 +375,19 @@ struct zmm_vector<float> {
     {
         return _mm256_min_ps(x, y);
     }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const auto rev_index = _mm512_set_epi32(NETWORK_32BIT_5);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_32bit<zmm_vector<type_t>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_32bit<zmm_vector<type_t>>(x);
+    }
 };
 
 /*
@@ -421,189 +467,6 @@ X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_32bit(zmm_t zmm)
     return zmm;
 }
 
-// Assumes zmm1 and zmm2 are sorted and performs a recursive half cleaner
-template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_two_zmm_32bit(zmm_t *zmm1, zmm_t *zmm2)
-{
-    // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
-    *zmm2 = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5), *zmm2);
-    zmm_t zmm3 = vtype::min(*zmm1, *zmm2);
-    zmm_t zmm4 = vtype::max(*zmm1, *zmm2);
-    // 2) Recursive half cleaner for each
-    *zmm1 = bitonic_merge_zmm_32bit<vtype>(zmm3);
-    *zmm2 = bitonic_merge_zmm_32bit<vtype>(zmm4);
-}
-
-// Assumes [zmm0, zmm1] and [zmm2, zmm3] are sorted and performs a recursive
-// half cleaner
-template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_32bit(zmm_t *zmm)
-{
-    zmm_t zmm2r = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5), zmm[2]);
-    zmm_t zmm3r = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5), zmm[3]);
-    zmm_t zmm_t1 = vtype::min(zmm[0], zmm3r);
-    zmm_t zmm_t2 = vtype::min(zmm[1], zmm2r);
-    zmm_t zmm_t3 = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5),
-                                      vtype::max(zmm[1], zmm2r));
-    zmm_t zmm_t4 = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5),
-                                      vtype::max(zmm[0], zmm3r));
-    zmm_t zmm0 = vtype::min(zmm_t1, zmm_t2);
-    zmm_t zmm1 = vtype::max(zmm_t1, zmm_t2);
-    zmm_t zmm2 = vtype::min(zmm_t3, zmm_t4);
-    zmm_t zmm3 = vtype::max(zmm_t3, zmm_t4);
-    zmm[0] = bitonic_merge_zmm_32bit<vtype>(zmm0);
-    zmm[1] = bitonic_merge_zmm_32bit<vtype>(zmm1);
-    zmm[2] = bitonic_merge_zmm_32bit<vtype>(zmm2);
-    zmm[3] = bitonic_merge_zmm_32bit<vtype>(zmm3);
-}
-
-template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_eight_zmm_32bit(zmm_t *zmm)
-{
-    zmm_t zmm4r = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5), zmm[4]);
-    zmm_t zmm5r = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5), zmm[5]);
-    zmm_t zmm6r = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5), zmm[6]);
-    zmm_t zmm7r = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5), zmm[7]);
-    zmm_t zmm_t1 = vtype::min(zmm[0], zmm7r);
-    zmm_t zmm_t2 = vtype::min(zmm[1], zmm6r);
-    zmm_t zmm_t3 = vtype::min(zmm[2], zmm5r);
-    zmm_t zmm_t4 = vtype::min(zmm[3], zmm4r);
-    zmm_t zmm_t5 = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5),
-                                      vtype::max(zmm[3], zmm4r));
-    zmm_t zmm_t6 = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5),
-                                      vtype::max(zmm[2], zmm5r));
-    zmm_t zmm_t7 = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5),
-                                      vtype::max(zmm[1], zmm6r));
-    zmm_t zmm_t8 = vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_5),
-                                      vtype::max(zmm[0], zmm7r));
-    COEX<vtype>(zmm_t1, zmm_t3);
-    COEX<vtype>(zmm_t2, zmm_t4);
-    COEX<vtype>(zmm_t5, zmm_t7);
-    COEX<vtype>(zmm_t6, zmm_t8);
-    COEX<vtype>(zmm_t1, zmm_t2);
-    COEX<vtype>(zmm_t3, zmm_t4);
-    COEX<vtype>(zmm_t5, zmm_t6);
-    COEX<vtype>(zmm_t7, zmm_t8);
-    zmm[0] = bitonic_merge_zmm_32bit<vtype>(zmm_t1);
-    zmm[1] = bitonic_merge_zmm_32bit<vtype>(zmm_t2);
-    zmm[2] = bitonic_merge_zmm_32bit<vtype>(zmm_t3);
-    zmm[3] = bitonic_merge_zmm_32bit<vtype>(zmm_t4);
-    zmm[4] = bitonic_merge_zmm_32bit<vtype>(zmm_t5);
-    zmm[5] = bitonic_merge_zmm_32bit<vtype>(zmm_t6);
-    zmm[6] = bitonic_merge_zmm_32bit<vtype>(zmm_t7);
-    zmm[7] = bitonic_merge_zmm_32bit<vtype>(zmm_t8);
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_16_32bit(type_t *arr, int32_t N)
-{
-    typename vtype::opmask_t load_mask = (0x0001 << N) - 0x0001;
-    typename vtype::zmm_t zmm
-            = vtype::mask_loadu(vtype::zmm_max(), load_mask, arr);
-    vtype::mask_storeu(arr, load_mask, sort_zmm_32bit<vtype>(zmm));
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_32_32bit(type_t *arr, int32_t N)
-{
-    if (N <= 16) {
-        sort_16_32bit<vtype>(arr, N);
-        return;
-    }
-    using zmm_t = typename vtype::zmm_t;
-    zmm_t zmm1 = vtype::loadu(arr);
-    typename vtype::opmask_t load_mask = (0x0001 << (N - 16)) - 0x0001;
-    zmm_t zmm2 = vtype::mask_loadu(vtype::zmm_max(), load_mask, arr + 16);
-    zmm1 = sort_zmm_32bit<vtype>(zmm1);
-    zmm2 = sort_zmm_32bit<vtype>(zmm2);
-    bitonic_merge_two_zmm_32bit<vtype>(&zmm1, &zmm2);
-    vtype::storeu(arr, zmm1);
-    vtype::mask_storeu(arr + 16, load_mask, zmm2);
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_64_32bit(type_t *arr, int32_t N)
-{
-    if (N <= 32) {
-        sort_32_32bit<vtype>(arr, N);
-        return;
-    }
-    using zmm_t = typename vtype::zmm_t;
-    using opmask_t = typename vtype::opmask_t;
-    zmm_t zmm[4];
-    zmm[0] = vtype::loadu(arr);
-    zmm[1] = vtype::loadu(arr + 16);
-    opmask_t load_mask1 = 0xFFFF, load_mask2 = 0xFFFF;
-    uint64_t combined_mask = (0x1ull << (N - 32)) - 0x1ull;
-    load_mask1 &= combined_mask & 0xFFFF;
-    load_mask2 &= (combined_mask >> 16) & 0xFFFF;
-    zmm[2] = vtype::mask_loadu(vtype::zmm_max(), load_mask1, arr + 32);
-    zmm[3] = vtype::mask_loadu(vtype::zmm_max(), load_mask2, arr + 48);
-    zmm[0] = sort_zmm_32bit<vtype>(zmm[0]);
-    zmm[1] = sort_zmm_32bit<vtype>(zmm[1]);
-    zmm[2] = sort_zmm_32bit<vtype>(zmm[2]);
-    zmm[3] = sort_zmm_32bit<vtype>(zmm[3]);
-    bitonic_merge_two_zmm_32bit<vtype>(&zmm[0], &zmm[1]);
-    bitonic_merge_two_zmm_32bit<vtype>(&zmm[2], &zmm[3]);
-    bitonic_merge_four_zmm_32bit<vtype>(zmm);
-    vtype::storeu(arr, zmm[0]);
-    vtype::storeu(arr + 16, zmm[1]);
-    vtype::mask_storeu(arr + 32, load_mask1, zmm[2]);
-    vtype::mask_storeu(arr + 48, load_mask2, zmm[3]);
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void sort_128_32bit(type_t *arr, int32_t N)
-{
-    if (N <= 64) {
-        sort_64_32bit<vtype>(arr, N);
-        return;
-    }
-    using zmm_t = typename vtype::zmm_t;
-    using opmask_t = typename vtype::opmask_t;
-    zmm_t zmm[8];
-    zmm[0] = vtype::loadu(arr);
-    zmm[1] = vtype::loadu(arr + 16);
-    zmm[2] = vtype::loadu(arr + 32);
-    zmm[3] = vtype::loadu(arr + 48);
-    zmm[0] = sort_zmm_32bit<vtype>(zmm[0]);
-    zmm[1] = sort_zmm_32bit<vtype>(zmm[1]);
-    zmm[2] = sort_zmm_32bit<vtype>(zmm[2]);
-    zmm[3] = sort_zmm_32bit<vtype>(zmm[3]);
-    opmask_t load_mask1 = 0xFFFF, load_mask2 = 0xFFFF;
-    opmask_t load_mask3 = 0xFFFF, load_mask4 = 0xFFFF;
-    if (N != 128) {
-        uint64_t combined_mask = (0x1ull << (N - 64)) - 0x1ull;
-        load_mask1 &= combined_mask & 0xFFFF;
-        load_mask2 &= (combined_mask >> 16) & 0xFFFF;
-        load_mask3 &= (combined_mask >> 32) & 0xFFFF;
-        load_mask4 &= (combined_mask >> 48) & 0xFFFF;
-    }
-    zmm[4] = vtype::mask_loadu(vtype::zmm_max(), load_mask1, arr + 64);
-    zmm[5] = vtype::mask_loadu(vtype::zmm_max(), load_mask2, arr + 80);
-    zmm[6] = vtype::mask_loadu(vtype::zmm_max(), load_mask3, arr + 96);
-    zmm[7] = vtype::mask_loadu(vtype::zmm_max(), load_mask4, arr + 112);
-    zmm[4] = sort_zmm_32bit<vtype>(zmm[4]);
-    zmm[5] = sort_zmm_32bit<vtype>(zmm[5]);
-    zmm[6] = sort_zmm_32bit<vtype>(zmm[6]);
-    zmm[7] = sort_zmm_32bit<vtype>(zmm[7]);
-    bitonic_merge_two_zmm_32bit<vtype>(&zmm[0], &zmm[1]);
-    bitonic_merge_two_zmm_32bit<vtype>(&zmm[2], &zmm[3]);
-    bitonic_merge_two_zmm_32bit<vtype>(&zmm[4], &zmm[5]);
-    bitonic_merge_two_zmm_32bit<vtype>(&zmm[6], &zmm[7]);
-    bitonic_merge_four_zmm_32bit<vtype>(zmm);
-    bitonic_merge_four_zmm_32bit<vtype>(zmm + 4);
-    bitonic_merge_eight_zmm_32bit<vtype>(zmm);
-    vtype::storeu(arr, zmm[0]);
-    vtype::storeu(arr + 16, zmm[1]);
-    vtype::storeu(arr + 32, zmm[2]);
-    vtype::storeu(arr + 48, zmm[3]);
-    vtype::mask_storeu(arr + 64, load_mask1, zmm[4]);
-    vtype::mask_storeu(arr + 80, load_mask2, zmm[5]);
-    vtype::mask_storeu(arr + 96, load_mask3, zmm[6]);
-    vtype::mask_storeu(arr + 112, load_mask4, zmm[7]);
-}
-
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
                                             const int64_t left,
@@ -651,10 +514,10 @@ qsort_32bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
         return;
     }
     /*
-     * Base case: use bitonic networks to sort arrays <= 128
+     * Base case: use bitonic networks to sort arrays <= 256
      */
-    if (right + 1 - left <= 128) {
-        sort_128_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
+    if (right + 1 - left <= 256) {
+        xss::sort_n<vtype, 256>(arr + left, (int32_t)(right + 1 - left));
         return;
     }
 
@@ -684,10 +547,10 @@ static void qselect_32bit_(type_t *arr,
         return;
     }
     /*
-     * Base case: use bitonic networks to sort arrays <= 128
+     * Base case: use bitonic networks to sort arrays <= 256
      */
-    if (right + 1 - left <= 128) {
-        sort_128_32bit<vtype>(arr + left, (int32_t)(right + 1 - left));
+    if (right + 1 - left <= 256) {
+        xss::sort_n<vtype, 256>(arr + left, (int32_t)(right + 1 - left));
         return;
     }
 

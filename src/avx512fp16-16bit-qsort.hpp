@@ -8,6 +8,7 @@
 #define AVX512FP16_QSORT_16BIT
 
 #include "avx512-16bit-common.h"
+#include "xss-network-qsort.hpp"
 
 typedef union {
     _Float16 f_;
@@ -123,6 +124,19 @@ struct zmm_vector<_Float16> {
     static void storeu(void *mem, zmm_t x)
     {
         return _mm512_storeu_ph(mem, x);
+    }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const auto rev_index = get_network(4);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_16bit<zmm_vector<type_t>>(x);
     }
 };
 

@@ -8,6 +8,7 @@
 #define AVX512_QSORT_16BIT
 
 #include "avx512-16bit-common.h"
+#include "xss-network-qsort.hpp"
 
 struct float16 {
     uint16_t val;
@@ -152,6 +153,19 @@ struct zmm_vector<float16> {
     {
         return _mm512_storeu_si512(mem, x);
     }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const auto rev_index = get_network(4);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_16bit<zmm_vector<float16>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_16bit<zmm_vector<float16>>(x);
+    }
 };
 
 template <>
@@ -251,6 +265,19 @@ struct zmm_vector<int16_t> {
     {
         return _mm512_storeu_si512(mem, x);
     }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const auto rev_index = get_network(4);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_16bit<zmm_vector<type_t>>(x);
+    }
 };
 template <>
 struct zmm_vector<uint16_t> {
@@ -346,6 +373,19 @@ struct zmm_vector<uint16_t> {
     static void storeu(void *mem, zmm_t x)
     {
         return _mm512_storeu_si512(mem, x);
+    }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const auto rev_index = get_network(4);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_16bit<zmm_vector<type_t>>(x);
     }
 };
 

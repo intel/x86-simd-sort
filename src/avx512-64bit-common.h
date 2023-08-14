@@ -19,6 +19,12 @@
 #define NETWORK_64BIT_3 5, 4, 7, 6, 1, 0, 3, 2
 #define NETWORK_64BIT_4 3, 2, 1, 0, 7, 6, 5, 4
 
+template <typename vtype, typename zmm_t>
+X86_SIMD_SORT_INLINE zmm_t sort_zmm_64bit(zmm_t zmm);
+
+template <typename vtype, typename zmm_t>
+X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_64bit(zmm_t zmm);
+
 template <>
 struct ymm_vector<float> {
     using type_t = float;
@@ -538,6 +544,19 @@ struct zmm_vector<int64_t> {
     {
         _mm512_storeu_si512(mem, x);
     }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const zmmi_t rev_index = seti(NETWORK_64BIT_2);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_64bit<zmm_vector<type_t>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_64bit<zmm_vector<type_t>>(x);
+    }
 };
 template <>
 struct zmm_vector<uint64_t> {
@@ -643,6 +662,19 @@ struct zmm_vector<uint64_t> {
     static void storeu(void *mem, zmm_t x)
     {
         _mm512_storeu_si512(mem, x);
+    }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const zmmi_t rev_index = seti(NETWORK_64BIT_2);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_64bit<zmm_vector<type_t>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_64bit<zmm_vector<type_t>>(x);
     }
 };
 template <>
@@ -762,6 +794,19 @@ struct zmm_vector<double> {
     {
         _mm512_storeu_pd(mem, x);
     }
+    static zmm_t reverse(zmm_t zmm)
+    {
+        const zmmi_t rev_index = seti(NETWORK_64BIT_2);
+        return permutexvar(rev_index, zmm);
+    }
+    static zmm_t bitonic_merge(zmm_t x)
+    {
+        return bitonic_merge_zmm_64bit<zmm_vector<type_t>>(x);
+    }
+    static zmm_t sort_vec(zmm_t x)
+    {
+        return sort_zmm_64bit<zmm_vector<type_t>>(x);
+    }
 };
 
 /*
@@ -781,6 +826,27 @@ X86_SIMD_SORT_INLINE zmm_t sort_zmm_64bit(zmm_t zmm)
     zmm = cmp_merge<vtype>(zmm, vtype::permutexvar(rev_index, zmm), 0xF0);
     zmm = cmp_merge<vtype>(
             zmm, vtype::permutexvar(vtype::seti(NETWORK_64BIT_3), zmm), 0xCC);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
+    return zmm;
+}
+
+// Assumes zmm is bitonic and performs a recursive half cleaner
+template <typename vtype, typename zmm_t = typename vtype::zmm_t>
+X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
+{
+
+    // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
+    zmm = cmp_merge<vtype>(
+            zmm,
+            vtype::permutexvar(_mm512_set_epi64(NETWORK_64BIT_4), zmm),
+            0xF0);
+    // 2) half_cleaner[4]
+    zmm = cmp_merge<vtype>(
+            zmm,
+            vtype::permutexvar(_mm512_set_epi64(NETWORK_64BIT_3), zmm),
+            0xCC);
+    // 3) half_cleaner[1]
     zmm = cmp_merge<vtype>(
             zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
     return zmm;
