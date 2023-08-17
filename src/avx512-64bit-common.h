@@ -435,6 +435,8 @@ struct zmm_vector<int64_t> {
     using ymm_t = __m512i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
+    static constexpr int network_sort_threshold = 256;
+    static constexpr int partition_unroll_factor = 8;
 
     static type_t type_max()
     {
@@ -566,6 +568,8 @@ struct zmm_vector<uint64_t> {
     using ymm_t = __m512i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
+    static constexpr int network_sort_threshold = 256;
+    static constexpr int partition_unroll_factor = 8;
 
     static type_t type_max()
     {
@@ -685,6 +689,8 @@ struct zmm_vector<double> {
     using ymm_t = __m512d;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
+    static constexpr int network_sort_threshold = 256;
+    static constexpr int partition_unroll_factor = 8;
 
     static type_t type_max()
     {

@@ -37,6 +37,9 @@ struct zmm_vector<int32_t> {
     using ymm_t = __m256i;
     using opmask_t = __mmask16;
     static const uint8_t numlanes = 16;
+    static constexpr int network_sort_threshold = 256;
+    static constexpr int partition_unroll_factor = 2;
+
 
     static type_t type_max()
     {
@@ -152,6 +155,8 @@ struct zmm_vector<uint32_t> {
     using ymm_t = __m256i;
     using opmask_t = __mmask16;
     static const uint8_t numlanes = 16;
+    static constexpr int network_sort_threshold = 256;
+    static constexpr int partition_unroll_factor = 2;
 
     static type_t type_max()
     {
@@ -267,6 +272,9 @@ struct zmm_vector<float> {
     using ymm_t = __m256;
     using opmask_t = __mmask16;
     static const uint8_t numlanes = 16;
+    static constexpr int network_sort_threshold = 256;
+    static constexpr int partition_unroll_factor = 2;
+
 
     static type_t type_max()
     {
@@ -502,116 +510,4 @@ X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
     return ((type_t *)&sort)[8];
 }
 
-template <typename vtype, typename type_t>
-static void
-qsort_32bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
-{
-    /*
-     * Resort to std::sort if quicksort isnt making any progress
-     */
-    if (max_iters <= 0) {
-        std::sort(arr + left, arr + right + 1);
-        return;
-    }
-    /*
-     * Base case: use bitonic networks to sort arrays <= 256
-     */
-    if (right + 1 - left <= 256) {
-        xss::sort_n<vtype, 256>(arr + left, (int32_t)(right + 1 - left));
-        return;
-    }
-
-    type_t pivot = get_pivot_32bit<vtype>(arr, left, right);
-    type_t smallest = vtype::type_max();
-    type_t biggest = vtype::type_min();
-    int64_t pivot_index = partition_avx512_unrolled<vtype, 2>(
-            arr, left, right + 1, pivot, &smallest, &biggest);
-    if (pivot != smallest)
-        qsort_32bit_<vtype>(arr, left, pivot_index - 1, max_iters - 1);
-    if (pivot != biggest)
-        qsort_32bit_<vtype>(arr, pivot_index, right, max_iters - 1);
-}
-
-template <typename vtype, typename type_t>
-static void qselect_32bit_(type_t *arr,
-                           int64_t pos,
-                           int64_t left,
-                           int64_t right,
-                           int64_t max_iters)
-{
-    /*
-     * Resort to std::sort if quicksort isnt making any progress
-     */
-    if (max_iters <= 0) {
-        std::sort(arr + left, arr + right + 1);
-        return;
-    }
-    /*
-     * Base case: use bitonic networks to sort arrays <= 256
-     */
-    if (right + 1 - left <= 256) {
-        xss::sort_n<vtype, 256>(arr + left, (int32_t)(right + 1 - left));
-        return;
-    }
-
-    type_t pivot = get_pivot_32bit<vtype>(arr, left, right);
-    type_t smallest = vtype::type_max();
-    type_t biggest = vtype::type_min();
-    int64_t pivot_index = partition_avx512_unrolled<vtype, 2>(
-            arr, left, right + 1, pivot, &smallest, &biggest);
-    if ((pivot != smallest) && (pos < pivot_index))
-        qselect_32bit_<vtype>(arr, pos, left, pivot_index - 1, max_iters - 1);
-    else if ((pivot != biggest) && (pos >= pivot_index))
-        qselect_32bit_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
-}
-
-/* Specialized template function for 32-bit qselect_ funcs*/
-template <>
-void qselect_<zmm_vector<int32_t>>(
-        int32_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
-{
-    qselect_32bit_<zmm_vector<int32_t>>(arr, k, left, right, maxiters);
-}
-
-template <>
-void qselect_<zmm_vector<uint32_t>>(
-        uint32_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
-{
-    qselect_32bit_<zmm_vector<uint32_t>>(arr, k, left, right, maxiters);
-}
-
-template <>
-void qselect_<zmm_vector<float>>(
-        float *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
-{
-    qselect_32bit_<zmm_vector<float>>(arr, k, left, right, maxiters);
-}
-
-/* Specialized template function for 32-bit qsort_ funcs*/
-template <>
-void qsort_<zmm_vector<int32_t>>(int32_t *arr,
-                                 int64_t left,
-                                 int64_t right,
-                                 int64_t maxiters)
-{
-    qsort_32bit_<zmm_vector<int32_t>>(arr, left, right, maxiters);
-}
-
-template <>
-void qsort_<zmm_vector<uint32_t>>(uint32_t *arr,
-                                  int64_t left,
-                                  int64_t right,
-                                  int64_t maxiters)
-{
-    qsort_32bit_<zmm_vector<uint32_t>>(arr, left, right, maxiters);
-}
-
-template <>
-void qsort_<zmm_vector<float>>(float *arr,
-                               int64_t left,
-                               int64_t right,
-                               int64_t maxiters)
-{
-    qsort_32bit_<zmm_vector<float>>(arr, left, right, maxiters);
-}
 #endif //AVX512_QSORT_32BIT

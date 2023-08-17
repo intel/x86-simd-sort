@@ -22,6 +22,8 @@ struct zmm_vector<_Float16> {
     using ymm_t = __m256h;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+    static constexpr int network_sort_threshold = 128;
+    static constexpr int partition_unroll_factor = 0;
 
     static __m512i get_network(int index)
     {
@@ -154,22 +156,6 @@ void replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
     memset(arr + arrsize - nan_count, 0xFF, nan_count * 2);
 }
 
-template <>
-void qselect_<zmm_vector<_Float16>>(
-        _Float16 *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
-{
-    qselect_16bit_<zmm_vector<_Float16>>(arr, k, left, right, maxiters);
-}
-
-template <>
-void qsort_<zmm_vector<_Float16>>(_Float16 *arr,
-                                  int64_t left,
-                                  int64_t right,
-                                  int64_t maxiters)
-{
-    qsort_16bit_<zmm_vector<_Float16>>(arr, left, right, maxiters);
-}
-
 /* Specialized template function for _Float16 qsort_*/
 template <>
 void avx512_qsort(_Float16 *arr, int64_t arrsize)
@@ -178,7 +164,7 @@ void avx512_qsort(_Float16 *arr, int64_t arrsize)
         int64_t nan_count
                 = replace_nan_with_inf<zmm_vector<_Float16>, _Float16>(arr,
                                                                        arrsize);
-        qsort_16bit_<zmm_vector<_Float16>, _Float16>(
+        qsort_<zmm_vector<_Float16>, _Float16>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);
     }
