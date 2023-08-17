@@ -31,7 +31,8 @@ if args.benchcompare:
         baseline = "stdargsort.*" + filterb
         contender = "avx512argsort.*" + filterb
     else:
-        parser.error("Unknown argument '%s'" % args.benchcompare)
+        parser.print_help(sys.stderr)
+        parser.error("ERROR: Unknown argument '%s'" % args.benchcompare)
     rc = subprocess.check_call("./scripts/bench-compare.sh '%s' '%s'" % (baseline, contender), shell=True)
 
 if args.branchcompare:
