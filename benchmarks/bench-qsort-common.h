@@ -19,6 +19,10 @@
                             })))
 
 #define BENCH(func, type) \
+    MY_BENCHMARK_CAPTURE(func, type, smallrandom_128, 128, std::string("random")); \
+    MY_BENCHMARK_CAPTURE(func, type, smallrandom_256, 256, std::string("random")); \
+    MY_BENCHMARK_CAPTURE(func, type, smallrandom_512, 512, std::string("random")); \
+    MY_BENCHMARK_CAPTURE(func, type, smallrandom_1k, 1024, std::string("random")); \
     MY_BENCHMARK_CAPTURE(func, type, random_5k, 5000, std::string("random")); \
     MY_BENCHMARK_CAPTURE( \
             func, type, random_100k, 100000, std::string("random")); \
