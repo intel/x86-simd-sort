@@ -13,21 +13,21 @@
 #include <vector>
 
 using argtype = zmm_vector<int64_t>;
-using argzmm_t = typename argtype::zmm_t;
+using argzmm_t = typename argtype::reg_t;
 
 /*
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
-template <typename vtype, typename type_t, typename zmm_t>
+template <typename vtype, typename type_t, typename reg_t>
 static inline int32_t partition_vec(type_t *arg,
                                     int64_t left,
                                     int64_t right,
                                     const argzmm_t arg_vec,
-                                    const zmm_t curr_vec,
-                                    const zmm_t pivot_vec,
-                                    zmm_t *smallest_vec,
-                                    zmm_t *biggest_vec)
+                                    const reg_t curr_vec,
+                                    const reg_t pivot_vec,
+                                    reg_t *smallest_vec,
+                                    reg_t *biggest_vec)
 {
     /* which elements are larger than the pivot */
     typename vtype::opmask_t gt_mask = vtype::ge(curr_vec, pivot_vec);
@@ -68,14 +68,14 @@ static inline int64_t partition_avx512(type_t *arr,
     if (left == right)
         return left; /* less than vtype::numlanes elements in the array */
 
-    using zmm_t = typename vtype::zmm_t;
-    zmm_t pivot_vec = vtype::set1(pivot);
-    zmm_t min_vec = vtype::set1(*smallest);
-    zmm_t max_vec = vtype::set1(*biggest);
+    using reg_t = typename vtype::reg_t;
+    reg_t pivot_vec = vtype::set1(pivot);
+    reg_t min_vec = vtype::set1(*smallest);
+    reg_t max_vec = vtype::set1(*biggest);
 
     if (right - left == vtype::numlanes) {
         argzmm_t argvec = argtype::loadu(arg + left);
-        zmm_t vec = vtype::template i64gather<sizeof(type_t)>(argvec, arr);
+        reg_t vec = vtype::template i64gather<sizeof(type_t)>(argvec, arr);
         int32_t amount_gt_pivot = partition_vec<vtype>(arg,
                                                        left,
                                                        left + vtype::numlanes,
@@ -91,10 +91,10 @@ static inline int64_t partition_avx512(type_t *arr,
 
     // first and last vtype::numlanes values are partitioned at the end
     argzmm_t argvec_left = argtype::loadu(arg + left);
-    zmm_t vec_left
+    reg_t vec_left
             = vtype::template i64gather<sizeof(type_t)>(argvec_left, arr);
     argzmm_t argvec_right = argtype::loadu(arg + (right - vtype::numlanes));
-    zmm_t vec_right
+    reg_t vec_right
             = vtype::template i64gather<sizeof(type_t)>(argvec_right, arr);
     // store points of the vectors
     int64_t r_store = right - vtype::numlanes;
@@ -104,7 +104,7 @@ static inline int64_t partition_avx512(type_t *arr,
     right -= vtype::numlanes;
     while (right - left != 0) {
         argzmm_t arg_vec;
-        zmm_t curr_vec;
+        reg_t curr_vec;
         /*
          * if fewer elements are stored on the right side of the array,
          * then next elements are loaded from the right side,
@@ -190,13 +190,13 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
     if (left == right)
         return left; /* less than vtype::numlanes elements in the array */
 
-    using zmm_t = typename vtype::zmm_t;
-    zmm_t pivot_vec = vtype::set1(pivot);
-    zmm_t min_vec = vtype::set1(*smallest);
-    zmm_t max_vec = vtype::set1(*biggest);
+    using reg_t = typename vtype::reg_t;
+    reg_t pivot_vec = vtype::set1(pivot);
+    reg_t min_vec = vtype::set1(*smallest);
+    reg_t max_vec = vtype::set1(*biggest);
 
     // first and last vtype::numlanes values are partitioned at the end
-    zmm_t vec_left[num_unroll], vec_right[num_unroll];
+    reg_t vec_left[num_unroll], vec_right[num_unroll];
     argzmm_t argvec_left[num_unroll], argvec_right[num_unroll];
 X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
@@ -216,7 +216,7 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
     right -= num_unroll * vtype::numlanes;
     while (right - left != 0) {
         argzmm_t arg_vec[num_unroll];
-        zmm_t curr_vec[num_unroll];
+        reg_t curr_vec[num_unroll];
         /*
          * if fewer elements are stored on the right side of the array,
          * then next elements are loaded from the right side,

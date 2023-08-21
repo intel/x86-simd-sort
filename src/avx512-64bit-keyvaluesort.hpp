@@ -19,10 +19,10 @@ X86_SIMD_SORT_INLINE void
 sort_8_64bit(type1_t *keys, type2_t *indexes, int32_t N)
 {
     typename vtype1::opmask_t load_mask = (0x01 << N) - 0x01;
-    typename vtype1::zmm_t key_zmm
+    typename vtype1::reg_t key_zmm
             = vtype1::mask_loadu(vtype1::zmm_max(), load_mask, keys);
 
-    typename vtype2::zmm_t index_zmm
+    typename vtype2::reg_t index_zmm
             = vtype2::mask_loadu(vtype2::zmm_max(), load_mask, indexes);
     vtype1::mask_storeu(keys,
                         load_mask,
@@ -41,13 +41,13 @@ sort_16_64bit(type1_t *keys, type2_t *indexes, int32_t N)
         sort_8_64bit<vtype1, vtype2>(keys, indexes, N);
         return;
     }
-    using zmm_t = typename vtype1::zmm_t;
-    using index_type = typename vtype2::zmm_t;
+    using reg_t = typename vtype1::reg_t;
+    using index_type = typename vtype2::reg_t;
 
     typename vtype1::opmask_t load_mask = (0x01 << (N - 8)) - 0x01;
 
-    zmm_t key_zmm1 = vtype1::loadu(keys);
-    zmm_t key_zmm2 = vtype1::mask_loadu(vtype1::zmm_max(), load_mask, keys + 8);
+    reg_t key_zmm1 = vtype1::loadu(keys);
+    reg_t key_zmm2 = vtype1::mask_loadu(vtype1::zmm_max(), load_mask, keys + 8);
 
     index_type index_zmm1 = vtype2::loadu(indexes);
     index_type index_zmm2
@@ -76,10 +76,10 @@ sort_32_64bit(type1_t *keys, type2_t *indexes, int32_t N)
         sort_16_64bit<vtype1, vtype2>(keys, indexes, N);
         return;
     }
-    using zmm_t = typename vtype1::zmm_t;
+    using reg_t = typename vtype1::reg_t;
     using opmask_t = typename vtype2::opmask_t;
-    using index_type = typename vtype2::zmm_t;
-    zmm_t key_zmm[4];
+    using index_type = typename vtype2::reg_t;
+    reg_t key_zmm[4];
     index_type index_zmm[4];
 
     key_zmm[0] = vtype1::loadu(keys);
@@ -134,10 +134,10 @@ sort_64_64bit(type1_t *keys, type2_t *indexes, int32_t N)
         sort_32_64bit<vtype1, vtype2>(keys, indexes, N);
         return;
     }
-    using zmm_t = typename vtype1::zmm_t;
+    using reg_t = typename vtype1::reg_t;
     using opmask_t = typename vtype1::opmask_t;
-    using index_type = typename vtype2::zmm_t;
-    zmm_t key_zmm[8];
+    using index_type = typename vtype2::reg_t;
+    reg_t key_zmm[8];
     index_type index_zmm[8];
 
     key_zmm[0] = vtype1::loadu(keys);
@@ -222,10 +222,10 @@ sort_128_64bit(type1_t *keys, type2_t *indexes, int32_t N)
         sort_64_64bit<vtype1, vtype2>(keys, indexes, N);
         return;
     }
-    using zmm_t = typename vtype1::zmm_t;
-    using index_type = typename vtype2::zmm_t;
+    using reg_t = typename vtype1::reg_t;
+    using index_type = typename vtype2::reg_t;
     using opmask_t = typename vtype1::opmask_t;
-    zmm_t key_zmm[16];
+    reg_t key_zmm[16];
     index_type index_zmm[16];
 
     key_zmm[0] = vtype1::loadu(keys);

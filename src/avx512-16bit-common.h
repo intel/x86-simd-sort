@@ -34,8 +34,8 @@ static const uint16_t network[6][32]
  * Assumes zmm is random and performs a full sorting network defined in
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
-template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_INLINE zmm_t sort_zmm_16bit(zmm_t zmm)
+template <typename vtype, typename reg_t = typename vtype::reg_t>
+X86_SIMD_SORT_INLINE reg_t sort_zmm_16bit(reg_t zmm)
 {
     // Level 1
     zmm = cmp_merge<vtype>(
@@ -94,8 +94,8 @@ X86_SIMD_SORT_INLINE zmm_t sort_zmm_16bit(zmm_t zmm)
 }
 
 // Assumes zmm is bitonic and performs a recursive half cleaner
-template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-X86_SIMD_SORT_INLINE zmm_t bitonic_merge_zmm_16bit(zmm_t zmm)
+template <typename vtype, typename reg_t = typename vtype::reg_t>
+X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_16bit(reg_t zmm)
 {
     // 1) half_cleaner[32]: compare 1-17, 2-18, 3-19 etc ..
     zmm = cmp_merge<vtype>(
@@ -158,8 +158,8 @@ X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
                           arr[left + 29 * size],
                           arr[left + 30 * size],
                           arr[left + 31 * size]};
-    typename vtype::zmm_t rand_vec = vtype::loadu(vec_arr);
-    typename vtype::zmm_t sort = sort_zmm_16bit<vtype>(rand_vec);
+    typename vtype::reg_t rand_vec = vtype::loadu(vec_arr);
+    typename vtype::reg_t sort = sort_zmm_16bit<vtype>(rand_vec);
     return ((type_t *)&sort)[16];
 }
 
