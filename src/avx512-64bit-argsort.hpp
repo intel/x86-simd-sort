@@ -85,7 +85,7 @@ X86_SIMD_SORT_INLINE void argsort_16_64bit(type_t *arr, int64_t *arg, int32_t N)
     typename vtype::opmask_t load_mask = (0x01 << (N - 8)) - 0x01;
     argzmm_t argzmm1 = argtype::loadu(arg);
     argzmm_t argzmm2 = argtype::maskz_loadu(load_mask, arg + 8);
-    reg_t arrzmm1 = vtype::template i64gather<sizeof(type_t)>(argzmm1, arr);
+    reg_t arrzmm1 = vtype::i64gather(arr, arg);
     reg_t arrzmm2 = vtype::template mask_i64gather<sizeof(type_t)>(
             vtype::zmm_max(), load_mask, argzmm2, arr);
     arrzmm1 = sort_zmm_64bit<vtype, argtype>(arrzmm1, argzmm1);
@@ -111,7 +111,7 @@ X86_SIMD_SORT_INLINE void argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
 X86_SIMD_SORT_UNROLL_LOOP(2)
     for (int ii = 0; ii < 2; ++ii) {
         argzmm[ii] = argtype::loadu(arg + 8 * ii);
-        arrzmm[ii] = vtype::template i64gather<sizeof(type_t)>(argzmm[ii], arr);
+        arrzmm[ii] = vtype::i64gather(arr, arg + 8 * ii);
         arrzmm[ii] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii], argzmm[ii]);
     }
 
@@ -154,7 +154,7 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
 X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
         argzmm[ii] = argtype::loadu(arg + 8 * ii);
-        arrzmm[ii] = vtype::template i64gather<sizeof(type_t)>(argzmm[ii], arr);
+        arrzmm[ii] = vtype::i64gather(arr, arg + 8 * ii);
         arrzmm[ii] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii], argzmm[ii]);
     }
 
@@ -206,7 +206,7 @@ X86_SIMD_SORT_UNROLL_LOOP(4)
 //X86_SIMD_SORT_UNROLL_LOOP(8)
 //    for (int ii = 0; ii < 8; ++ii) {
 //        argzmm[ii] = argtype::loadu(arg + 8*ii);
-//        arrzmm[ii] = vtype::template i64gather<sizeof(type_t)>(argzmm[ii], arr);
+//        arrzmm[ii] = vtype::i64gather(argzmm[ii], arr);
 //        arrzmm[ii] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii], argzmm[ii]);
 //    }
 //
@@ -257,17 +257,14 @@ type_t get_pivot_64bit(type_t *arr,
         // median of 8
         int64_t size = (right - left) / 8;
         using reg_t = typename vtype::reg_t;
-        // TODO: Use gather here too:
-        __m512i rand_index = _mm512_set_epi64(arg[left + size],
-                                              arg[left + 2 * size],
-                                              arg[left + 3 * size],
-                                              arg[left + 4 * size],
-                                              arg[left + 5 * size],
-                                              arg[left + 6 * size],
-                                              arg[left + 7 * size],
-                                              arg[left + 8 * size]);
-        reg_t rand_vec
-                = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
+        reg_t rand_vec = vtype::set(arr[arg[left + size]],
+                                    arr[arg[left + 2 * size]],
+                                    arr[arg[left + 3 * size]],
+                                    arr[arg[left + 4 * size]],
+                                    arr[arg[left + 5 * size]],
+                                    arr[arg[left + 6 * size]],
+                                    arr[arg[left + 7 * size]],
+                                    arr[arg[left + 8 * size]]);
         // pivot will never be a nan, since there are no nan's!
         reg_t sort = sort_zmm_64bit<vtype>(rand_vec);
         return ((type_t *)&sort)[4];

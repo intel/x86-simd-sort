@@ -45,11 +45,21 @@ struct ymm_vector<float> {
     {
         return _mm256_set1_ps(type_max());
     }
-
     static zmmi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
+    {
+        return _mm256_set_ps(v1, v2, v3, v4, v5, v6, v7, v8);
     }
     static opmask_t kxor_opmask(opmask_t x, opmask_t y)
     {
@@ -86,10 +96,16 @@ struct ymm_vector<float> {
     {
         return _mm512_mask_i64gather_ps(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_ps(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -195,6 +211,17 @@ struct ymm_vector<uint32_t> {
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
     }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
+    {
+        return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
     static opmask_t kxor_opmask(opmask_t x, opmask_t y)
     {
         return _kxor_mask8(x, y);
@@ -221,10 +248,16 @@ struct ymm_vector<uint32_t> {
     {
         return _mm512_mask_i64gather_epi32(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_epi32(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -324,6 +357,17 @@ struct ymm_vector<int32_t> {
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
     }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
+    {
+        return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
     static opmask_t kxor_opmask(opmask_t x, opmask_t y)
     {
         return _kxor_mask8(x, y);
@@ -350,10 +394,16 @@ struct ymm_vector<int32_t> {
     {
         return _mm512_mask_i64gather_epi32(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_epi32(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -456,6 +506,17 @@ struct zmm_vector<int64_t> {
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
+    {
+        return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
     static opmask_t kxor_opmask(opmask_t x, opmask_t y)
     {
         return _kxor_mask8(x, y);
@@ -482,10 +543,16 @@ struct zmm_vector<int64_t> {
     {
         return _mm512_mask_i64gather_epi64(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_epi64(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -589,16 +656,33 @@ struct zmm_vector<uint64_t> {
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
+    {
+        return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
     template <int scale>
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m512i index, void const *base)
     {
         return _mm512_mask_i64gather_epi64(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_epi64(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static opmask_t knot_opmask(opmask_t x)
     {
@@ -704,13 +788,22 @@ struct zmm_vector<double> {
     {
         return _mm512_set1_pd(type_max());
     }
-
     static zmmi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
-
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
+    {
+        return _mm512_set_pd(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
     static reg_t maskz_loadu(opmask_t mask, void const *mem)
     {
         return _mm512_maskz_loadu_pd(mask, mem);
@@ -742,10 +835,16 @@ struct zmm_vector<double> {
     {
         return _mm512_mask_i64gather_pd(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_pd(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -841,7 +940,6 @@ X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t zmm)
 template <typename vtype, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_64bit(reg_t zmm)
 {
-
     // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
     zmm = cmp_merge<vtype>(
             zmm,
