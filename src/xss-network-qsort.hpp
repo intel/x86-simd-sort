@@ -1,8 +1,6 @@
 #ifndef XSS_NETWORK_QSORT
 #define XSS_NETWORK_QSORT
 
-namespace xss {
-
 template <typename vtype,
           int64_t numVecs,
           typename reg_t = typename vtype::reg_t>
@@ -116,8 +114,7 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
         int64_t num_to_write
                 = std::min((int64_t)std::max(0, N - i * vtype::numlanes),
                            (int64_t)vtype::numlanes);
-        typename vtype::opmask_t store_mask
-                = ((0x1ull << num_to_write) - 0x1ull)
+        typename vtype::opmask_t store_mask = ((0x1ull << num_to_write) - 0x1ull)
                 & ((0x1ull << vtype::numlanes) - 0x1ull);
         vtype::mask_storeu(arr + i * vtype::numlanes, store_mask, vecs[i]);
     }
@@ -134,6 +131,5 @@ X86_SIMD_SORT_INLINE void sort_n(typename vtype::type_t *arr, int N)
 
     sort_n_vec<vtype, numVecs>(arr, N);
 }
-} // namespace xss
 
 #endif

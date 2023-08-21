@@ -687,10 +687,8 @@ X86_SIMD_SORT_INLINE type_t get_pivot(type_t *arr,
                                       const int64_t left,
                                       const int64_t right);
 
-namespace xss {
 template <typename vtype, int64_t maxN>
 X86_SIMD_SORT_INLINE void sort_n(typename vtype::type_t *arr, int N);
-}
 
 template <typename vtype, typename type_t>
 static void qsort_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
@@ -706,7 +704,7 @@ static void qsort_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
      * Base case: use bitonic networks to sort arrays <= vtype::network_sort_threshold
      */
     if (right + 1 - left <= vtype::network_sort_threshold) {
-        xss::sort_n<vtype, vtype::network_sort_threshold>(
+        sort_n<vtype, vtype::network_sort_threshold>(
                 arr + left, (int32_t)(right + 1 - left));
         return;
     }
@@ -750,7 +748,7 @@ static void qselect_(type_t *arr,
      * Base case: use bitonic networks to sort arrays <= vtype::network_sort_threshold
      */
     if (right + 1 - left <= vtype::network_sort_threshold) {
-        xss::sort_n<vtype, vtype::network_sort_threshold>(
+        sort_n<vtype, vtype::network_sort_threshold>(
                 arr + left, (int32_t)(right + 1 - left));
         return;
     }
@@ -837,37 +835,24 @@ inline void avx512_partial_qsort_fp16(uint16_t *arr,
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right);
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right);
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right);
-
-template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot(type_t *arr,
                                       const int64_t left,
                                       const int64_t right)
 {
-    if constexpr (sizeof(typename vtype::reg_t) == 64) {
-        // Use the AVX512 pivot logic
-        if constexpr (vtype::numlanes == 8) {
-            return get_pivot_64bit<vtype>(arr, left, right);
-        }
-        else if constexpr (vtype::numlanes == 16) {
-            return get_pivot_32bit<vtype>(arr, left, right);
-        }
-        else if constexpr (vtype::numlanes == 32) {
-            return get_pivot_16bit<vtype>(arr, left, right);
-        }
+    constexpr int64_t numSamples = vtype::numlanes;
+    type_t samples[numSamples];
+    
+    int64_t delta = (right - left) / numSamples;
+    
+    for (int i = 0; i < numSamples; i++){
+        samples[i] = arr[left + i * delta];
     }
-    // Should never get here
-    return vtype::type_min();
+    
+    auto vec = vtype::loadu(samples);
+    vec = vtype::sort_vec(vec);
+    vtype::storeu(samples, vec);
+    
+    return samples[numSamples / 2 + 1];
 }
 
 #endif // AVX512_QSORT_COMMON
