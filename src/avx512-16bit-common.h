@@ -119,48 +119,4 @@ X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_16bit(reg_t zmm)
     return zmm;
 }
 
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right)
-{
-    // median of 32
-    int64_t size = (right - left) / 32;
-    type_t vec_arr[32] = {arr[left],
-                          arr[left + size],
-                          arr[left + 2 * size],
-                          arr[left + 3 * size],
-                          arr[left + 4 * size],
-                          arr[left + 5 * size],
-                          arr[left + 6 * size],
-                          arr[left + 7 * size],
-                          arr[left + 8 * size],
-                          arr[left + 9 * size],
-                          arr[left + 10 * size],
-                          arr[left + 11 * size],
-                          arr[left + 12 * size],
-                          arr[left + 13 * size],
-                          arr[left + 14 * size],
-                          arr[left + 15 * size],
-                          arr[left + 16 * size],
-                          arr[left + 17 * size],
-                          arr[left + 18 * size],
-                          arr[left + 19 * size],
-                          arr[left + 20 * size],
-                          arr[left + 21 * size],
-                          arr[left + 22 * size],
-                          arr[left + 23 * size],
-                          arr[left + 24 * size],
-                          arr[left + 25 * size],
-                          arr[left + 26 * size],
-                          arr[left + 27 * size],
-                          arr[left + 28 * size],
-                          arr[left + 29 * size],
-                          arr[left + 30 * size],
-                          arr[left + 31 * size]};
-    typename vtype::reg_t rand_vec = vtype::loadu(vec_arr);
-    typename vtype::reg_t sort = sort_zmm_16bit<vtype>(rand_vec);
-    return ((type_t *)&sort)[16];
-}
-
 #endif // AVX512_16BIT_COMMON

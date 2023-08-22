@@ -8,7 +8,6 @@
 #define AVX512_QSORT_16BIT
 
 #include "avx512-16bit-common.h"
-#include "xss-network-qsort.hpp"
 
 struct float16 {
     uint16_t val;

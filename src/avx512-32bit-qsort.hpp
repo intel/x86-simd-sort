@@ -473,39 +473,4 @@ X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_32bit(reg_t zmm)
     return zmm;
 }
 
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right)
-{
-    // median of 16
-    int64_t size = (right - left) / 16;
-    using reg_t = typename vtype::reg_t;
-    using halfreg_t = typename vtype::halfreg_t;
-    __m512i rand_index1 = _mm512_set_epi64(left + size,
-                                           left + 2 * size,
-                                           left + 3 * size,
-                                           left + 4 * size,
-                                           left + 5 * size,
-                                           left + 6 * size,
-                                           left + 7 * size,
-                                           left + 8 * size);
-    __m512i rand_index2 = _mm512_set_epi64(left + 9 * size,
-                                           left + 10 * size,
-                                           left + 11 * size,
-                                           left + 12 * size,
-                                           left + 13 * size,
-                                           left + 14 * size,
-                                           left + 15 * size,
-                                           left + 16 * size);
-    halfreg_t rand_vec1
-            = vtype::template i64gather<sizeof(type_t)>(rand_index1, arr);
-    halfreg_t rand_vec2
-            = vtype::template i64gather<sizeof(type_t)>(rand_index2, arr);
-    reg_t rand_vec = vtype::merge(rand_vec1, rand_vec2);
-    reg_t sort = sort_zmm_32bit<vtype>(rand_vec);
-    // pivot will never be a nan, since there are no nan's!
-    return ((type_t *)&sort)[8];
-}
-
 #endif //AVX512_QSORT_32BIT

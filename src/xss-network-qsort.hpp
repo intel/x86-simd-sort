@@ -76,6 +76,16 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
     }
 
     reg_t vecs[numVecs];
+    
+    // Generate masks for loading and storing
+    typename vtype::opmask_t ioMasks[numVecs / 2];
+    #pragma GCC unroll 64
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
+        int64_t num_to_read
+                = std::min((int64_t)std::max(0, N - i * vtype::numlanes),
+                           (int64_t)vtype::numlanes);
+        ioMasks[j] = ((0x1ull << num_to_read) - 0x1ull);
+    }
 
 // Unmasked part of the load
 #pragma GCC unroll 64
@@ -84,14 +94,9 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
     }
 // Masked part of the load
 #pragma GCC unroll 64
-    for (int i = numVecs / 2; i < numVecs; i++) {
-        int64_t num_to_read
-                = std::min((int64_t)std::max(0, N - i * vtype::numlanes),
-                           (int64_t)vtype::numlanes);
-        typename vtype::opmask_t load_mask = ((0x1ull << num_to_read) - 0x1ull)
-                & ((0x1ull << vtype::numlanes) - 0x1ull);
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         vecs[i] = vtype::mask_loadu(
-                vtype::zmm_max(), load_mask, arr + i * vtype::numlanes);
+                vtype::zmm_max(), ioMasks[j], arr + i * vtype::numlanes);
     }
 
 // Sort each loaded vector
@@ -110,13 +115,8 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
     }
 // Masked part of the store
 #pragma GCC unroll 64
-    for (int i = numVecs / 2; i < numVecs; i++) {
-        int64_t num_to_write
-                = std::min((int64_t)std::max(0, N - i * vtype::numlanes),
-                           (int64_t)vtype::numlanes);
-        typename vtype::opmask_t store_mask = ((0x1ull << num_to_write) - 0x1ull)
-                & ((0x1ull << vtype::numlanes) - 0x1ull);
-        vtype::mask_storeu(arr + i * vtype::numlanes, store_mask, vecs[i]);
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
+        vtype::mask_storeu(arr + i * vtype::numlanes, ioMasks[j], vecs[i]);
     }
 }
 

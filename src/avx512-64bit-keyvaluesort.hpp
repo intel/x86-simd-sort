@@ -424,7 +424,7 @@ void qsort_64bit_(type1_t *keys,
         return;
     }
 
-    type1_t pivot = get_pivot_64bit<vtype1>(keys, left, right);
+    type1_t pivot = get_pivot<vtype1>(keys, left, right);
     type1_t smallest = vtype1::type_max();
     type1_t biggest = vtype1::type_min();
     int64_t pivot_index = partition_avx512<vtype1, vtype2>(
