@@ -10,17 +10,17 @@ echo "Comparing main branch with $branch"
 build_branch() {
     dir_name=$1
     if [ ! -d $dir_name ]; then
-        git clone -b $branch ${BASE_DIR} $dir_name
+        git clone -b $dir_name ${BASE_DIR} $dir_name
     else
         # if it exists, just update it
         cd $dir_name
         git fetch origin
-        git rebase origin/$branch
+        git rebase origin/$dir_name
         # rebase fails with conflict, delete and start over
         if [ "$?" != 0 ]; then
             cd ..
-            rm -rf $branch
-            git clone -b $branch ${BASE_DIR} $dir_name
+            rm -rf $dir_name
+            git clone -b $dir_name ${BASE_DIR} $dir_name
         else
             cd ..
         fi
@@ -40,8 +40,8 @@ fi
 compare=$(realpath google-benchmark/tools/compare.py)
 build_branch $branch
 build_branch "main"
-baseline=$(realpath ${branch}/builddir/benchexe)
-contender=$(realpath main/builddir/benchexe)
+contender=$(realpath ${branch}/builddir/benchexe)
+baseline=$(realpath main/builddir/benchexe)
 
 if [ -z "$1" ]; then
     echo "Comparing all benchmarks .."
