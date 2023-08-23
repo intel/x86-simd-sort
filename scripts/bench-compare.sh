@@ -3,16 +3,13 @@ set -e
 branch=$(git rev-parse --abbrev-ref HEAD)
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd $SCRIPT_DIR/..
-if [[ -z "${GBENCH}" ]]; then
-    echo "Please set env variable GBENCH and re run"
-    exit 1
-fi
 
-compare=$GBENCH/tools/compare.py
-if [ ! -f $compare ]; then
-    echo "Unable to locate $GBENCH/tools/compare.py"
-    exit 1
+## Get google-benchmark
+mkdir -p .bench
+if [ ! -d .bench/google-benchmark ]; then
+    git clone https://github.com/google/benchmark .bench/google-benchmark
 fi
+compare=$(realpath .bench/google-benchmark/tools/compare.py)
 
 meson setup --warnlevel 0 --buildtype plain builddir-${branch}
 cd builddir-${branch}

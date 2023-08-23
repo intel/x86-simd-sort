@@ -1,5 +1,6 @@
 # bench-compare
 .bench-compare
+.bench
 # Prerequisites
 *.d
 

@@ -3,41 +3,50 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 BASE_DIR=$(dirname $SCRIPT_DIR)
 branch=$(git rev-parse --abbrev-ref HEAD)
+#br_commit=$(git rev-parse $branch)
+#main_commit=$(git rev-parse main)
 echo "Comparing main branch with $branch"
 
-if [[ -z "${GBENCH}" ]]; then
-    echo "Please set env variable GBENCH and re run"
-    exit 1
-fi
+build_branch() {
+    dir_name=$1
+    if [ ! -d $dir_name ]; then
+        git clone -b $branch ${BASE_DIR} $dir_name
+    else
+        # if it exists, just update it
+        cd $dir_name
+        git fetch origin
+        git rebase origin/$branch
+        # rebase fails with conflict, delete and start over
+        if [ "$?" != 0 ]; then
+            cd ..
+            rm -rf $branch
+            git clone -b $branch ${BASE_DIR} $dir_name
+        else
+            cd ..
+        fi
+    fi
+    cd $dir_name
+    meson setup --warnlevel 0 --buildtype plain builddir
+    cd builddir
+    ninja
+    cd ../../
+}
 
-compare=$GBENCH/tools/compare.py
-if [ ! -f $compare ]; then
-    echo "Unable to locate $GBENCH/tools/compare.py"
-    exit 1
+mkdir -p .bench
+cd .bench
+if [ ! -d google-benchmark ]; then
+    git clone https://github.com/google/benchmark google-benchmark
 fi
+compare=$(realpath google-benchmark/tools/compare.py)
+build_branch $branch
+build_branch "main"
+baseline=$(realpath ${branch}/builddir/benchexe)
+contender=$(realpath main/builddir/benchexe)
 
-rm -rf .bench-compare
-mkdir .bench-compare
-cd .bench-compare
-echo "Fetching and build $branch .."
-git clone ${BASE_DIR} -b $branch .
-git fetch origin
-meson setup --warnlevel 0 --buildtype plain builddir-${branch}
-cd builddir-${branch}
-ninja
-echo "Fetching and build main .."
-cd ..
-git remote add upstream https://github.com/intel/x86-simd-sort.git
-git fetch upstream
-git checkout upstream/main
-meson setup --warnlevel 0 --buildtype plain builddir-main
-cd builddir-main
-ninja
-cd ..
 if [ -z "$1" ]; then
     echo "Comparing all benchmarks .."
-    $compare benchmarks ./builddir-main/benchexe ./builddir-${branch}/benchexe
+    $compare benchmarks $baseline $contender
 else
     echo "Comparing benchmark $1 .."
-    $compare benchmarksfiltered ./builddir-main/benchexe $1 ./builddir-${branch}/benchexe $1
+    $compare benchmarksfiltered $baseline $1 $contender $1
 fi
