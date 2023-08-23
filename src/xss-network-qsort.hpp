@@ -78,7 +78,7 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
     reg_t vecs[numVecs];
     
     // Generate masks for loading and storing
-    typename vtype::opmask_t ioMasks[numVecs / 2];
+    typename vtype::opmask_t ioMasks[numVecs - numVecs / 2];
     #pragma GCC unroll 64
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         int64_t num_to_read
