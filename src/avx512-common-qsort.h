@@ -67,9 +67,12 @@
 #define ZMM_MAX_INT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_INT16)
 #define SHUFFLE_MASK(a, b, c, d) (a << 6) | (b << 4) | (c << 2) | d
 
+/* Compiler specific macros specific */
 #ifdef _MSC_VER
 #define X86_SIMD_SORT_INLINE static inline
 #define X86_SIMD_SORT_FINLINE static __forceinline
+#define LIKELY(x)
+#define UNLIKELY(x)
 #elif defined(__CYGWIN__)
 /*
  * Force inline in cygwin to work around a compiler bug. See
@@ -80,13 +83,15 @@
 #elif defined(__GNUC__)
 #define X86_SIMD_SORT_INLINE static inline
 #define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
+#define LIKELY(x) __builtin_expect((x), 1)
+#define UNLIKELY(x) __builtin_expect((x), 0)
 #else
 #define X86_SIMD_SORT_INLINE static
 #define X86_SIMD_SORT_FINLINE static
+#define LIKELY(x)
+#define UNLIKELY(x)
 #endif
 
-#define LIKELY(x) __builtin_expect((x), 1)
-#define UNLIKELY(x) __builtin_expect((x), 0)
 #if __GNUC__ >= 8
 #define X86_SIMD_SORT_UNROLL_LOOP(num)\
 GCC unroll num
