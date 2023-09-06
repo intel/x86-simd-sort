@@ -11,7 +11,7 @@ on:
 jobs:
   NumPyMultiarrayTests:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - name: Checkout x86-simd-sort
