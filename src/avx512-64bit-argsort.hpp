@@ -108,7 +108,7 @@ X86_SIMD_SORT_INLINE void argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
     zmm_t arrzmm[4];
     argzmm_t argzmm[4];
 
-#pragma X86_SIMD_SORT_UNROLL_LOOP(2)
+X86_SIMD_SORT_UNROLL_LOOP(2)
     for (int ii = 0; ii < 2; ++ii) {
         argzmm[ii] = argtype::loadu(arg + 8 * ii);
         arrzmm[ii] = vtype::template i64gather<sizeof(type_t)>(argzmm[ii], arr);
@@ -117,7 +117,7 @@ X86_SIMD_SORT_INLINE void argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
 
     uint64_t combined_mask = (0x1ull << (N - 16)) - 0x1ull;
     opmask_t load_mask[2] = {0xFF, 0xFF};
-#pragma X86_SIMD_SORT_UNROLL_LOOP(2)
+X86_SIMD_SORT_UNROLL_LOOP(2)
     for (int ii = 0; ii < 2; ++ii) {
         load_mask[ii] = (combined_mask >> (ii * 8)) & 0xFF;
         argzmm[ii + 2] = argtype::maskz_loadu(load_mask[ii], arg + 16 + 8 * ii);
@@ -151,7 +151,7 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
     zmm_t arrzmm[8];
     argzmm_t argzmm[8];
 
-#pragma X86_SIMD_SORT_UNROLL_LOOP(4)
+X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
         argzmm[ii] = argtype::loadu(arg + 8 * ii);
         arrzmm[ii] = vtype::template i64gather<sizeof(type_t)>(argzmm[ii], arr);
@@ -160,7 +160,7 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
 
     opmask_t load_mask[4] = {0xFF, 0xFF, 0xFF, 0xFF};
     uint64_t combined_mask = (0x1ull << (N - 32)) - 0x1ull;
-#pragma X86_SIMD_SORT_UNROLL_LOOP(4)
+X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
         load_mask[ii] = (combined_mask >> (ii * 8)) & 0xFF;
         argzmm[ii + 4] = argtype::maskz_loadu(load_mask[ii], arg + 32 + 8 * ii);
@@ -170,7 +170,7 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
                                                         argzmm[ii + 4]);
     }
 
-#pragma X86_SIMD_SORT_UNROLL_LOOP(4)
+X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 8; ii = ii + 2) {
         bitonic_merge_two_zmm_64bit<vtype, argtype>(
                 arrzmm[ii], arrzmm[ii + 1], argzmm[ii], argzmm[ii + 1]);
@@ -179,11 +179,11 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
     bitonic_merge_four_zmm_64bit<vtype, argtype>(arrzmm + 4, argzmm + 4);
     bitonic_merge_eight_zmm_64bit<vtype, argtype>(arrzmm, argzmm);
 
-#pragma X86_SIMD_SORT_UNROLL_LOOP(4)
+X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
         argtype::storeu(arg + 8 * ii, argzmm[ii]);
     }
-#pragma X86_SIMD_SORT_UNROLL_LOOP(4)
+X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
         argtype::mask_storeu(arg + 32 + 8 * ii, load_mask[ii], argzmm[ii + 4]);
     }
@@ -203,7 +203,7 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
 //    zmm_t arrzmm[16];
 //    argzmm_t argzmm[16];
 //
-//#pragma X86_SIMD_SORT_UNROLL_LOOP(8)
+//X86_SIMD_SORT_UNROLL_LOOP(8)
 //    for (int ii = 0; ii < 8; ++ii) {
 //        argzmm[ii] = argtype::loadu(arg + 8*ii);
 //        arrzmm[ii] = vtype::template i64gather<sizeof(type_t)>(argzmm[ii], arr);
@@ -213,19 +213,19 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
 //    opmask_t load_mask[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 //    if (N != 128) {
 //    uint64_t combined_mask = (0x1ull << (N - 64)) - 0x1ull;
-//#pragma X86_SIMD_SORT_UNROLL_LOOP(8)
+//X86_SIMD_SORT_UNROLL_LOOP(8)
 //        for (int ii = 0; ii < 8; ++ii) {
 //            load_mask[ii] = (combined_mask >> (ii*8)) & 0xFF;
 //        }
 //    }
-//#pragma X86_SIMD_SORT_UNROLL_LOOP(8)
+//X86_SIMD_SORT_UNROLL_LOOP(8)
 //    for (int ii = 0; ii < 8; ++ii) {
 //        argzmm[ii+8] = argtype::maskz_loadu(load_mask[ii], arg + 64 + 8*ii);
 //        arrzmm[ii+8] = vtype::template mask_i64gather<sizeof(type_t)>(vtype::zmm_max(), load_mask[ii], argzmm[ii+8], arr);
 //        arrzmm[ii+8] = sort_zmm_64bit<vtype, argtype>(arrzmm[ii+8], argzmm[ii+8]);
 //    }
 //
-//#pragma X86_SIMD_SORT_UNROLL_LOOP(8)
+//X86_SIMD_SORT_UNROLL_LOOP(8)
 //    for (int ii = 0; ii < 16; ii = ii + 2) {
 //        bitonic_merge_two_zmm_64bit<vtype, argtype>(arrzmm[ii], arrzmm[ii + 1], argzmm[ii], argzmm[ii + 1]);
 //    }
@@ -237,11 +237,11 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
 //    bitonic_merge_eight_zmm_64bit<vtype, argtype>(arrzmm+8, argzmm+8);
 //    bitonic_merge_sixteen_zmm_64bit<vtype, argtype>(arrzmm, argzmm);
 //
-//#pragma X86_SIMD_SORT_UNROLL_LOOP(8)
+//X86_SIMD_SORT_UNROLL_LOOP(8)
 //    for (int ii = 0; ii < 8; ++ii) {
 //        argtype::storeu(arg + 8*ii, argzmm[ii]);
 //    }
-//#pragma X86_SIMD_SORT_UNROLL_LOOP(8)
+//X86_SIMD_SORT_UNROLL_LOOP(8)
 //    for (int ii = 0; ii < 8; ++ii) {
 //        argtype::mask_storeu(arg + 64 + 8*ii, load_mask[ii], argzmm[ii + 8]);
 //    }

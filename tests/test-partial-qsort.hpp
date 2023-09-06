@@ -24,7 +24,7 @@ TYPED_TEST_P(avx512_partial_sort, test_ranges)
         /* Sort with std::sort for comparison */
         std::sort(sortedarr.begin(), sortedarr.end());
 
-        for (size_t ii = 0; ii < nranges; ++ii) {
+        for (auto ii = 0; ii < nranges; ++ii) {
             psortedarr = arr;
 
             /* Pick a random number of elements to sort at the beginning of the array */
@@ -33,7 +33,7 @@ TYPED_TEST_P(avx512_partial_sort, test_ranges)
             /* Sort the range and verify all the required elements match the presorted set */
             avx512_partial_qsort<TypeParam>(
                     psortedarr.data(), k, psortedarr.size());
-            for (size_t jj = 0; jj < k; jj++) {
+            for (auto jj = 0; jj < k; jj++) {
                 ASSERT_EQ(sortedarr[jj], psortedarr[jj]);
             }
 
