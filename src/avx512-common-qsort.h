@@ -73,8 +73,8 @@
 #ifdef _MSC_VER
 #define X86_SIMD_SORT_INLINE static inline
 #define X86_SIMD_SORT_FINLINE static __forceinline
-#define LIKELY(x)
-#define UNLIKELY(x)
+#define LIKELY(x) (x)
+#define UNLIKELY(x) (x)
 #elif defined(__CYGWIN__)
 /*
  * Force inline in cygwin to work around a compiler bug. See
@@ -90,8 +90,8 @@
 #else
 #define X86_SIMD_SORT_INLINE static
 #define X86_SIMD_SORT_FINLINE static
-#define LIKELY(x)
-#define UNLIKELY(x)
+#define LIKELY(x) (x)
+#define UNLIKELY(x) (x)
 #endif
 
 #if __GNUC__ >= 8

@@ -75,7 +75,7 @@ benchexe: $(BENCHOBJS) $(UTILOBJS)
 
 .PHONY: meson
 meson:
-	meson setup --warnlevel 2 --buildtype plain builddir
+	meson setup --warnlevel 2 --werror --buildtype plain builddir
 	cd builddir && ninja
 
 .PHONY: clean
