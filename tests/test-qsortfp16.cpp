@@ -21,7 +21,7 @@ TEST(avx512_qsort_float16, test_arrsizes)
 
         for (size_t ii = 0; ii < arrsizes.size(); ++ii) {
             /* Random array */
-            for (size_t jj = 0; jj < arrsizes[ii]; ++jj) {
+            for (auto jj = 0; jj < arrsizes[ii]; ++jj) {
                 _Float16 temp = (float)rand() / (float)(RAND_MAX);
                 arr.push_back(temp);
                 sortedarr.push_back(temp);
@@ -86,7 +86,7 @@ TEST(avx512_qselect_float16, test_arrsizes)
 
         for (size_t ii = 0; ii < arrsizes.size(); ++ii) {
             /* Random array */
-            for (size_t jj = 0; jj < arrsizes[ii]; ++jj) {
+            for (auto jj = 0; jj < arrsizes[ii]; ++jj) {
                 _Float16 temp = (float)rand() / (float)(RAND_MAX);
                 arr.push_back(temp);
                 sortedarr.push_back(temp);
@@ -129,7 +129,7 @@ TEST(avx512_partial_qsort_float16, test_ranges)
         std::vector<_Float16> psortedarr;
 
         /* Random array */
-        for (size_t ii = 0; ii < arrsize; ++ii) {
+        for (auto ii = 0; ii < arrsize; ++ii) {
             _Float16 temp = (float)rand() / (float)(RAND_MAX);
             arr.push_back(temp);
             sortedarr.push_back(temp);
@@ -137,7 +137,7 @@ TEST(avx512_partial_qsort_float16, test_ranges)
         /* Sort with std::sort for comparison */
         std::sort(sortedarr.begin(), sortedarr.end());
 
-        for (size_t ii = 0; ii < nranges; ++ii) {
+        for (auto ii = 0; ii < nranges; ++ii) {
             psortedarr = arr;
 
             int k = get_uniform_rand_array<int64_t>(1, arrsize, 1).front();
@@ -145,7 +145,7 @@ TEST(avx512_partial_qsort_float16, test_ranges)
             /* Sort the range and verify all the required elements match the presorted set */
             avx512_partial_qsort<_Float16>(
                     psortedarr.data(), k, psortedarr.size());
-            for (size_t jj = 0; jj < k; jj++) {
+            for (auto jj = 0; jj < k; jj++) {
                 ASSERT_EQ(sortedarr[jj], psortedarr[jj]);
             }
 
