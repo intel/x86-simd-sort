@@ -46,7 +46,7 @@ BENCHOBJS	:= $(patsubst %.cpp, %.o, $(filter-out $(addprefix $(BENCHDIR)/, $(BEN
 TESTOBJS	:= $(patsubst %.cpp, %.o, $(filter-out $(addprefix $(TESTDIR)/, $(TESTS_SKIP)), $(TESTS)))
 UTILOBJS	:= $(UTILS:.cpp=.o)
 
-# Stops make from wondering if it needs to generate the .hpp files (.cpp and .h have equivalent rules by default) 
+# Stops make from wondering if it needs to generate the .hpp files (.cpp and .h have equivalent rules by default)
 %.hpp:
 
 .PHONY: all
@@ -75,7 +75,7 @@ benchexe: $(BENCHOBJS) $(UTILOBJS)
 
 .PHONY: meson
 meson:
-	meson setup --warnlevel 0 --buildtype plain builddir
+	meson setup --warnlevel 2 --buildtype plain builddir
 	cd builddir && ninja
 
 .PHONY: clean
