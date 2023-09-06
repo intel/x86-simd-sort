@@ -23,7 +23,7 @@ TYPED_TEST_P(avx512argsort, test_random)
             std::vector<int64_t> inx2
                     = avx512_argsort<TypeParam>(arr.data(), arr.size());
             std::vector<TypeParam> sort1, sort2;
-            for (size_t jj = 0; jj < size; ++jj) {
+            for (auto jj = 0; jj < size; ++jj) {
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
@@ -48,14 +48,14 @@ TYPED_TEST_P(avx512argsort, test_constant)
         for (auto &size : arrsizes) {
             /* constant array */
             auto elem = get_uniform_rand_array<TypeParam>(1)[0];
-            for (int64_t jj = 0; jj < size; ++jj) {
+            for (auto jj = 0; jj < size; ++jj) {
                 arr.push_back(elem);
             }
             std::vector<int64_t> inx1 = std_argsort(arr);
             std::vector<int64_t> inx2
                     = avx512_argsort<TypeParam>(arr.data(), arr.size());
             std::vector<TypeParam> sort1, sort2;
-            for (size_t jj = 0; jj < size; ++jj) {
+            for (auto jj = 0; jj < size; ++jj) {
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
@@ -84,7 +84,7 @@ TYPED_TEST_P(avx512argsort, test_small_range)
             std::vector<int64_t> inx2
                     = avx512_argsort<TypeParam>(arr.data(), arr.size());
             std::vector<TypeParam> sort1, sort2;
-            for (size_t jj = 0; jj < size; ++jj) {
+            for (auto jj = 0; jj < size; ++jj) {
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
@@ -113,7 +113,7 @@ TYPED_TEST_P(avx512argsort, test_sorted)
             std::vector<int64_t> inx2
                     = avx512_argsort<TypeParam>(arr.data(), arr.size());
             std::vector<TypeParam> sort1, sort2;
-            for (size_t jj = 0; jj < size; ++jj) {
+            for (auto jj = 0; jj < size; ++jj) {
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
@@ -143,7 +143,7 @@ TYPED_TEST_P(avx512argsort, test_reverse)
             std::vector<int64_t> inx2
                     = avx512_argsort<TypeParam>(arr.data(), arr.size());
             std::vector<TypeParam> sort1, sort2;
-            for (size_t jj = 0; jj < size; ++jj) {
+            for (auto jj = 0; jj < size; ++jj) {
                 sort1.push_back(arr[inx1[jj]]);
                 sort2.push_back(arr[inx2[jj]]);
             }
@@ -177,7 +177,7 @@ TYPED_TEST_P(avx512argsort, test_array_with_nan)
         std::vector<int64_t> inx
                 = avx512_argsort<TypeParam>(arr.data(), arr.size());
         std::vector<TypeParam> sort1;
-        for (size_t jj = 0; jj < size; ++jj) {
+        for (auto jj = 0; jj < size; ++jj) {
             sort1.push_back(arr[inx[jj]]);
         }
         if ((!std::isnan(sort1[size - 1])) || (!std::isnan(sort1[size - 2]))) {
@@ -211,7 +211,7 @@ TYPED_TEST_P(avx512argsort, test_max_value_at_end_of_array)
         }
         std::vector<int64_t> inx = avx512_argsort(arr.data(), arr.size());
         std::vector<TypeParam> sorted;
-        for (size_t jj = 0; jj < size; ++jj) {
+        for (auto jj = 0; jj < size; ++jj) {
             sorted.push_back(arr[inx[jj]]);
         }
         if (!std::is_sorted(sorted.begin(), sorted.end())) {
@@ -250,7 +250,7 @@ TYPED_TEST_P(avx512argsort, test_all_inf_array)
         }
         std::vector<int64_t> inx = avx512_argsort(arr.data(), arr.size());
         std::vector<TypeParam> sorted;
-        for (size_t jj = 0; jj < size; ++jj) {
+        for (auto jj = 0; jj < size; ++jj) {
             sorted.push_back(arr[inx[jj]]);
         }
         if (!std::is_sorted(sorted.begin(), sorted.end())) {

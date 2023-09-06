@@ -29,13 +29,15 @@ TYPED_TEST_P(avx512argselect, test_random)
                     = avx512_argselect<TypeParam>(arr.data(), k, arr.size());
             auto true_kth = arr[sorted_inx[k]];
             EXPECT_EQ(true_kth, arr[inx[k]]) << "Failed at index k = " << k;
-            if (k >= 1)
+            if (k >= 1) {
                 EXPECT_GE(true_kth, std_max_element(arr, inx, 0, k - 1))
                         << "failed at k = " << k;
-            if (k != arrsize - 1)
+            }
+            if (k != arrsize - 1) {
                 EXPECT_LE(true_kth,
                           std_min_element(arr, inx, k + 1, arrsize - 1))
                         << "failed at k = " << k;
+            }
             EXPECT_UNIQUE(inx)
         }
     }
