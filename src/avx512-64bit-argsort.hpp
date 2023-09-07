@@ -67,7 +67,7 @@ X86_SIMD_SORT_INLINE void argsort_8_64bit(type_t *arr, int64_t *arg, int32_t N)
 {
     using reg_t = typename vtype::reg_t;
     typename vtype::opmask_t load_mask = (0x01 << N) - 0x01;
-    argzmm_t argzmm = argtype::maskz_loadu(load_mask, arg);
+    argreg_t argzmm = argtype::maskz_loadu(load_mask, arg);
     reg_t arrzmm = vtype::template mask_i64gather<sizeof(type_t)>(
             vtype::zmm_max(), load_mask, argzmm, arr);
     arrzmm = sort_zmm_64bit<vtype, argtype>(arrzmm, argzmm);
@@ -83,8 +83,8 @@ X86_SIMD_SORT_INLINE void argsort_16_64bit(type_t *arr, int64_t *arg, int32_t N)
     }
     using reg_t = typename vtype::reg_t;
     typename vtype::opmask_t load_mask = (0x01 << (N - 8)) - 0x01;
-    argzmm_t argzmm1 = argtype::loadu(arg);
-    argzmm_t argzmm2 = argtype::maskz_loadu(load_mask, arg + 8);
+    argreg_t argzmm1 = argtype::loadu(arg);
+    argreg_t argzmm2 = argtype::maskz_loadu(load_mask, arg + 8);
     reg_t arrzmm1 = vtype::i64gather(arr, arg);
     reg_t arrzmm2 = vtype::template mask_i64gather<sizeof(type_t)>(
             vtype::zmm_max(), load_mask, argzmm2, arr);
@@ -106,7 +106,7 @@ X86_SIMD_SORT_INLINE void argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
     using reg_t = typename vtype::reg_t;
     using opmask_t = typename vtype::opmask_t;
     reg_t arrzmm[4];
-    argzmm_t argzmm[4];
+    argreg_t argzmm[4];
 
 X86_SIMD_SORT_UNROLL_LOOP(2)
     for (int ii = 0; ii < 2; ++ii) {
@@ -149,7 +149,7 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
     using reg_t = typename vtype::reg_t;
     using opmask_t = typename vtype::opmask_t;
     reg_t arrzmm[8];
-    argzmm_t argzmm[8];
+    argreg_t argzmm[8];
 
 X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
@@ -201,7 +201,7 @@ X86_SIMD_SORT_UNROLL_LOOP(4)
 //    using reg_t = typename vtype::reg_t;
 //    using opmask_t = typename vtype::opmask_t;
 //    reg_t arrzmm[16];
-//    argzmm_t argzmm[16];
+//    argreg_t argzmm[16];
 //
 //X86_SIMD_SORT_UNROLL_LOOP(8)
 //    for (int ii = 0; ii < 8; ++ii) {
