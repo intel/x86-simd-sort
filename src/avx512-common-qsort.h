@@ -706,15 +706,6 @@ X86_SIMD_SORT_INLINE type_t get_pivot_scalar(type_t *arr,
     return ((type_t *)&vec)[numSamples / 2];
 }
 
-template <typename vtype, typename reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_zmm_16bit(reg_t zmm);
-
-template <typename vtype, typename reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_zmm_32bit(reg_t zmm);
-
-template <typename vtype, typename reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t zmm);
-
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
                                             const int64_t left,
@@ -755,7 +746,7 @@ X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
                           arr[left + 30 * size],
                           arr[left + 31 * size]};
     typename vtype::reg_t rand_vec = vtype::loadu(vec_arr);
-    typename vtype::reg_t sort = sort_zmm_16bit<vtype>(rand_vec);
+    typename vtype::reg_t sort = vtype::sort_vec(rand_vec);
     return ((type_t *)&sort)[16];
 }
 
@@ -789,7 +780,7 @@ X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
     ymm_t rand_vec2
             = vtype::template i64gather<sizeof(type_t)>(rand_index2, arr);
     zmm_t rand_vec = vtype::merge(rand_vec1, rand_vec2);
-    zmm_t sort = sort_zmm_32bit<vtype>(rand_vec);
+    zmm_t sort = vtype::sort_vec(rand_vec);
     // pivot will never be a nan, since there are no nan's!
     return ((type_t *)&sort)[8];
 }
@@ -812,7 +803,7 @@ X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
                                           left + 8 * size);
     zmm_t rand_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
     // pivot will never be a nan, since there are no nan's!
-    zmm_t sort = sort_zmm_64bit<vtype>(rand_vec);
+    zmm_t sort = vtype::sort_vec(rand_vec);
     return ((type_t *)&sort)[4];
 }
 
