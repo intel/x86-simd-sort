@@ -65,10 +65,10 @@ void std_argsort(T *arr, int64_t *arg, int64_t left, int64_t right)
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE void argsort_8_64bit(type_t *arr, int64_t *arg, int32_t N)
 {
-    using zmm_t = typename vtype::zmm_t;
+    using reg_t = typename vtype::reg_t;
     typename vtype::opmask_t load_mask = (0x01 << N) - 0x01;
     argzmm_t argzmm = argtype::maskz_loadu(load_mask, arg);
-    zmm_t arrzmm = vtype::template mask_i64gather<sizeof(type_t)>(
+    reg_t arrzmm = vtype::template mask_i64gather<sizeof(type_t)>(
             vtype::zmm_max(), load_mask, argzmm, arr);
     arrzmm = sort_zmm_64bit<vtype, argtype>(arrzmm, argzmm);
     argtype::mask_storeu(arg, load_mask, argzmm);
@@ -81,12 +81,12 @@ X86_SIMD_SORT_INLINE void argsort_16_64bit(type_t *arr, int64_t *arg, int32_t N)
         argsort_8_64bit<vtype>(arr, arg, N);
         return;
     }
-    using zmm_t = typename vtype::zmm_t;
+    using reg_t = typename vtype::reg_t;
     typename vtype::opmask_t load_mask = (0x01 << (N - 8)) - 0x01;
     argzmm_t argzmm1 = argtype::loadu(arg);
     argzmm_t argzmm2 = argtype::maskz_loadu(load_mask, arg + 8);
-    zmm_t arrzmm1 = vtype::template i64gather<sizeof(type_t)>(argzmm1, arr);
-    zmm_t arrzmm2 = vtype::template mask_i64gather<sizeof(type_t)>(
+    reg_t arrzmm1 = vtype::template i64gather<sizeof(type_t)>(argzmm1, arr);
+    reg_t arrzmm2 = vtype::template mask_i64gather<sizeof(type_t)>(
             vtype::zmm_max(), load_mask, argzmm2, arr);
     arrzmm1 = sort_zmm_64bit<vtype, argtype>(arrzmm1, argzmm1);
     arrzmm2 = sort_zmm_64bit<vtype, argtype>(arrzmm2, argzmm2);
@@ -103,9 +103,9 @@ X86_SIMD_SORT_INLINE void argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
         argsort_16_64bit<vtype>(arr, arg, N);
         return;
     }
-    using zmm_t = typename vtype::zmm_t;
+    using reg_t = typename vtype::reg_t;
     using opmask_t = typename vtype::opmask_t;
-    zmm_t arrzmm[4];
+    reg_t arrzmm[4];
     argzmm_t argzmm[4];
 
 X86_SIMD_SORT_UNROLL_LOOP(2)
@@ -146,9 +146,9 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
         argsort_32_64bit<vtype>(arr, arg, N);
         return;
     }
-    using zmm_t = typename vtype::zmm_t;
+    using reg_t = typename vtype::reg_t;
     using opmask_t = typename vtype::opmask_t;
-    zmm_t arrzmm[8];
+    reg_t arrzmm[8];
     argzmm_t argzmm[8];
 
 X86_SIMD_SORT_UNROLL_LOOP(4)
@@ -198,9 +198,9 @@ X86_SIMD_SORT_UNROLL_LOOP(4)
 //        argsort_64_64bit<vtype>(arr, arg, N);
 //        return;
 //    }
-//    using zmm_t = typename vtype::zmm_t;
+//    using reg_t = typename vtype::reg_t;
 //    using opmask_t = typename vtype::opmask_t;
-//    zmm_t arrzmm[16];
+//    reg_t arrzmm[16];
 //    argzmm_t argzmm[16];
 //
 //X86_SIMD_SORT_UNROLL_LOOP(8)
@@ -256,7 +256,7 @@ type_t get_pivot_64bit(type_t *arr,
     if (right - left >= vtype::numlanes) {
         // median of 8
         int64_t size = (right - left) / 8;
-        using zmm_t = typename vtype::zmm_t;
+        using reg_t = typename vtype::reg_t;
         // TODO: Use gather here too:
         __m512i rand_index = _mm512_set_epi64(arg[left + size],
                                               arg[left + 2 * size],
@@ -266,10 +266,10 @@ type_t get_pivot_64bit(type_t *arr,
                                               arg[left + 6 * size],
                                               arg[left + 7 * size],
                                               arg[left + 8 * size]);
-        zmm_t rand_vec
+        reg_t rand_vec
                 = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
         // pivot will never be a nan, since there are no nan's!
-        zmm_t sort = sort_zmm_64bit<vtype>(rand_vec);
+        reg_t sort = sort_zmm_64bit<vtype>(rand_vec);
         return ((type_t *)&sort)[4];
     }
     else {

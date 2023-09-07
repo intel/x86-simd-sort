@@ -8,6 +8,7 @@
 #define AVX512FP16_QSORT_16BIT
 
 #include "avx512-16bit-common.h"
+#include "xss-network-qsort.hpp"
 
 typedef union {
     _Float16 f_;
@@ -17,10 +18,12 @@ typedef union {
 template <>
 struct zmm_vector<_Float16> {
     using type_t = _Float16;
-    using zmm_t = __m512h;
-    using ymm_t = __m256h;
+    using reg_t = __m512h;
+    using halfreg_t = __m256h;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+    static constexpr int network_sort_threshold = 128;
+    static constexpr int partition_unroll_factor = 0;
 
     static __m512i get_network(int index)
     {
@@ -38,7 +41,7 @@ struct zmm_vector<_Float16> {
         val.i_ = X86_SIMD_SORT_NEGINFINITYH;
         return val.f_;
     }
-    static zmm_t zmm_max()
+    static reg_t zmm_max()
     {
         return _mm512_set1_ph(type_max());
     }
@@ -46,7 +49,7 @@ struct zmm_vector<_Float16> {
     {
         return _knot_mask32(x);
     }
-    static opmask_t ge(zmm_t x, zmm_t y)
+    static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_ph_mask(x, y, _CMP_GE_OQ);
     }
@@ -55,74 +58,87 @@ struct zmm_vector<_Float16> {
         return (0x00000001 << size) - 0x00000001;
     }
     template <int type>
-    static opmask_t fpclass(zmm_t x)
+    static opmask_t fpclass(reg_t x)
     {
         return _mm512_fpclass_ph_mask(x, type);
     }
-    static zmm_t loadu(void const *mem)
+    static reg_t loadu(void const *mem)
     {
         return _mm512_loadu_ph(mem);
     }
-    static zmm_t max(zmm_t x, zmm_t y)
+    static reg_t max(reg_t x, reg_t y)
     {
         return _mm512_max_ph(x, y);
     }
-    static void mask_compressstoreu(void *mem, opmask_t mask, zmm_t x)
+    static void mask_compressstoreu(void *mem, opmask_t mask, reg_t x)
     {
         __m512i temp = _mm512_castph_si512(x);
         // AVX512_VBMI2
         return _mm512_mask_compressstoreu_epi16(mem, mask, temp);
     }
-    static zmm_t maskz_loadu(opmask_t mask, void const *mem)
+    static reg_t maskz_loadu(opmask_t mask, void const *mem)
     {
         return _mm512_castsi512_ph(_mm512_maskz_loadu_epi16(mask, mem));
     }
-    static zmm_t mask_loadu(zmm_t x, opmask_t mask, void const *mem)
+    static reg_t mask_loadu(reg_t x, opmask_t mask, void const *mem)
     {
         // AVX512BW
         return _mm512_castsi512_ph(
                 _mm512_mask_loadu_epi16(_mm512_castph_si512(x), mask, mem));
     }
-    static zmm_t mask_mov(zmm_t x, opmask_t mask, zmm_t y)
+    static reg_t mask_mov(reg_t x, opmask_t mask, reg_t y)
     {
         return _mm512_castsi512_ph(_mm512_mask_mov_epi16(
                 _mm512_castph_si512(x), mask, _mm512_castph_si512(y)));
     }
-    static void mask_storeu(void *mem, opmask_t mask, zmm_t x)
+    static void mask_storeu(void *mem, opmask_t mask, reg_t x)
     {
         return _mm512_mask_storeu_epi16(mem, mask, _mm512_castph_si512(x));
     }
-    static zmm_t min(zmm_t x, zmm_t y)
+    static reg_t min(reg_t x, reg_t y)
     {
         return _mm512_min_ph(x, y);
     }
-    static zmm_t permutexvar(__m512i idx, zmm_t zmm)
+    static reg_t permutexvar(__m512i idx, reg_t zmm)
     {
         return _mm512_permutexvar_ph(idx, zmm);
     }
-    static type_t reducemax(zmm_t v)
+    static type_t reducemax(reg_t v)
     {
         return _mm512_reduce_max_ph(v);
     }
-    static type_t reducemin(zmm_t v)
+    static type_t reducemin(reg_t v)
     {
         return _mm512_reduce_min_ph(v);
     }
-    static zmm_t set1(type_t v)
+    static reg_t set1(type_t v)
     {
         return _mm512_set1_ph(v);
     }
     template <uint8_t mask>
-    static zmm_t shuffle(zmm_t zmm)
+    static reg_t shuffle(reg_t zmm)
     {
         __m512i temp = _mm512_shufflehi_epi16(_mm512_castph_si512(zmm),
                                               (_MM_PERM_ENUM)mask);
         return _mm512_castsi512_ph(
                 _mm512_shufflelo_epi16(temp, (_MM_PERM_ENUM)mask));
     }
-    static void storeu(void *mem, zmm_t x)
+    static void storeu(void *mem, reg_t x)
     {
         return _mm512_storeu_ph(mem, x);
+    }
+    static reg_t reverse(reg_t zmm)
+    {
+        const auto rev_index = get_network(4);
+        return permutexvar(rev_index, zmm);
+    }
+    static reg_t bitonic_merge(reg_t x)
+    {
+        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t sort_vec(reg_t x)
+    {
+        return sort_zmm_16bit<zmm_vector<type_t>>(x);
     }
 };
 
@@ -140,22 +156,6 @@ void replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
     memset(arr + arrsize - nan_count, 0xFF, nan_count * 2);
 }
 
-template <>
-void qselect_<zmm_vector<_Float16>>(
-        _Float16 *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
-{
-    qselect_16bit_<zmm_vector<_Float16>>(arr, k, left, right, maxiters);
-}
-
-template <>
-void qsort_<zmm_vector<_Float16>>(_Float16 *arr,
-                                  int64_t left,
-                                  int64_t right,
-                                  int64_t maxiters)
-{
-    qsort_16bit_<zmm_vector<_Float16>>(arr, left, right, maxiters);
-}
-
 /* Specialized template function for _Float16 qsort_*/
 template <>
 void avx512_qsort(_Float16 *arr, int64_t arrsize)
@@ -164,7 +164,7 @@ void avx512_qsort(_Float16 *arr, int64_t arrsize)
         int64_t nan_count
                 = replace_nan_with_inf<zmm_vector<_Float16>, _Float16>(arr,
                                                                        arrsize);
-        qsort_16bit_<zmm_vector<_Float16>, _Float16>(
+        qsort_<zmm_vector<_Float16>, _Float16>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);
     }

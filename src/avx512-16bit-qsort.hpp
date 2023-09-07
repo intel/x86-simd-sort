@@ -16,12 +16,14 @@ struct float16 {
 template <>
 struct zmm_vector<float16> {
     using type_t = uint16_t;
-    using zmm_t = __m512i;
-    using ymm_t = __m256i;
+    using reg_t = __m512i;
+    using halfreg_t = __m256i;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+    static constexpr int network_sort_threshold = 512;
+    static constexpr int partition_unroll_factor = 0;
 
-    static zmm_t get_network(int index)
+    static reg_t get_network(int index)
     {
         return _mm512_loadu_si512(&network[index - 1][0]);
     }
@@ -33,7 +35,7 @@ struct zmm_vector<float16> {
     {
         return X86_SIMD_SORT_NEGINFINITYH;
     }
-    static zmm_t zmm_max()
+    static reg_t zmm_max()
     {
         return _mm512_set1_epi16(type_max());
     }
@@ -42,14 +44,14 @@ struct zmm_vector<float16> {
         return _knot_mask32(x);
     }
 
-    static opmask_t ge(zmm_t x, zmm_t y)
+    static opmask_t ge(reg_t x, reg_t y)
     {
-        zmm_t sign_x = _mm512_and_si512(x, _mm512_set1_epi16(0x8000));
-        zmm_t sign_y = _mm512_and_si512(y, _mm512_set1_epi16(0x8000));
-        zmm_t exp_x = _mm512_and_si512(x, _mm512_set1_epi16(0x7c00));
-        zmm_t exp_y = _mm512_and_si512(y, _mm512_set1_epi16(0x7c00));
-        zmm_t mant_x = _mm512_and_si512(x, _mm512_set1_epi16(0x3ff));
-        zmm_t mant_y = _mm512_and_si512(y, _mm512_set1_epi16(0x3ff));
+        reg_t sign_x = _mm512_and_si512(x, _mm512_set1_epi16(0x8000));
+        reg_t sign_y = _mm512_and_si512(y, _mm512_set1_epi16(0x8000));
+        reg_t exp_x = _mm512_and_si512(x, _mm512_set1_epi16(0x7c00));
+        reg_t exp_y = _mm512_and_si512(y, _mm512_set1_epi16(0x7c00));
+        reg_t mant_x = _mm512_and_si512(x, _mm512_set1_epi16(0x3ff));
+        reg_t mant_y = _mm512_and_si512(y, _mm512_set1_epi16(0x3ff));
 
         __mmask32 mask_ge = _mm512_cmp_epu16_mask(
                 sign_x, sign_y, _MM_CMPINT_LT); // only greater than
@@ -72,37 +74,37 @@ struct zmm_vector<float16> {
                           exp_eq, mant_x, mant_y, _MM_CMPINT_NLT);
         return _kxor_mask32(mask_ge, neg);
     }
-    static zmm_t loadu(void const *mem)
+    static reg_t loadu(void const *mem)
     {
         return _mm512_loadu_si512(mem);
     }
-    static zmm_t max(zmm_t x, zmm_t y)
+    static reg_t max(reg_t x, reg_t y)
     {
         return _mm512_mask_mov_epi16(y, ge(x, y), x);
     }
-    static void mask_compressstoreu(void *mem, opmask_t mask, zmm_t x)
+    static void mask_compressstoreu(void *mem, opmask_t mask, reg_t x)
     {
         // AVX512_VBMI2
         return _mm512_mask_compressstoreu_epi16(mem, mask, x);
     }
-    static zmm_t mask_loadu(zmm_t x, opmask_t mask, void const *mem)
+    static reg_t mask_loadu(reg_t x, opmask_t mask, void const *mem)
     {
         // AVX512BW
         return _mm512_mask_loadu_epi16(x, mask, mem);
     }
-    static zmm_t mask_mov(zmm_t x, opmask_t mask, zmm_t y)
+    static reg_t mask_mov(reg_t x, opmask_t mask, reg_t y)
     {
         return _mm512_mask_mov_epi16(x, mask, y);
     }
-    static void mask_storeu(void *mem, opmask_t mask, zmm_t x)
+    static void mask_storeu(void *mem, opmask_t mask, reg_t x)
     {
         return _mm512_mask_storeu_epi16(mem, mask, x);
     }
-    static zmm_t min(zmm_t x, zmm_t y)
+    static reg_t min(reg_t x, reg_t y)
     {
         return _mm512_mask_mov_epi16(x, ge(x, y), y);
     }
-    static zmm_t permutexvar(__m512i idx, zmm_t zmm)
+    static reg_t permutexvar(__m512i idx, reg_t zmm)
     {
         return _mm512_permutexvar_epi16(idx, zmm);
     }
@@ -122,7 +124,7 @@ struct zmm_vector<float16> {
         __m128i xmm2 = _mm_cvtps_ph(xmm, _MM_FROUND_NO_EXC);
         return _mm_extract_epi16(xmm2, 0);
     }
-    static type_t reducemax(zmm_t v)
+    static type_t reducemax(reg_t v)
     {
         __m512 lo = _mm512_cvtph_ps(_mm512_extracti64x4_epi64(v, 0));
         __m512 hi = _mm512_cvtph_ps(_mm512_extracti64x4_epi64(v, 1));
@@ -130,7 +132,7 @@ struct zmm_vector<float16> {
         float hi_max = _mm512_reduce_max_ps(hi);
         return float_to_uint16(std::max(lo_max, hi_max));
     }
-    static type_t reducemin(zmm_t v)
+    static type_t reducemin(reg_t v)
     {
         __m512 lo = _mm512_cvtph_ps(_mm512_extracti64x4_epi64(v, 0));
         __m512 hi = _mm512_cvtph_ps(_mm512_extracti64x4_epi64(v, 1));
@@ -138,31 +140,46 @@ struct zmm_vector<float16> {
         float hi_max = _mm512_reduce_min_ps(hi);
         return float_to_uint16(std::min(lo_max, hi_max));
     }
-    static zmm_t set1(type_t v)
+    static reg_t set1(type_t v)
     {
         return _mm512_set1_epi16(v);
     }
     template <uint8_t mask>
-    static zmm_t shuffle(zmm_t zmm)
+    static reg_t shuffle(reg_t zmm)
     {
         zmm = _mm512_shufflehi_epi16(zmm, (_MM_PERM_ENUM)mask);
         return _mm512_shufflelo_epi16(zmm, (_MM_PERM_ENUM)mask);
     }
-    static void storeu(void *mem, zmm_t x)
+    static void storeu(void *mem, reg_t x)
     {
         return _mm512_storeu_si512(mem, x);
+    }
+    static reg_t reverse(reg_t zmm)
+    {
+        const auto rev_index = get_network(4);
+        return permutexvar(rev_index, zmm);
+    }
+    static reg_t bitonic_merge(reg_t x)
+    {
+        return bitonic_merge_zmm_16bit<zmm_vector<float16>>(x);
+    }
+    static reg_t sort_vec(reg_t x)
+    {
+        return sort_zmm_16bit<zmm_vector<float16>>(x);
     }
 };
 
 template <>
 struct zmm_vector<int16_t> {
     using type_t = int16_t;
-    using zmm_t = __m512i;
-    using ymm_t = __m256i;
+    using reg_t = __m512i;
+    using halfreg_t = __m256i;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+    static constexpr int network_sort_threshold = 512;
+    static constexpr int partition_unroll_factor = 0;
 
-    static zmm_t get_network(int index)
+    static reg_t get_network(int index)
     {
         return _mm512_loadu_si512(&network[index - 1][0]);
     }
@@ -174,7 +191,7 @@ struct zmm_vector<int16_t> {
     {
         return X86_SIMD_SORT_MIN_INT16;
     }
-    static zmm_t zmm_max()
+    static reg_t zmm_max()
     {
         return _mm512_set1_epi16(type_max());
     }
@@ -183,84 +200,99 @@ struct zmm_vector<int16_t> {
         return _knot_mask32(x);
     }
 
-    static opmask_t ge(zmm_t x, zmm_t y)
+    static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_epi16_mask(x, y, _MM_CMPINT_NLT);
     }
-    static zmm_t loadu(void const *mem)
+    static reg_t loadu(void const *mem)
     {
         return _mm512_loadu_si512(mem);
     }
-    static zmm_t max(zmm_t x, zmm_t y)
+    static reg_t max(reg_t x, reg_t y)
     {
         return _mm512_max_epi16(x, y);
     }
-    static void mask_compressstoreu(void *mem, opmask_t mask, zmm_t x)
+    static void mask_compressstoreu(void *mem, opmask_t mask, reg_t x)
     {
         // AVX512_VBMI2
         return _mm512_mask_compressstoreu_epi16(mem, mask, x);
     }
-    static zmm_t mask_loadu(zmm_t x, opmask_t mask, void const *mem)
+    static reg_t mask_loadu(reg_t x, opmask_t mask, void const *mem)
     {
         // AVX512BW
         return _mm512_mask_loadu_epi16(x, mask, mem);
     }
-    static zmm_t mask_mov(zmm_t x, opmask_t mask, zmm_t y)
+    static reg_t mask_mov(reg_t x, opmask_t mask, reg_t y)
     {
         return _mm512_mask_mov_epi16(x, mask, y);
     }
-    static void mask_storeu(void *mem, opmask_t mask, zmm_t x)
+    static void mask_storeu(void *mem, opmask_t mask, reg_t x)
     {
         return _mm512_mask_storeu_epi16(mem, mask, x);
     }
-    static zmm_t min(zmm_t x, zmm_t y)
+    static reg_t min(reg_t x, reg_t y)
     {
         return _mm512_min_epi16(x, y);
     }
-    static zmm_t permutexvar(__m512i idx, zmm_t zmm)
+    static reg_t permutexvar(__m512i idx, reg_t zmm)
     {
         return _mm512_permutexvar_epi16(idx, zmm);
     }
-    static type_t reducemax(zmm_t v)
+    static type_t reducemax(reg_t v)
     {
-        zmm_t lo = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 0));
-        zmm_t hi = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 1));
+        reg_t lo = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 0));
+        reg_t hi = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 1));
         type_t lo_max = (type_t)_mm512_reduce_max_epi32(lo);
         type_t hi_max = (type_t)_mm512_reduce_max_epi32(hi);
         return std::max(lo_max, hi_max);
     }
-    static type_t reducemin(zmm_t v)
+    static type_t reducemin(reg_t v)
     {
-        zmm_t lo = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 0));
-        zmm_t hi = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 1));
+        reg_t lo = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 0));
+        reg_t hi = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 1));
         type_t lo_min = (type_t)_mm512_reduce_min_epi32(lo);
         type_t hi_min = (type_t)_mm512_reduce_min_epi32(hi);
         return std::min(lo_min, hi_min);
     }
-    static zmm_t set1(type_t v)
+    static reg_t set1(type_t v)
     {
         return _mm512_set1_epi16(v);
     }
     template <uint8_t mask>
-    static zmm_t shuffle(zmm_t zmm)
+    static reg_t shuffle(reg_t zmm)
     {
         zmm = _mm512_shufflehi_epi16(zmm, (_MM_PERM_ENUM)mask);
         return _mm512_shufflelo_epi16(zmm, (_MM_PERM_ENUM)mask);
     }
-    static void storeu(void *mem, zmm_t x)
+    static void storeu(void *mem, reg_t x)
     {
         return _mm512_storeu_si512(mem, x);
+    }
+    static reg_t reverse(reg_t zmm)
+    {
+        const auto rev_index = get_network(4);
+        return permutexvar(rev_index, zmm);
+    }
+    static reg_t bitonic_merge(reg_t x)
+    {
+        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t sort_vec(reg_t x)
+    {
+        return sort_zmm_16bit<zmm_vector<type_t>>(x);
     }
 };
 template <>
 struct zmm_vector<uint16_t> {
     using type_t = uint16_t;
-    using zmm_t = __m512i;
-    using ymm_t = __m256i;
+    using reg_t = __m512i;
+    using halfreg_t = __m256i;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+    static constexpr int network_sort_threshold = 512;
+    static constexpr int partition_unroll_factor = 0;
 
-    static zmm_t get_network(int index)
+    static reg_t get_network(int index)
     {
         return _mm512_loadu_si512(&network[index - 1][0]);
     }
@@ -272,7 +304,7 @@ struct zmm_vector<uint16_t> {
     {
         return 0;
     }
-    static zmm_t zmm_max()
+    static reg_t zmm_max()
     {
         return _mm512_set1_epi16(type_max());
     }
@@ -281,71 +313,84 @@ struct zmm_vector<uint16_t> {
     {
         return _knot_mask32(x);
     }
-    static opmask_t ge(zmm_t x, zmm_t y)
+    static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_epu16_mask(x, y, _MM_CMPINT_NLT);
     }
-    static zmm_t loadu(void const *mem)
+    static reg_t loadu(void const *mem)
     {
         return _mm512_loadu_si512(mem);
     }
-    static zmm_t max(zmm_t x, zmm_t y)
+    static reg_t max(reg_t x, reg_t y)
     {
         return _mm512_max_epu16(x, y);
     }
-    static void mask_compressstoreu(void *mem, opmask_t mask, zmm_t x)
+    static void mask_compressstoreu(void *mem, opmask_t mask, reg_t x)
     {
         return _mm512_mask_compressstoreu_epi16(mem, mask, x);
     }
-    static zmm_t mask_loadu(zmm_t x, opmask_t mask, void const *mem)
+    static reg_t mask_loadu(reg_t x, opmask_t mask, void const *mem)
     {
         return _mm512_mask_loadu_epi16(x, mask, mem);
     }
-    static zmm_t mask_mov(zmm_t x, opmask_t mask, zmm_t y)
+    static reg_t mask_mov(reg_t x, opmask_t mask, reg_t y)
     {
         return _mm512_mask_mov_epi16(x, mask, y);
     }
-    static void mask_storeu(void *mem, opmask_t mask, zmm_t x)
+    static void mask_storeu(void *mem, opmask_t mask, reg_t x)
     {
         return _mm512_mask_storeu_epi16(mem, mask, x);
     }
-    static zmm_t min(zmm_t x, zmm_t y)
+    static reg_t min(reg_t x, reg_t y)
     {
         return _mm512_min_epu16(x, y);
     }
-    static zmm_t permutexvar(__m512i idx, zmm_t zmm)
+    static reg_t permutexvar(__m512i idx, reg_t zmm)
     {
         return _mm512_permutexvar_epi16(idx, zmm);
     }
-    static type_t reducemax(zmm_t v)
+    static type_t reducemax(reg_t v)
     {
-        zmm_t lo = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 0));
-        zmm_t hi = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 1));
+        reg_t lo = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 0));
+        reg_t hi = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 1));
         type_t lo_max = (type_t)_mm512_reduce_max_epi32(lo);
         type_t hi_max = (type_t)_mm512_reduce_max_epi32(hi);
         return std::max(lo_max, hi_max);
     }
-    static type_t reducemin(zmm_t v)
+    static type_t reducemin(reg_t v)
     {
-        zmm_t lo = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 0));
-        zmm_t hi = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 1));
+        reg_t lo = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 0));
+        reg_t hi = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 1));
         type_t lo_min = (type_t)_mm512_reduce_min_epi32(lo);
         type_t hi_min = (type_t)_mm512_reduce_min_epi32(hi);
         return std::min(lo_min, hi_min);
     }
-    static zmm_t set1(type_t v)
+    static reg_t set1(type_t v)
     {
         return _mm512_set1_epi16(v);
     }
     template <uint8_t mask>
-    static zmm_t shuffle(zmm_t zmm)
+    static reg_t shuffle(reg_t zmm)
     {
         zmm = _mm512_shufflehi_epi16(zmm, (_MM_PERM_ENUM)mask);
         return _mm512_shufflelo_epi16(zmm, (_MM_PERM_ENUM)mask);
     }
-    static void storeu(void *mem, zmm_t x)
+    static void storeu(void *mem, reg_t x)
     {
         return _mm512_storeu_si512(mem, x);
+    }
+    static reg_t reverse(reg_t zmm)
+    {
+        const auto rev_index = get_network(4);
+        return permutexvar(rev_index, zmm);
+    }
+    static reg_t bitonic_merge(reg_t x)
+    {
+        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t sort_vec(reg_t x)
+    {
+        return sort_zmm_16bit<zmm_vector<type_t>>(x);
     }
 };
 
@@ -403,49 +448,15 @@ bool is_a_nan<uint16_t>(uint16_t elem)
     return (elem & 0x7c00) == 0x7c00;
 }
 
-/* Specialized template function for 16-bit qsort_ funcs*/
-template <>
-void qsort_<zmm_vector<int16_t>>(int16_t *arr,
-                                 int64_t left,
-                                 int64_t right,
-                                 int64_t maxiters)
-{
-    qsort_16bit_<zmm_vector<int16_t>>(arr, left, right, maxiters);
-}
-
-template <>
-void qsort_<zmm_vector<uint16_t>>(uint16_t *arr,
-                                  int64_t left,
-                                  int64_t right,
-                                  int64_t maxiters)
-{
-    qsort_16bit_<zmm_vector<uint16_t>>(arr, left, right, maxiters);
-}
-
 void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize)
 {
     if (arrsize > 1) {
         int64_t nan_count = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(
                 arr, arrsize);
-        qsort_16bit_<zmm_vector<float16>, uint16_t>(
+        qsort_<zmm_vector<float16>, uint16_t>(
                 arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);
     }
-}
-
-/* Specialized template function for 16-bit qselect_ funcs*/
-template <>
-void qselect_<zmm_vector<int16_t>>(
-        int16_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
-{
-    qselect_16bit_<zmm_vector<int16_t>>(arr, k, left, right, maxiters);
-}
-
-template <>
-void qselect_<zmm_vector<uint16_t>>(
-        uint16_t *arr, int64_t k, int64_t left, int64_t right, int64_t maxiters)
-{
-    qselect_16bit_<zmm_vector<uint16_t>>(arr, k, left, right, maxiters);
 }
 
 void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
@@ -455,7 +466,7 @@ void avx512_qselect_fp16(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
         indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     }
     if (indx_last_elem >= k) {
-        qselect_16bit_<zmm_vector<float16>, uint16_t>(
+        qselect_<zmm_vector<float16>, uint16_t>(
                 arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }
