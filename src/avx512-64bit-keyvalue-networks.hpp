@@ -5,8 +5,8 @@ template <typename vtype1,
           typename index_type = typename vtype2::reg_t>
 X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t key_zmm, index_type &index_zmm)
 {
-    const typename vtype1::zmmi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
-    const typename vtype2::zmmi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
+    const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
+    const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
     key_zmm = cmp_merge<vtype1, vtype2>(
             key_zmm,
             vtype1::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(key_zmm),
@@ -87,8 +87,8 @@ X86_SIMD_SORT_INLINE void bitonic_merge_two_zmm_64bit(reg_t &key_zmm1,
                                                       index_type &index_zmm1,
                                                       index_type &index_zmm2)
 {
-    const typename vtype1::zmmi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
-    const typename vtype2::zmmi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
+    const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
+    const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
     // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
     key_zmm2 = vtype1::permutexvar(rev_index1, key_zmm2);
     index_zmm2 = vtype2::permutexvar(rev_index2, index_zmm2);
@@ -120,8 +120,8 @@ template <typename vtype1,
 X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_64bit(reg_t *key_zmm,
                                                        index_type *index_zmm)
 {
-    const typename vtype1::zmmi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
-    const typename vtype2::zmmi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
+    const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
+    const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
     // 1) First step of a merging network
     reg_t key_zmm2r = vtype1::permutexvar(rev_index1, key_zmm[2]);
     reg_t key_zmm3r = vtype1::permutexvar(rev_index1, key_zmm[3]);
@@ -186,8 +186,8 @@ template <typename vtype1,
 X86_SIMD_SORT_INLINE void bitonic_merge_eight_zmm_64bit(reg_t *key_zmm,
                                                         index_type *index_zmm)
 {
-    const typename vtype1::zmmi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
-    const typename vtype2::zmmi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
+    const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
+    const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
     reg_t key_zmm4r = vtype1::permutexvar(rev_index1, key_zmm[4]);
     reg_t key_zmm5r = vtype1::permutexvar(rev_index1, key_zmm[5]);
     reg_t key_zmm6r = vtype1::permutexvar(rev_index1, key_zmm[6]);
@@ -280,8 +280,8 @@ template <typename vtype1,
 X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_zmm_64bit(reg_t *key_zmm,
                                                           index_type *index_zmm)
 {
-    const typename vtype1::zmmi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
-    const typename vtype2::zmmi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
+    const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
+    const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
     reg_t key_zmm8r = vtype1::permutexvar(rev_index1, key_zmm[8]);
     reg_t key_zmm9r = vtype1::permutexvar(rev_index1, key_zmm[9]);
     reg_t key_zmm10r = vtype1::permutexvar(rev_index1, key_zmm[10]);

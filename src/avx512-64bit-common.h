@@ -29,7 +29,7 @@ template <>
 struct ymm_vector<float> {
     using type_t = float;
     using reg_t = __m256;
-    using zmmi_t = __m256i;
+    using regi_t = __m256i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
@@ -45,7 +45,7 @@ struct ymm_vector<float> {
     {
         return _mm256_set1_ps(type_max());
     }
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
@@ -189,7 +189,7 @@ template <>
 struct ymm_vector<uint32_t> {
     using type_t = uint32_t;
     using reg_t = __m256i;
-    using zmmi_t = __m256i;
+    using regi_t = __m256i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
@@ -206,7 +206,7 @@ struct ymm_vector<uint32_t> {
         return _mm256_set1_epi32(type_max());
     }
 
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
@@ -335,7 +335,7 @@ template <>
 struct ymm_vector<int32_t> {
     using type_t = int32_t;
     using reg_t = __m256i;
-    using zmmi_t = __m256i;
+    using regi_t = __m256i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
@@ -352,7 +352,7 @@ struct ymm_vector<int32_t> {
         return _mm256_set1_epi32(type_max());
     } // TODO: this should broadcast bits as is?
 
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
@@ -481,7 +481,7 @@ template <>
 struct zmm_vector<int64_t> {
     using type_t = int64_t;
     using reg_t = __m512i;
-    using zmmi_t = __m512i;
+    using regi_t = __m512i;
     using halfreg_t = __m512i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
@@ -501,7 +501,7 @@ struct zmm_vector<int64_t> {
         return _mm512_set1_epi64(type_max());
     } // TODO: this should broadcast bits as is?
 
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
@@ -615,7 +615,7 @@ struct zmm_vector<int64_t> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const zmmi_t rev_index = seti(NETWORK_64BIT_2);
+        const regi_t rev_index = seti(NETWORK_64BIT_2);
         return permutexvar(rev_index, zmm);
     }
     static reg_t bitonic_merge(reg_t x)
@@ -631,7 +631,7 @@ template <>
 struct zmm_vector<uint64_t> {
     using type_t = uint64_t;
     using reg_t = __m512i;
-    using zmmi_t = __m512i;
+    using regi_t = __m512i;
     using halfreg_t = __m512i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
@@ -651,7 +651,7 @@ struct zmm_vector<uint64_t> {
         return _mm512_set1_epi64(type_max());
     }
 
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
@@ -753,7 +753,7 @@ struct zmm_vector<uint64_t> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const zmmi_t rev_index = seti(NETWORK_64BIT_2);
+        const regi_t rev_index = seti(NETWORK_64BIT_2);
         return permutexvar(rev_index, zmm);
     }
     static reg_t bitonic_merge(reg_t x)
@@ -769,7 +769,7 @@ template <>
 struct zmm_vector<double> {
     using type_t = double;
     using reg_t = __m512d;
-    using zmmi_t = __m512i;
+    using regi_t = __m512i;
     using halfreg_t = __m512d;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
@@ -788,7 +788,7 @@ struct zmm_vector<double> {
     {
         return _mm512_set1_pd(type_max());
     }
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
@@ -901,7 +901,7 @@ struct zmm_vector<double> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const zmmi_t rev_index = seti(NETWORK_64BIT_2);
+        const regi_t rev_index = seti(NETWORK_64BIT_2);
         return permutexvar(rev_index, zmm);
     }
     static reg_t bitonic_merge(reg_t x)
@@ -921,7 +921,7 @@ struct zmm_vector<double> {
 template <typename vtype, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t zmm)
 {
-    const typename vtype::zmmi_t rev_index = vtype::seti(NETWORK_64BIT_2);
+    const typename vtype::regi_t rev_index = vtype::seti(NETWORK_64BIT_2);
     zmm = cmp_merge<vtype>(
             zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
     zmm = cmp_merge<vtype>(
