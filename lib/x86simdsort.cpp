@@ -45,7 +45,7 @@ dispatch_requested(std::string_view cpurequested,
     return false;
 }
 
-#define CAT_(a, b) a ## b
+#define CAT_(a, b) a##b
 #define CAT(a, b) CAT_(a, b)
 
 #define DECLARE_INTERNAL_qsort(TYPE) \
@@ -57,7 +57,8 @@ dispatch_requested(std::string_view cpurequested,
     }
 
 #define DECLARE_INTERNAL_qselect(TYPE) \
-    static void (*internal_qselect##TYPE)(TYPE *, int64_t, int64_t, bool) = NULL; \
+    static void (*internal_qselect##TYPE)(TYPE *, int64_t, int64_t, bool) \
+            = NULL; \
     template <> \
     void qselect(TYPE *arr, int64_t k, int64_t arrsize, bool hasnan) \
     { \
@@ -65,7 +66,9 @@ dispatch_requested(std::string_view cpurequested,
     }
 
 #define DECLARE_INTERNAL_partial_qsort(TYPE) \
-    static void (*internal_partial_qsort##TYPE)(TYPE *, int64_t, int64_t, bool) = NULL; \
+    static void (*internal_partial_qsort##TYPE)( \
+            TYPE *, int64_t, int64_t, bool) \
+            = NULL; \
     template <> \
     void partial_qsort(TYPE *arr, int64_t k, int64_t arrsize, bool hasnan) \
     { \
@@ -73,7 +76,8 @@ dispatch_requested(std::string_view cpurequested,
     }
 
 #define DECLARE_INTERNAL_argsort(TYPE) \
-    static std::vector<int64_t> (*internal_argsort##TYPE)(TYPE *, int64_t) = NULL; \
+    static std::vector<int64_t> (*internal_argsort##TYPE)(TYPE *, int64_t) \
+            = NULL; \
     template <> \
     std::vector<int64_t> argsort(TYPE *arr, int64_t arrsize) \
     { \
@@ -81,7 +85,9 @@ dispatch_requested(std::string_view cpurequested,
     }
 
 #define DECLARE_INTERNAL_argselect(TYPE) \
-    static std::vector<int64_t> (*internal_argselect##TYPE)(TYPE *, int64_t, int64_t) = NULL; \
+    static std::vector<int64_t> (*internal_argselect##TYPE)( \
+            TYPE *, int64_t, int64_t) \
+            = NULL; \
     template <> \
     std::vector<int64_t> argselect(TYPE *arr, int64_t k, int64_t arrsize) \
     { \
@@ -90,8 +96,8 @@ dispatch_requested(std::string_view cpurequested,
 
 /* runtime dispatch mechanism */
 #define DISPATCH(func, TYPE, ...) \
-    DECLARE_INTERNAL_##func(TYPE) \
-    static __attribute__((constructor)) void CAT(CAT(resolve_, func), TYPE)(void) \
+    DECLARE_INTERNAL_##func(TYPE) static __attribute__((constructor)) void \
+    CAT(CAT(resolve_, func), TYPE)(void) \
     { \
         CAT(CAT(internal_, func), TYPE) = &xss::scalar::func<TYPE>; \
         __builtin_cpu_init(); \
@@ -110,8 +116,6 @@ dispatch_requested(std::string_view cpurequested,
         } \
     }
 
-
-
 namespace x86simdsort {
 #ifdef __FLT16_MAX__
 DISPATCH(qsort, _Float16, "avx512_spr")
@@ -122,14 +126,14 @@ DISPATCH(argselect, _Float16, "none")
 #endif
 
 #define DISPATCH_ALL(func, ISA_16BIT, ISA_32BIT, ISA_64BIT) \
-    DISPATCH(func, uint16_t, ISA_16BIT)\
-    DISPATCH(func, int16_t, ISA_16BIT)\
-    DISPATCH(func, float, ISA_32BIT)\
-    DISPATCH(func, int32_t, ISA_32BIT)\
-    DISPATCH(func, uint32_t, ISA_32BIT)\
-    DISPATCH(func, int64_t, ISA_64BIT)\
-    DISPATCH(func, uint64_t, ISA_64BIT)\
-    DISPATCH(func, double, ISA_64BIT)\
+    DISPATCH(func, uint16_t, ISA_16BIT) \
+    DISPATCH(func, int16_t, ISA_16BIT) \
+    DISPATCH(func, float, ISA_32BIT) \
+    DISPATCH(func, int32_t, ISA_32BIT) \
+    DISPATCH(func, uint32_t, ISA_32BIT) \
+    DISPATCH(func, int64_t, ISA_64BIT) \
+    DISPATCH(func, uint64_t, ISA_64BIT) \
+    DISPATCH(func, double, ISA_64BIT)
 
 DISPATCH_ALL(qsort, ("avx512_icl"), ("avx512_skx"), ("avx512_skx"))
 DISPATCH_ALL(qselect, ("avx512_icl"), ("avx512_skx"), ("avx512_skx"))
@@ -137,4 +141,4 @@ DISPATCH_ALL(partial_qsort, ("avx512_icl"), ("avx512_skx"), ("avx512_skx"))
 DISPATCH_ALL(argsort, "none", "avx512_skx", "avx512_skx")
 DISPATCH_ALL(argselect, "none", "avx512_skx", "avx512_skx")
 
-} // namespace simdsort
+} // namespace x86simdsort
