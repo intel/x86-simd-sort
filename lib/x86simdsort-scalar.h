@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <numeric>
+#define UNUSED(x) (void)(x)
 namespace xss {
 namespace scalar {
     /* TODO: handle NAN */
@@ -11,11 +12,13 @@ namespace scalar {
     template <typename T>
     void qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan)
     {
+        UNUSED(hasnan);
         std::nth_element(arr, arr + k, arr + arrsize);
     }
     template <typename T>
     void partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan)
     {
+        UNUSED(hasnan);
         std::partial_sort(arr, arr + k, arr + arrsize);
     }
     template <typename T>
