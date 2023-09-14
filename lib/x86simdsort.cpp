@@ -8,9 +8,13 @@
 static int check_cpu_feature_support(std::string_view cpufeature)
 {
     if (cpufeature == "avx512_spr")
+#ifdef __FLT16_MAX__
         return __builtin_cpu_supports("avx512f")
                 && __builtin_cpu_supports("avx512fp16")
                 && __builtin_cpu_supports("avx512vbmi2");
+#else
+        return 0;
+#endif
     else if (cpufeature == "avx512_icl")
         return __builtin_cpu_supports("avx512f")
                 && __builtin_cpu_supports("avx512vbmi2")
