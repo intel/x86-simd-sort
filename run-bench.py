@@ -19,17 +19,17 @@ if args.benchcompare:
     baseline = ""
     contender = ""
     if "qsort" in args.benchcompare:
-        baseline = "stdsort.*" + filterb
-        contender = "avx512qsort.*" + filterb
-    elif "qselect" in args.benchcompare:
-        baseline = "stdnthelement.*" + filterb
-        contender = "avx512_qselect.*" + filterb
+        baseline = "scalarsort.*" + filterb
+        contender = "simdsort.*" + filterb
+    elif "select" in args.benchcompare:
+        baseline = "scalarqselect.*" + filterb
+        contender = "simdqselect.*" + filterb
     elif "partial" in args.benchcompare:
-        baseline = "stdpartialsort.*" + filterb
-        contender = "avx512_partial_qsort.*" + filterb
+        baseline = "scalarpartialsort.*" + filterb
+        contender = "simdpartialsort.*" + filterb
     elif "argsort" in args.benchcompare:
-        baseline = "stdargsort.*" + filterb
-        contender = "avx512argsort.*" + filterb
+        baseline = "scalarargsort.*" + filterb
+        contender = "simdargsort.*" + filterb
     else:
         parser.print_help(sys.stderr)
         parser.error("ERROR: Unknown argument '%s'" % args.benchcompare)

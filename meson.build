@@ -28,6 +28,7 @@ libsimdsort = shared_library('x86simdsort',
                              'lib/x86simdsort.cpp',
                              include_directories : [lib],
                              link_whole : [libtargets],
+                             cpp_args : ['-O3'],
                             )
 
 testexe = executable('testexe',
@@ -37,10 +38,11 @@ testexe = executable('testexe',
                     )
 
 benchexe = executable('benchexe',
-                      include_directories : [src, utils, bench],
+                      include_directories : [src, lib, utils, bench],
                       dependencies : [gbench_dep],
                       link_args: ['-lbenchmark_main'],
                       link_whole : [libbench],
+                      link_with : libsimdsort,
                      )
 
 summary({

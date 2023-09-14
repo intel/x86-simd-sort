@@ -1,34 +1,14 @@
-#include "bench-qsort-common.h"
-
 template <typename T, class... Args>
-static void stdsort(benchmark::State &state, Args &&...args)
+static void scalarsort(benchmark::State &state, Args &&...args)
 {
+    // Get args
     auto args_tuple = std::make_tuple(std::move(args)...);
-    // Perform setup here
-    size_t ARRSIZE = std::get<0>(args_tuple);
-    std::vector<T> arr;
-    std::vector<T> arr_bkp;
-
+    size_t arrsize = std::get<0>(args_tuple);
     std::string arrtype = std::get<1>(args_tuple);
-    if (arrtype == "random") { arr = get_uniform_rand_array<T>(ARRSIZE); }
-    else if (arrtype == "sorted") {
-        arr = get_uniform_rand_array<T>(ARRSIZE);
-        std::sort(arr.begin(), arr.end());
-    }
-    else if (arrtype == "constant") {
-        T temp = get_uniform_rand_array<T>(1)[0];
-        for (size_t ii = 0; ii < ARRSIZE; ++ii) {
-            arr.push_back(temp);
-        }
-    }
-    else if (arrtype == "reverse") {
-        arr = get_uniform_rand_array<T>(ARRSIZE);
-        std::sort(arr.begin(), arr.end());
-        std::reverse(arr.begin(), arr.end());
-    }
-    arr_bkp = arr;
-
-    /* call avx512 quicksort */
+    // set up array
+    std::vector<T> arr = get_array<T>(arrtype, arrsize);
+    std::vector<T> arr_bkp = arr;
+    // benchmark
     for (auto _ : state) {
         std::sort(arr.begin(), arr.end());
         state.PauseTiming();
@@ -38,42 +18,18 @@ static void stdsort(benchmark::State &state, Args &&...args)
 }
 
 template <typename T, class... Args>
-static void avx512qsort(benchmark::State &state, Args &&...args)
+static void simdsort(benchmark::State &state, Args &&...args)
 {
+    // Get args
     auto args_tuple = std::make_tuple(std::move(args)...);
-    if (!__builtin_cpu_supports("avx512bw")) {
-        state.SkipWithMessage("Requires AVX512 BW ISA");
-    }
-    if ((sizeof(T) == 2) && (!__builtin_cpu_supports("avx512vbmi2"))) {
-        state.SkipWithMessage("Requires AVX512 VBMI2");
-    }
-    // Perform setup here
-    size_t ARRSIZE = std::get<0>(args_tuple);
-    std::vector<T> arr;
-    std::vector<T> arr_bkp;
-
+    size_t arrsize = std::get<0>(args_tuple);
     std::string arrtype = std::get<1>(args_tuple);
-    if (arrtype == "random") { arr = get_uniform_rand_array<T>(ARRSIZE); }
-    else if (arrtype == "sorted") {
-        arr = get_uniform_rand_array<T>(ARRSIZE);
-        std::sort(arr.begin(), arr.end());
-    }
-    else if (arrtype == "constant") {
-        T temp = get_uniform_rand_array<T>(1)[0];
-        for (size_t ii = 0; ii < ARRSIZE; ++ii) {
-            arr.push_back(temp);
-        }
-    }
-    else if (arrtype == "reverse") {
-        arr = get_uniform_rand_array<T>(ARRSIZE);
-        std::sort(arr.begin(), arr.end());
-        std::reverse(arr.begin(), arr.end());
-    }
-    arr_bkp = arr;
-
-    /* call avx512 quicksort */
+    // set up array
+    std::vector<T> arr = get_array<T>(arrtype, arrsize);
+    std::vector<T> arr_bkp = arr;
+    // benchmark
     for (auto _ : state) {
-        avx512_qsort<T>(arr.data(), ARRSIZE);
+        x86simdsort::qsort(arr.data(), arrsize);
         state.PauseTiming();
         arr = arr_bkp;
         state.ResumeTiming();
@@ -81,8 +37,8 @@ static void avx512qsort(benchmark::State &state, Args &&...args)
 }
 
 #define BENCH_BOTH_QSORT(type) \
-    BENCH(avx512qsort, type) \
-    BENCH(stdsort, type)
+    BENCH_SORT(simdsort, type) \
+    BENCH_SORT(scalarsort, type)
 
 BENCH_BOTH_QSORT(uint64_t)
 BENCH_BOTH_QSORT(int64_t)
@@ -92,3 +48,7 @@ BENCH_BOTH_QSORT(uint16_t)
 BENCH_BOTH_QSORT(int16_t)
 BENCH_BOTH_QSORT(float)
 BENCH_BOTH_QSORT(double)
+#ifdef __FLT16_MAX__
+BENCH_BOTH_QSORT(_Float16)
+#endif
+

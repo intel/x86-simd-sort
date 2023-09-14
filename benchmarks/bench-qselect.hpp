@@ -1,17 +1,10 @@
-#include "bench-qsort-common.h"
-
-template <typename T>
-static void avx512_qselect(benchmark::State &state)
+template <typename T, class... Args>
+static void simdqselect(benchmark::State &state, Args &&...args)
 {
-    if (!__builtin_cpu_supports("avx512bw")) {
-        state.SkipWithMessage("Requires AVX512 BW ISA");
-    }
-    if ((sizeof(T) == 2) && (!__builtin_cpu_supports("avx512vbmi2"))) {
-        state.SkipWithMessage("Requires AVX512 VBMI2 ISA");
-    }
     // Perform setup here
-    int64_t K = state.range(0);
-    size_t ARRSIZE = 10000;
+    auto args_tuple = std::make_tuple(std::move(args)...);
+    int64_t ARRSIZE = std::get<0>(args_tuple);
+    int64_t k = std::get<1>(args_tuple);
     std::vector<T> arr;
     std::vector<T> arr_bkp;
 
@@ -21,7 +14,7 @@ static void avx512_qselect(benchmark::State &state)
 
     /* call avx512 quickselect */
     for (auto _ : state) {
-        avx512_qselect<T>(arr.data(), K, ARRSIZE);
+        x86simdsort::qselect<T>(arr.data(), k, ARRSIZE);
 
         state.PauseTiming();
         arr = arr_bkp;
@@ -29,12 +22,13 @@ static void avx512_qselect(benchmark::State &state)
     }
 }
 
-template <typename T>
-static void stdnthelement(benchmark::State &state)
+template <typename T, class... Args>
+static void scalarqselect(benchmark::State &state, Args &&...args)
 {
     // Perform setup here
-    int64_t K = state.range(0);
-    size_t ARRSIZE = 10000;
+    auto args_tuple = std::make_tuple(std::move(args)...);
+    int64_t ARRSIZE = std::get<0>(args_tuple);
+    int64_t k = std::get<1>(args_tuple);
     std::vector<T> arr;
     std::vector<T> arr_bkp;
 
@@ -44,7 +38,7 @@ static void stdnthelement(benchmark::State &state)
 
     /* call std::nth_element */
     for (auto _ : state) {
-        std::nth_element(arr.begin(), arr.begin() + K, arr.end());
+        std::nth_element(arr.begin(), arr.begin() + k, arr.end());
 
         state.PauseTiming();
         arr = arr_bkp;
@@ -52,23 +46,18 @@ static void stdnthelement(benchmark::State &state)
     }
 }
 
-// Register the function as a benchmark
-BENCHMARK(avx512_qselect<float>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(stdnthelement<float>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_qselect<uint32_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(stdnthelement<uint32_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_qselect<int32_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(stdnthelement<int32_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
+#define BENCH_BOTH_QSELECT(type) \
+    BENCH_PARTIAL(simdqselect, type) \
+    BENCH_PARTIAL(scalarqselect, type)
 
-BENCHMARK(avx512_qselect<double>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(stdnthelement<double>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_qselect<uint64_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(stdnthelement<uint64_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_qselect<int64_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(stdnthelement<int64_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-
-//BENCHMARK(avx512_qselect<float16>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_qselect<uint16_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(stdnthelement<uint16_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_qselect<int16_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(stdnthelement<int16_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
+BENCH_BOTH_QSELECT(uint64_t)
+BENCH_BOTH_QSELECT(int64_t)
+BENCH_BOTH_QSELECT(uint32_t)
+BENCH_BOTH_QSELECT(int32_t)
+BENCH_BOTH_QSELECT(uint16_t)
+BENCH_BOTH_QSELECT(int16_t)
+BENCH_BOTH_QSELECT(float)
+BENCH_BOTH_QSELECT(double)
+#ifdef __FLT16_MAX__
+BENCH_BOTH_QSELECT(_Float16)
+#endif
