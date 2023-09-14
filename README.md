@@ -10,43 +10,55 @@ relative to std::sort. The following API's are currently supported:
 
 #### Quicksort
 
-```
+```cpp
 void avx512_qsort<T>(T* arr, int64_t arrsize)
 ```
-Supported datatypes: `uint16_t, int16_t, _Float16, uint32_t, int32_t, float,
-uint64_t, int64_t and double`
+Supported datatypes: `uint16_t`, `int16_t`, `_Float16`, `uint32_t`, `int32_t`,
+`float`, `uint64_t`, `int64_t` and `double`.
+
+For floating-point types, if `arr` contains NaNs, they are moved to the end and
+replaced with a quiet NaN. That is, the original, bit-exact NaNs in the input
+are not preserved.
 
 #### Argsort
 
-```
+```cpp
 std::vector<int64_t> arg = avx512_argsort<T>(T* arr, int64_t arrsize)
 void avx512_argsort<T>(T* arr, int64_t *arg, int64_t arrsize)
 ```
-Supported datatypes: `uint32_t, int32_t, float, uint64_t, int64_t and double`.
-The algorithm resorts to scalar `std::sort` if the array contains NAN.
+Supported datatypes: `uint32_t`, `int32_t`, `float`, `uint64_t`, `int64_t` and
+`double`.
+
+The algorithm resorts to scalar `std::sort` if the array contains NaNs.
 
 #### Quickselect
 
-```
+```cpp
 void avx512_qselect<T>(T* arr, int64_t arrsize)
 void avx512_qselect<T>(T* arr, int64_t arrsize, bool hasnan)
 ```
-Supported datatypes: `uint16_t, int16_t, _Float16 ,uint32_t, int32_t, float,
-uint64_t, int64_t and double`. Use an additional optional argument `bool
-hasnan` if you expect your arrays to contain nan.
+Supported datatypes: `uint16_t`, `int16_t`, `_Float16`, `uint32_t`, `int32_t`,
+`float`, `uint64_t`, `int64_t` and `double`.
+
+For floating-point types, if `bool hasnan` is set, NaNs are moved to the end of
+the array, preserving the bit-exact NaNs in the input. If NaNs are present but
+`hasnan` is `false`, the behavior is undefined.
 
 #### Partialsort
 
-```
+```cpp
 void avx512_partial_qsort<T>(T* arr, int64_t arrsize)
 void avx512_partial_qsort<T>(T* arr, int64_t arrsize, bool hasnan)
 ```
-Supported datatypes: `uint16_t, int16_t, _Float16 ,uint32_t, int32_t, float,
-uint64_t, int64_t and double`. Use an additional optional argument `bool
-hasnan` if you expect your arrays to contain nan.
+Supported datatypes: `uint16_t`, `int16_t`, `_Float16`, `uint32_t`, `int32_t`,
+`float`, `uint64_t`, `int64_t` and `double`.
+
+For floating-point types, if `bool hasnan` is set, NaNs are moved to the end of
+the array, preserving the bit-exact NaNs in the input. If NaNs are present but
+`hasnan` is `false`, the behavior is undefined.
 
 #### Key-value sort
-```
+```cpp
 void avx512_qsort_kv<T>(T* key, uint64_t* value , int64_t arrsize)
 ```
 Supported datatypes: `uint64_t, int64_t and double`
@@ -63,15 +75,6 @@ definitions depend on the size of the dtype and are defined in separate files:
 network. The core implementations of the vectorized qsort functions
 `avx512_qsort<T>(T*, int64_t)` are modified versions of avx2 quicksort
 presented in the paper [2] and source code associated with that paper [3].
-
-## A note on NAN in float and double arrays
-
-If you expect your array to contain NANs, please be aware that the these
-routines **do not preserve your NANs as you pass them**. The quicksort,
-quickselect, partialsort and key-value sorting routines will sort NAN's to the
-end of the array and replace them with `std::nan("1")`. `avx512_argsort`
-routines will also resort to a scalar argsort that uses `std::sort` to sort array
-that contains NAN.
 
 ## Example to include and build this in a C++ code
 
