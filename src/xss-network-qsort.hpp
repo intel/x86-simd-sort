@@ -72,9 +72,11 @@ X86_SIMD_SORT_UNROLL_LOOP(64)
 template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
 {
-    if (numVecs > 1 && N * 2 <= numVecs * vtype::numlanes) {
-        sort_n_vec<vtype, numVecs / 2>(arr, N);
-        return;
+    if constexpr (numVecs > 1) {
+        if (N * 2 <= numVecs * vtype::numlanes) {
+            sort_n_vec<vtype, numVecs / 2>(arr, N);
+            return;
+        }
     }
 
     reg_t vecs[numVecs];
