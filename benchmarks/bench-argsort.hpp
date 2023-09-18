@@ -22,7 +22,6 @@ static void scalarargsort(benchmark::State &state, Args &&...args)
     std::string arrtype = std::get<1>(args_tuple);
     // set up array
     std::vector<T> arr = get_array<T>(arrtype, arrsize);
-    std::vector<T> arr_bkp = arr;
     std::vector<int64_t> inx;
     // benchmark
     for (auto _ : state) {
@@ -39,7 +38,6 @@ static void simdargsort(benchmark::State &state, Args &&...args)
     std::string arrtype = std::get<1>(args_tuple);
     // set up array
     std::vector<T> arr = get_array<T>(arrtype, arrsize);
-    std::vector<T> arr_bkp = arr;
     std::vector<int64_t> inx;
     // benchmark
     for (auto _ : state) {

@@ -32,9 +32,10 @@ libsimdsort = shared_library('x86simdsort',
                             )
 
 testexe = executable('testexe',
-                     include_directories : [src, utils],
+                     include_directories : [lib, utils],
                      dependencies : gtest_dep,
-                     link_whole : [libtests]
+                     link_whole : [libtests],
+                     link_with : libsimdsort,
                     )
 
 benchexe = executable('benchexe',
