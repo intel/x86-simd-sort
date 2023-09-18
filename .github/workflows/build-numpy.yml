@@ -56,12 +56,20 @@ jobs:
         git fetch temp
         git checkout temp/pr-branch
 
-    - name: Build & run NumPy sort tests
+    - name: Build NumPy
       working-directory: ${{ github.workspace }}/numpy
       env:
         CXX: g++-12
         CC: gcc-12
       run: |
-        python runtests.py -t numpy/core/tests/test_multiarray.py
+        spin build -- -Dallow-noblas=true
+
+    - name: Run multiarray tests
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        python -c "import numpy; numpy.show_config()" &&
+        python -m pytest $NUMPY_SITE/numpy/core/tests/test_multiarray.py
 
 
