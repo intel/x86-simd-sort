@@ -5,6 +5,20 @@ class avx512_select : public ::testing::Test {
 };
 TYPED_TEST_SUITE_P(avx512_select);
 
+#ifdef __FLT16_MAX__
+TEST(avx512_select, test_simple)
+{
+    if (__builtin_cpu_supports("avx512vbmi2")) {
+        std::vector<_Float16> arr{1.0, -1.0};
+        avx512_qselect_fp16(reinterpret_cast<uint16_t*>(arr.data()), 0, arr.size());
+        ASSERT_EQ(arr[0], -1.0);
+    }
+    else {
+        GTEST_SKIP() << "Skipping this test, it requires avx512vbmi2";
+    }
+}
+#endif
+
 TYPED_TEST_P(avx512_select, test_random)
 {
     if (__builtin_cpu_supports("avx512bw")) {
