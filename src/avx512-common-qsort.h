@@ -484,16 +484,16 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
 
 template <typename vtype1,
           typename vtype2,
-          typename zmm_t1 = typename vtype1::reg_t,
-          typename zmm_t2 = typename vtype2::reg_t>
-static void COEX(zmm_t1 &key1, zmm_t1 &key2, zmm_t2 &index1, zmm_t2 &index2)
+          typename reg_t1 = typename vtype1::reg_t,
+          typename reg_t2 = typename vtype2::reg_t>
+static void COEX(reg_t1 &key1, reg_t1 &key2, reg_t2 &index1, reg_t2 &index2)
 {
-    zmm_t1 key_t1 = vtype1::min(key1, key2);
-    zmm_t1 key_t2 = vtype1::max(key1, key2);
+    reg_t1 key_t1 = vtype1::min(key1, key2);
+    reg_t1 key_t2 = vtype1::max(key1, key2);
 
-    zmm_t2 index_t1
+    reg_t2 index_t1
             = vtype2::mask_mov(index2, vtype1::eq(key_t1, key1), index1);
-    zmm_t2 index_t2
+    reg_t2 index_t2
             = vtype2::mask_mov(index1, vtype1::eq(key_t1, key1), index2);
 
     key1 = key_t1;
@@ -503,16 +503,16 @@ static void COEX(zmm_t1 &key1, zmm_t1 &key2, zmm_t2 &index1, zmm_t2 &index2)
 }
 template <typename vtype1,
           typename vtype2,
-          typename zmm_t1 = typename vtype1::reg_t,
-          typename zmm_t2 = typename vtype2::reg_t,
+          typename reg_t1 = typename vtype1::reg_t,
+          typename reg_t2 = typename vtype2::reg_t,
           typename opmask_t = typename vtype1::opmask_t>
-static inline zmm_t1 cmp_merge(zmm_t1 in1,
-                               zmm_t1 in2,
-                               zmm_t2 &indexes1,
-                               zmm_t2 indexes2,
+static inline reg_t1 cmp_merge(reg_t1 in1,
+                               reg_t1 in2,
+                               reg_t2 &indexes1,
+                               reg_t2 indexes2,
                                opmask_t mask)
 {
-    zmm_t1 tmp_keys = cmp_merge<vtype1>(in1, in2, mask);
+    reg_t1 tmp_keys = cmp_merge<vtype1>(in1, in2, mask);
     indexes1 = vtype2::mask_mov(indexes2, vtype1::eq(tmp_keys, in1), indexes1);
     return tmp_keys; // 0 -> min, 1 -> max
 }
@@ -525,17 +525,17 @@ template <typename vtype1,
           typename vtype2,
           typename type_t1 = typename vtype1::type_t,
           typename type_t2 = typename vtype2::type_t,
-          typename zmm_t1 = typename vtype1::reg_t,
-          typename zmm_t2 = typename vtype2::reg_t>
+          typename reg_t1 = typename vtype1::reg_t,
+          typename reg_t2 = typename vtype2::reg_t>
 static inline int32_t partition_vec(type_t1 *keys,
                                     type_t2 *indexes,
                                     int64_t left,
                                     int64_t right,
-                                    const zmm_t1 keys_vec,
-                                    const zmm_t2 indexes_vec,
-                                    const zmm_t1 pivot_vec,
-                                    zmm_t1 *smallest_vec,
-                                    zmm_t1 *biggest_vec)
+                                    const reg_t1 keys_vec,
+                                    const reg_t2 indexes_vec,
+                                    const reg_t1 pivot_vec,
+                                    reg_t1 *smallest_vec,
+                                    reg_t1 *biggest_vec)
 {
     /* which elements are larger than the pivot */
     typename vtype1::opmask_t gt_mask = vtype1::ge(keys_vec, pivot_vec);
@@ -560,8 +560,8 @@ template <typename vtype1,
           typename vtype2,
           typename type_t1 = typename vtype1::type_t,
           typename type_t2 = typename vtype2::type_t,
-          typename zmm_t1 = typename vtype1::reg_t,
-          typename zmm_t2 = typename vtype2::reg_t>
+          typename reg_t1 = typename vtype1::reg_t,
+          typename reg_t2 = typename vtype2::reg_t>
 static inline int64_t partition_avx512(type_t1 *keys,
                                        type_t2 *indexes,
                                        int64_t left,
@@ -587,15 +587,15 @@ static inline int64_t partition_avx512(type_t1 *keys,
     if (left == right)
         return left; /* less than vtype1::numlanes elements in the array */
 
-    zmm_t1 pivot_vec = vtype1::set1(pivot);
-    zmm_t1 min_vec = vtype1::set1(*smallest);
-    zmm_t1 max_vec = vtype1::set1(*biggest);
+    reg_t1 pivot_vec = vtype1::set1(pivot);
+    reg_t1 min_vec = vtype1::set1(*smallest);
+    reg_t1 max_vec = vtype1::set1(*biggest);
 
     if (right - left == vtype1::numlanes) {
-        zmm_t1 keys_vec = vtype1::loadu(keys + left);
+        reg_t1 keys_vec = vtype1::loadu(keys + left);
         int32_t amount_gt_pivot;
 
-        zmm_t2 indexes_vec = vtype2::loadu(indexes + left);
+        reg_t2 indexes_vec = vtype2::loadu(indexes + left);
         amount_gt_pivot = partition_vec<vtype1, vtype2>(keys,
                                                         indexes,
                                                         left,
@@ -612,10 +612,10 @@ static inline int64_t partition_avx512(type_t1 *keys,
     }
 
     // first and last vtype1::numlanes values are partitioned at the end
-    zmm_t1 keys_vec_left = vtype1::loadu(keys + left);
-    zmm_t1 keys_vec_right = vtype1::loadu(keys + (right - vtype1::numlanes));
-    zmm_t2 indexes_vec_left;
-    zmm_t2 indexes_vec_right;
+    reg_t1 keys_vec_left = vtype1::loadu(keys + left);
+    reg_t1 keys_vec_right = vtype1::loadu(keys + (right - vtype1::numlanes));
+    reg_t2 indexes_vec_left;
+    reg_t2 indexes_vec_right;
     indexes_vec_left = vtype2::loadu(indexes + left);
     indexes_vec_right = vtype2::loadu(indexes + (right - vtype1::numlanes));
 
@@ -626,8 +626,8 @@ static inline int64_t partition_avx512(type_t1 *keys,
     left += vtype1::numlanes;
     right -= vtype1::numlanes;
     while (right - left != 0) {
-        zmm_t1 keys_vec;
-        zmm_t2 indexes_vec;
+        reg_t1 keys_vec;
+        reg_t2 indexes_vec;
         /*
          * if fewer elements are stored on the right side of the array,
          * then next elements are loaded from the right side,
@@ -757,30 +757,25 @@ X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
 {
     // median of 16
     int64_t size = (right - left) / 16;
-    using zmm_t = typename vtype::reg_t;
-    using ymm_t = typename vtype::halfreg_t;
-    __m512i rand_index1 = _mm512_set_epi64(left + size,
-                                           left + 2 * size,
-                                           left + 3 * size,
-                                           left + 4 * size,
-                                           left + 5 * size,
-                                           left + 6 * size,
-                                           left + 7 * size,
-                                           left + 8 * size);
-    __m512i rand_index2 = _mm512_set_epi64(left + 9 * size,
-                                           left + 10 * size,
-                                           left + 11 * size,
-                                           left + 12 * size,
-                                           left + 13 * size,
-                                           left + 14 * size,
-                                           left + 15 * size,
-                                           left + 16 * size);
-    ymm_t rand_vec1
-            = vtype::template i64gather<sizeof(type_t)>(rand_index1, arr);
-    ymm_t rand_vec2
-            = vtype::template i64gather<sizeof(type_t)>(rand_index2, arr);
-    zmm_t rand_vec = vtype::merge(rand_vec1, rand_vec2);
-    zmm_t sort = vtype::sort_vec(rand_vec);
+    using reg_t = typename vtype::reg_t;
+    type_t vec_arr[16] = {arr[left + size],
+                          arr[left + 2 * size],
+                          arr[left + 3 * size],
+                          arr[left + 4 * size],
+                          arr[left + 5 * size],
+                          arr[left + 6 * size],
+                          arr[left + 7 * size],
+                          arr[left + 8 * size],
+                          arr[left + 9 * size],
+                          arr[left + 10 * size],
+                          arr[left + 11 * size],
+                          arr[left + 12 * size],
+                          arr[left + 13 * size],
+                          arr[left + 14 * size],
+                          arr[left + 15 * size],
+                          arr[left + 16 * size]};
+    reg_t rand_vec = vtype::loadu(vec_arr);
+    reg_t sort = vtype::sort_vec(rand_vec);
     // pivot will never be a nan, since there are no nan's!
     return ((type_t *)&sort)[8];
 }
@@ -792,18 +787,17 @@ X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
 {
     // median of 8
     int64_t size = (right - left) / 8;
-    using zmm_t = typename vtype::reg_t;
-    __m512i rand_index = _mm512_set_epi64(left + size,
-                                          left + 2 * size,
-                                          left + 3 * size,
-                                          left + 4 * size,
-                                          left + 5 * size,
-                                          left + 6 * size,
-                                          left + 7 * size,
-                                          left + 8 * size);
-    zmm_t rand_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
+    using reg_t = typename vtype::reg_t;
+    reg_t rand_vec = vtype::set(arr[left + size],
+                                arr[left + 2 * size],
+                                arr[left + 3 * size],
+                                arr[left + 4 * size],
+                                arr[left + 5 * size],
+                                arr[left + 6 * size],
+                                arr[left + 7 * size],
+                                arr[left + 8 * size]);
     // pivot will never be a nan, since there are no nan's!
-    zmm_t sort = vtype::sort_vec(rand_vec);
+    reg_t sort = vtype::sort_vec(rand_vec);
     return ((type_t *)&sort)[4];
 }
 

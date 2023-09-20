@@ -13,7 +13,7 @@
 #include <vector>
 
 using argtype = zmm_vector<int64_t>;
-using argzmm_t = typename argtype::reg_t;
+using argreg_t = typename argtype::reg_t;
 
 /*
  * Parition one ZMM register based on the pivot and returns the index of the
@@ -23,7 +23,7 @@ template <typename vtype, typename type_t, typename reg_t>
 static inline int32_t partition_vec(type_t *arg,
                                     int64_t left,
                                     int64_t right,
-                                    const argzmm_t arg_vec,
+                                    const argreg_t arg_vec,
                                     const reg_t curr_vec,
                                     const reg_t pivot_vec,
                                     reg_t *smallest_vec,
@@ -74,8 +74,8 @@ static inline int64_t partition_avx512(type_t *arr,
     reg_t max_vec = vtype::set1(*biggest);
 
     if (right - left == vtype::numlanes) {
-        argzmm_t argvec = argtype::loadu(arg + left);
-        reg_t vec = vtype::template i64gather<sizeof(type_t)>(argvec, arr);
+        argreg_t argvec = argtype::loadu(arg + left);
+        reg_t vec = vtype::i64gather(arr, arg + left);
         int32_t amount_gt_pivot = partition_vec<vtype>(arg,
                                                        left,
                                                        left + vtype::numlanes,
@@ -90,12 +90,10 @@ static inline int64_t partition_avx512(type_t *arr,
     }
 
     // first and last vtype::numlanes values are partitioned at the end
-    argzmm_t argvec_left = argtype::loadu(arg + left);
-    reg_t vec_left
-            = vtype::template i64gather<sizeof(type_t)>(argvec_left, arr);
-    argzmm_t argvec_right = argtype::loadu(arg + (right - vtype::numlanes));
-    reg_t vec_right
-            = vtype::template i64gather<sizeof(type_t)>(argvec_right, arr);
+    argreg_t argvec_left = argtype::loadu(arg + left);
+    reg_t vec_left = vtype::i64gather(arr, arg + left);
+    argreg_t argvec_right = argtype::loadu(arg + (right - vtype::numlanes));
+    reg_t vec_right = vtype::i64gather(arr, arg + (right - vtype::numlanes));
     // store points of the vectors
     int64_t r_store = right - vtype::numlanes;
     int64_t l_store = left;
@@ -103,7 +101,7 @@ static inline int64_t partition_avx512(type_t *arr,
     left += vtype::numlanes;
     right -= vtype::numlanes;
     while (right - left != 0) {
-        argzmm_t arg_vec;
+        argreg_t arg_vec;
         reg_t curr_vec;
         /*
          * if fewer elements are stored on the right side of the array,
@@ -113,11 +111,11 @@ static inline int64_t partition_avx512(type_t *arr,
         if ((r_store + vtype::numlanes) - right < left - l_store) {
             right -= vtype::numlanes;
             arg_vec = argtype::loadu(arg + right);
-            curr_vec = vtype::template i64gather<sizeof(type_t)>(arg_vec, arr);
+            curr_vec = vtype::i64gather(arr, arg + right);
         }
         else {
             arg_vec = argtype::loadu(arg + left);
-            curr_vec = vtype::template i64gather<sizeof(type_t)>(arg_vec, arr);
+            curr_vec = vtype::i64gather(arr, arg + left);
             left += vtype::numlanes;
         }
         // partition the current vector and save it on both sides of the array
@@ -197,16 +195,15 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
 
     // first and last vtype::numlanes values are partitioned at the end
     reg_t vec_left[num_unroll], vec_right[num_unroll];
-    argzmm_t argvec_left[num_unroll], argvec_right[num_unroll];
+    argreg_t argvec_left[num_unroll], argvec_right[num_unroll];
 X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         argvec_left[ii] = argtype::loadu(arg + left + vtype::numlanes * ii);
-        vec_left[ii] = vtype::template i64gather<sizeof(type_t)>(
-                argvec_left[ii], arr);
+        vec_left[ii] = vtype::i64gather(arr, arg + left + vtype::numlanes * ii);
         argvec_right[ii] = argtype::loadu(
                 arg + (right - vtype::numlanes * (num_unroll - ii)));
-        vec_right[ii] = vtype::template i64gather<sizeof(type_t)>(
-                argvec_right[ii], arr);
+        vec_right[ii] = vtype::i64gather(
+                arr, arg + (right - vtype::numlanes * (num_unroll - ii)));
     }
     // store points of the vectors
     int64_t r_store = right - vtype::numlanes;
@@ -215,7 +212,7 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
     left += num_unroll * vtype::numlanes;
     right -= num_unroll * vtype::numlanes;
     while (right - left != 0) {
-        argzmm_t arg_vec[num_unroll];
+        argreg_t arg_vec[num_unroll];
         reg_t curr_vec[num_unroll];
         /*
          * if fewer elements are stored on the right side of the array,
@@ -228,16 +225,16 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 arg_vec[ii]
                         = argtype::loadu(arg + right + ii * vtype::numlanes);
-                curr_vec[ii] = vtype::template i64gather<sizeof(type_t)>(
-                        arg_vec[ii], arr);
+                curr_vec[ii] = vtype::i64gather(
+                        arr, arg + right + ii * vtype::numlanes);
             }
         }
         else {
 X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 arg_vec[ii] = argtype::loadu(arg + left + ii * vtype::numlanes);
-                curr_vec[ii] = vtype::template i64gather<sizeof(type_t)>(
-                        arg_vec[ii], arr);
+                curr_vec[ii] = vtype::i64gather(
+                        arr, arg + left + ii * vtype::numlanes);
             }
             left += num_unroll * vtype::numlanes;
         }

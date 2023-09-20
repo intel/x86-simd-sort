@@ -29,7 +29,7 @@ template <>
 struct ymm_vector<float> {
     using type_t = float;
     using reg_t = __m256;
-    using zmmi_t = __m256i;
+    using regi_t = __m256i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
@@ -45,11 +45,21 @@ struct ymm_vector<float> {
     {
         return _mm256_set1_ps(type_max());
     }
-
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
+    {
+        return _mm256_set_ps(v1, v2, v3, v4, v5, v6, v7, v8);
     }
     static opmask_t kxor_opmask(opmask_t x, opmask_t y)
     {
@@ -86,10 +96,16 @@ struct ymm_vector<float> {
     {
         return _mm512_mask_i64gather_ps(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_ps(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -173,7 +189,7 @@ template <>
 struct ymm_vector<uint32_t> {
     using type_t = uint32_t;
     using reg_t = __m256i;
-    using zmmi_t = __m256i;
+    using regi_t = __m256i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
@@ -190,8 +206,19 @@ struct ymm_vector<uint32_t> {
         return _mm256_set1_epi32(type_max());
     }
 
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
+    {
+        return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -221,10 +248,16 @@ struct ymm_vector<uint32_t> {
     {
         return _mm512_mask_i64gather_epi32(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_epi32(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -302,7 +335,7 @@ template <>
 struct ymm_vector<int32_t> {
     using type_t = int32_t;
     using reg_t = __m256i;
-    using zmmi_t = __m256i;
+    using regi_t = __m256i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
@@ -319,8 +352,19 @@ struct ymm_vector<int32_t> {
         return _mm256_set1_epi32(type_max());
     } // TODO: this should broadcast bits as is?
 
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
+    {
+        return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
     {
         return _mm256_set_epi32(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -350,10 +394,16 @@ struct ymm_vector<int32_t> {
     {
         return _mm512_mask_i64gather_epi32(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_epi32(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -431,7 +481,7 @@ template <>
 struct zmm_vector<int64_t> {
     using type_t = int64_t;
     using reg_t = __m512i;
-    using zmmi_t = __m512i;
+    using regi_t = __m512i;
     using halfreg_t = __m512i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
@@ -451,8 +501,19 @@ struct zmm_vector<int64_t> {
         return _mm512_set1_epi64(type_max());
     } // TODO: this should broadcast bits as is?
 
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
+    {
+        return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -482,10 +543,16 @@ struct zmm_vector<int64_t> {
     {
         return _mm512_mask_i64gather_epi64(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_epi64(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -548,7 +615,7 @@ struct zmm_vector<int64_t> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const zmmi_t rev_index = seti(NETWORK_64BIT_2);
+        const regi_t rev_index = seti(NETWORK_64BIT_2);
         return permutexvar(rev_index, zmm);
     }
     static reg_t bitonic_merge(reg_t x)
@@ -564,7 +631,7 @@ template <>
 struct zmm_vector<uint64_t> {
     using type_t = uint64_t;
     using reg_t = __m512i;
-    using zmmi_t = __m512i;
+    using regi_t = __m512i;
     using halfreg_t = __m512i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
@@ -584,8 +651,19 @@ struct zmm_vector<uint64_t> {
         return _mm512_set1_epi64(type_max());
     }
 
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
+    {
+        return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
@@ -595,10 +673,16 @@ struct zmm_vector<uint64_t> {
     {
         return _mm512_mask_i64gather_epi64(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_epi64(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static opmask_t knot_opmask(opmask_t x)
     {
@@ -669,7 +753,7 @@ struct zmm_vector<uint64_t> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const zmmi_t rev_index = seti(NETWORK_64BIT_2);
+        const regi_t rev_index = seti(NETWORK_64BIT_2);
         return permutexvar(rev_index, zmm);
     }
     static reg_t bitonic_merge(reg_t x)
@@ -685,7 +769,7 @@ template <>
 struct zmm_vector<double> {
     using type_t = double;
     using reg_t = __m512d;
-    using zmmi_t = __m512i;
+    using regi_t = __m512i;
     using halfreg_t = __m512d;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
@@ -704,13 +788,22 @@ struct zmm_vector<double> {
     {
         return _mm512_set1_pd(type_max());
     }
-
-    static zmmi_t
+    static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
         return _mm512_set_epi64(v1, v2, v3, v4, v5, v6, v7, v8);
     }
-
+    static reg_t set(type_t v1,
+                     type_t v2,
+                     type_t v3,
+                     type_t v4,
+                     type_t v5,
+                     type_t v6,
+                     type_t v7,
+                     type_t v8)
+    {
+        return _mm512_set_pd(v1, v2, v3, v4, v5, v6, v7, v8);
+    }
     static reg_t maskz_loadu(opmask_t mask, void const *mem)
     {
         return _mm512_maskz_loadu_pd(mask, mem);
@@ -742,10 +835,16 @@ struct zmm_vector<double> {
     {
         return _mm512_mask_i64gather_pd(src, mask, index, base, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m512i index, void const *base)
+    static reg_t i64gather(type_t *arr, int64_t *ind)
     {
-        return _mm512_i64gather_pd(index, base, scale);
+        return set(arr[ind[7]],
+                   arr[ind[6]],
+                   arr[ind[5]],
+                   arr[ind[4]],
+                   arr[ind[3]],
+                   arr[ind[2]],
+                   arr[ind[1]],
+                   arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -802,7 +901,7 @@ struct zmm_vector<double> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const zmmi_t rev_index = seti(NETWORK_64BIT_2);
+        const regi_t rev_index = seti(NETWORK_64BIT_2);
         return permutexvar(rev_index, zmm);
     }
     static reg_t bitonic_merge(reg_t x)
@@ -822,7 +921,7 @@ struct zmm_vector<double> {
 template <typename vtype, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t zmm)
 {
-    const typename vtype::zmmi_t rev_index = vtype::seti(NETWORK_64BIT_2);
+    const typename vtype::regi_t rev_index = vtype::seti(NETWORK_64BIT_2);
     zmm = cmp_merge<vtype>(
             zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
     zmm = cmp_merge<vtype>(
@@ -841,7 +940,6 @@ X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t zmm)
 template <typename vtype, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_64bit(reg_t zmm)
 {
-
     // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
     zmm = cmp_merge<vtype>(
             zmm,
