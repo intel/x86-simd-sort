@@ -832,7 +832,7 @@ static void qsort_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
      * Resort to std::sort if quicksort isnt making any progress
      */
     if (max_iters <= 0) {
-        std::sort(arr + left, arr + right + 1);
+        std::sort(arr + left, arr + right + 1, comparison_func<vtype>);
         return;
     }
     /*
@@ -868,7 +868,7 @@ static void qselect_(type_t *arr,
      * Resort to std::sort if quicksort isnt making any progress
      */
     if (max_iters <= 0) {
-        std::sort(arr + left, arr + right + 1);
+        std::sort(arr + left, arr + right + 1, comparison_func<vtype>);
         return;
     }
     /*
