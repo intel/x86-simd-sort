@@ -380,12 +380,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
                 arr, left, right, pivot, smallest, biggest);
     }
 
-    if (right - left <= 2 * num_unroll * vtype::numlanes) {
-        return partition_avx512<vtype>(
-                arr, left, right, pivot, smallest, biggest);
-    }
-    /* make array length divisible by 8*vtype::numlanes , shortening the array */
-    for (int32_t i = ((right - left) % (num_unroll * vtype::numlanes)); i > 0;
+    /* make array length divisible by vtype::numlanes , shortening the array */
+    for (int32_t i = ((right - left) % (vtype::numlanes)); i > 0;
          --i) {
         *smallest = std::min(*smallest, arr[left], comparison_func<vtype>);
         *biggest = std::max(*biggest, arr[left], comparison_func<vtype>);
@@ -396,14 +392,49 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
             ++left;
         }
     }
-
+    
     if (left == right)
         return left; /* less than vtype::numlanes elements in the array */
-
+    
     using reg_t = typename vtype::reg_t;
     reg_t pivot_vec = vtype::set1(pivot);
     reg_t min_vec = vtype::set1(*smallest);
     reg_t max_vec = vtype::set1(*biggest);
+    
+    int64_t vecsToPartition = ((right - left) / vtype::numlanes) % num_unroll;
+    type_t buffer[num_unroll * vtype::numlanes];
+    int32_t bufferStored = 0;
+    int64_t leftStore = left;
+    
+    for (int32_t i = 0; i < vecsToPartition; i++){
+        reg_t curr_vec = vtype::loadu(arr + left + i * vtype::numlanes);
+        typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
+        int32_t amount_ge_pivot = _mm_popcnt_u64((int64_t)ge_mask);
+        vtype::mask_compressstoreu(
+                arr + leftStore, vtype::knot_opmask(ge_mask), curr_vec);
+                
+        vtype::mask_compressstoreu(
+                buffer + bufferStored, ge_mask, curr_vec);
+                
+        min_vec = vtype::min(curr_vec, min_vec);
+        max_vec = vtype::max(curr_vec, max_vec);
+        
+        bufferStored += amount_ge_pivot;
+        leftStore += vtype::numlanes - amount_ge_pivot;
+    }
+    
+    // We can't just store the buffer on the right, since this would override data that has no copies elsewhere
+    // Instead, copy the data that is currently on the right, and store it on the left side in the space between leftStore and left
+    // Then we copy the buffer onto the right side
+    std::memcpy(arr + leftStore, arr + right - bufferStored, bufferStored * sizeof(type_t));
+    std::memcpy(arr + right - bufferStored, buffer, bufferStored * sizeof(type_t));
+    
+    // The change to left depends only on numVecs, since we store the data replaced by the buffer on the left side
+    left += vecsToPartition * vtype::numlanes - bufferStored;
+    right -= bufferStored;
+
+    if (left == right)
+        return left; /* less than vtype::numlanes elements in the array */
 
     // We will now have atleast 16 registers worth of data to process:
     // left and right vtype::numlanes values are partitioned at the end
