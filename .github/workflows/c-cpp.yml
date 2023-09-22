@@ -9,7 +9,7 @@ on:
 jobs:
   ICX:
 
-    runs-on: ubuntu-latest
+    runs-on: intel-ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -47,7 +47,7 @@ jobs:
 
   SPR:
 
-    runs-on: ubuntu-latest
+    runs-on: intel-ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -86,7 +86,7 @@ jobs:
   compare-benchmarks-with-main:
     if: ${{ false }}  # disable for now
 
-    runs-on: ubuntu-latest
+    runs-on: intel-ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
