@@ -26,7 +26,7 @@ subdir('benchmarks')
 
 libsimdsort = shared_library('x86simdsort',
                              'lib/x86simdsort.cpp',
-                             include_directories : [lib],
+                             include_directories : [utils, lib],
                              link_whole : [libtargets],
                              cpp_args : ['-O3'],
                             )

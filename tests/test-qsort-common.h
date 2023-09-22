@@ -2,6 +2,7 @@
 #define AVX512_TEST_COMMON
 
 #include "rand_array.h"
+#include "custom-compare.h"
 #include "x86simdsort.h"
 #include <gtest/gtest.h>
 
@@ -16,46 +17,6 @@
 #define REPORT_FAIL(msg, size, type, k) \
     ASSERT_TRUE(false) << msg << ". arr size = " << size \
                        << ", type = " << type << ", k = " << k;
-
-/*
- * Custom comparator class to handle NAN's: treats NAN  > INF
- */
-template <typename T, typename Comparator>
-struct compare {
-    static constexpr auto op = Comparator {};
-    bool operator()(const T a, const T b)
-    {
-        if constexpr (std::is_floating_point_v<T>) {
-            T inf = std::numeric_limits<T>::infinity();
-            if (!std::isunordered(a, b)) { return op(a, b); }
-            else if ((std::isnan(a)) && (!std::isnan(b))) {
-                return b == inf ? op(inf, 1.) : op(inf, b);
-            }
-            else if ((!std::isnan(a)) && (std::isnan(b))) {
-                return a == inf ? op(1., inf) : op(a, inf);
-            }
-            else {
-                return op(1., 1.);
-            }
-        }
-        else {
-            return op(a, b);
-        }
-    }
-};
-
-//template <typename T, typename Comparator>
-//struct compare_arg {
-//    compare_arg(std::vector<T> arr)
-//    {
-//        this->arr = arr;
-//    }
-//    bool operator()(const int64_t a, const int64_t b)
-//    {
-//        return compare<T, Comparator>()(arr[a], arr[b]);
-//    }
-//    std::vector<T> arr;
-//};
 
 template <typename T>
 void IS_SORTED(std::vector<T> sorted, std::vector<T> arr, std::string type)
