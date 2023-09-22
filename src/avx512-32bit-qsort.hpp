@@ -27,8 +27,7 @@
 template <typename vtype, typename reg_t>
 X86_SIMD_SORT_INLINE reg_t sort_zmm_32bit(reg_t zmm);
 
-template <typename vtype, typename reg_t>
-X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_32bit(reg_t zmm);
+struct avx512_32bit_swizzle_ops;
 
 template <>
 struct zmm_vector<int32_t> {
@@ -39,6 +38,8 @@ struct zmm_vector<int32_t> {
     static const uint8_t numlanes = 16;
     static constexpr int network_sort_threshold = 256;
     static constexpr int partition_unroll_factor = 2;
+    
+    using swizzle_ops = avx512_32bit_swizzle_ops;
 
     static type_t type_max()
     {
@@ -138,13 +139,15 @@ struct zmm_vector<int32_t> {
         const auto rev_index = _mm512_set_epi32(NETWORK_32BIT_5);
         return permutexvar(rev_index, zmm);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_zmm_32bit<zmm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
         return sort_zmm_32bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t cast_from(__m512i v){
+        return v;
+    }
+    static __m512i cast_to(reg_t v){
+        return v;
     }
 };
 template <>
@@ -156,6 +159,8 @@ struct zmm_vector<uint32_t> {
     static const uint8_t numlanes = 16;
     static constexpr int network_sort_threshold = 256;
     static constexpr int partition_unroll_factor = 2;
+    
+    using swizzle_ops = avx512_32bit_swizzle_ops;
 
     static type_t type_max()
     {
@@ -255,13 +260,15 @@ struct zmm_vector<uint32_t> {
         const auto rev_index = _mm512_set_epi32(NETWORK_32BIT_5);
         return permutexvar(rev_index, zmm);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_zmm_32bit<zmm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
         return sort_zmm_32bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t cast_from(__m512i v){
+        return v;
+    }
+    static __m512i cast_to(reg_t v){
+        return v;
     }
 };
 template <>
@@ -273,6 +280,8 @@ struct zmm_vector<float> {
     static const uint8_t numlanes = 16;
     static constexpr int network_sort_threshold = 256;
     static constexpr int partition_unroll_factor = 2;
+    
+    using swizzle_ops = avx512_32bit_swizzle_ops;
 
     static type_t type_max()
     {
@@ -386,13 +395,15 @@ struct zmm_vector<float> {
         const auto rev_index = _mm512_set_epi32(NETWORK_32BIT_5);
         return permutexvar(rev_index, zmm);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_zmm_32bit<zmm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
         return sort_zmm_32bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t cast_from(__m512i v){
+        return _mm512_castsi512_ps(v);
+    }
+    static __m512i cast_to(reg_t v){
+        return _mm512_castps_si512(v);
     }
 };
 
@@ -446,31 +457,66 @@ X86_SIMD_SORT_INLINE reg_t sort_zmm_32bit(reg_t zmm)
     return zmm;
 }
 
-// Assumes zmm is bitonic and performs a recursive half cleaner
-template <typename vtype, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_32bit(reg_t zmm)
-{
-    // 1) half_cleaner[16]: compare 1-9, 2-10, 3-11 etc ..
-    zmm = cmp_merge<vtype>(
-            zmm,
-            vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_7), zmm),
-            0xFF00);
-    // 2) half_cleaner[8]: compare 1-5, 2-6, 3-7 etc ..
-    zmm = cmp_merge<vtype>(
-            zmm,
-            vtype::permutexvar(_mm512_set_epi32(NETWORK_32BIT_6), zmm),
-            0xF0F0);
-    // 3) half_cleaner[4]
-    zmm = cmp_merge<vtype>(
-            zmm,
-            vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(zmm),
-            0xCCCC);
-    // 3) half_cleaner[1]
-    zmm = cmp_merge<vtype>(
-            zmm,
-            vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
-            0xAAAA);
-    return zmm;
-}
+struct avx512_32bit_swizzle_ops{
+    template <typename vtype, int scale>
+    X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg){
+        __m512i v = vtype::cast_to(reg);
+        
+        if constexpr (scale == 2){
+            v = _mm512_shuffle_epi32(v, (_MM_PERM_ENUM)0b10110001);
+        }else if constexpr (scale == 4){
+            v = _mm512_shuffle_epi32(v, (_MM_PERM_ENUM)0b01001110);
+        }else if constexpr (scale == 8){
+            v = _mm512_shuffle_i64x2(v, v, 0b10110001);
+        }else if constexpr (scale == 16){
+            v = _mm512_shuffle_i64x2(v, v, 0b01001110);
+        }else{
+            static_assert(scale == -1, "should not be reached");
+        }
+        
+        return vtype::cast_from(v);
+    } 
+    
+    template <typename vtype, int scale>
+    X86_SIMD_SORT_INLINE typename vtype::reg_t reverse_n(typename vtype::reg_t reg){
+        __m512i v = vtype::cast_to(reg);
+        
+        if constexpr (scale == 2){
+            return swap_n<vtype, 2>(reg);
+        }else if constexpr (scale == 4){
+            __m512i mask = _mm512_set_epi32(12,13,14,15,8,9,10,11,4,5,6,7,0,1,2,3);
+            v = _mm512_permutexvar_epi32(mask, v);
+        }else if constexpr (scale == 8){
+            __m512i mask = _mm512_set_epi32(8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7);
+            v = _mm512_permutexvar_epi32(mask, v);
+        }else if constexpr (scale == 16){
+            return vtype::reverse(reg);
+        }else{
+            static_assert(scale == -1, "should not be reached");
+        }
+        
+        return vtype::cast_from(v);
+    }
+    
+    template <typename vtype, int scale>
+    X86_SIMD_SORT_INLINE typename vtype::reg_t merge_n(typename vtype::reg_t reg, typename vtype::reg_t other){
+        __m512i v1 = vtype::cast_to(reg);
+        __m512i v2 = vtype::cast_to(other);
+        
+        if constexpr (scale == 2){
+            v1 = _mm512_mask_blend_epi32(0b0101010101010101, v1, v2);
+        }else if constexpr (scale == 4){
+            v1 = _mm512_mask_blend_epi32(0b0011001100110011, v1, v2);
+        }else if constexpr (scale == 8){
+            v1 = _mm512_mask_blend_epi32(0b0000111100001111, v1, v2);
+        }else if constexpr (scale == 16){
+            v1 = _mm512_mask_blend_epi32(0b0000000011111111, v1, v2);
+        }else{
+            static_assert(scale == -1, "should not be reached");
+        }
+        
+        return vtype::cast_from(v1);
+    } 
+};
 
 #endif //AVX512_QSORT_32BIT

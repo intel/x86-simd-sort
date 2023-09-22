@@ -85,7 +85,7 @@
 #define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
 #elif defined(__GNUC__)
 #define X86_SIMD_SORT_INLINE static inline
-#define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
+#define X86_SIMD_SORT_FINLINE static inline __attribute__((always_inline))
 #define LIKELY(x) __builtin_expect((x), 1)
 #define UNLIKELY(x) __builtin_expect((x), 0)
 #else

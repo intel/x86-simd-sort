@@ -22,6 +22,8 @@ struct zmm_vector<float16> {
     static const uint8_t numlanes = 32;
     static constexpr int network_sort_threshold = 512;
     static constexpr int partition_unroll_factor = 0;
+    
+    using swizzle_ops = avx512_16bit_swizzle_ops;
 
     static reg_t get_network(int index)
     {
@@ -159,13 +161,15 @@ struct zmm_vector<float16> {
         const auto rev_index = get_network(4);
         return permutexvar(rev_index, zmm);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_zmm_16bit<zmm_vector<float16>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
         return sort_zmm_16bit<zmm_vector<float16>>(x);
+    }
+    static reg_t cast_from(__m512i v){
+        return v;
+    }
+    static __m512i cast_to(reg_t v){
+        return v;
     }
 };
 
@@ -178,6 +182,8 @@ struct zmm_vector<int16_t> {
     static const uint8_t numlanes = 32;
     static constexpr int network_sort_threshold = 512;
     static constexpr int partition_unroll_factor = 0;
+    
+    using swizzle_ops = avx512_16bit_swizzle_ops;
 
     static reg_t get_network(int index)
     {
@@ -273,13 +279,15 @@ struct zmm_vector<int16_t> {
         const auto rev_index = get_network(4);
         return permutexvar(rev_index, zmm);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
         return sort_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t cast_from(__m512i v){
+        return v;
+    }
+    static __m512i cast_to(reg_t v){
+        return v;
     }
 };
 template <>
@@ -291,6 +299,8 @@ struct zmm_vector<uint16_t> {
     static const uint8_t numlanes = 32;
     static constexpr int network_sort_threshold = 512;
     static constexpr int partition_unroll_factor = 0;
+    
+    using swizzle_ops = avx512_16bit_swizzle_ops;
 
     static reg_t get_network(int index)
     {
@@ -384,13 +394,15 @@ struct zmm_vector<uint16_t> {
         const auto rev_index = get_network(4);
         return permutexvar(rev_index, zmm);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
         return sort_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t cast_from(__m512i v){
+        return v;
+    }
+    static __m512i cast_to(reg_t v){
+        return v;
     }
 };
 
