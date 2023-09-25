@@ -813,8 +813,10 @@ template <typename vtype, int maxN>
 void sort_n(typename vtype::type_t *arr, int N);
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void
-qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
+X86_SIMD_SORT_INLINE type_t get_pivot_blocks(type_t * arr, uint64_t left, uint64_t right);
+
+template <typename vtype, typename type_t>
+static void qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -832,7 +834,7 @@ qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
         return;
     }
 
-    type_t pivot = get_pivot<vtype, type_t>(arr, left, right);
+    type_t pivot = get_pivot_blocks<vtype, type_t>(arr, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
 
