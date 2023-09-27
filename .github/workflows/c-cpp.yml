@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -y install g++-12 libgtest-dev meson curl git cmake
+        sudo apt -y install g++-13 libgtest-dev meson curl git cmake
 
     - name: Install google benchmarks
       run: |
@@ -35,7 +35,7 @@ jobs:
 
     - name: Build
       env:
-        CXX: g++-12
+        CXX: g++-13
       run: |
         make clean
         meson setup --warnlevel 2 --werror --buildtype plain builddir
