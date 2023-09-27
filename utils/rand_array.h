@@ -27,6 +27,16 @@ static std::vector<T> get_uniform_rand_array(
             arr.emplace_back(dis(gen));
         }
     }
+#ifdef __FLT16_MAX__
+    else if constexpr(std::is_same_v<T, _Float16>) {
+        (void)(max); (void)(min);
+        std::vector<_Float16> arr;
+        for (auto jj = 0; jj < arrsize; ++jj) {
+            float temp = (float)rand() / (float)(RAND_MAX);
+            arr.push_back((_Float16)temp);
+        }
+    }
+#endif
     else if constexpr(std::is_integral_v<T>) {
         std::default_random_engine e1(rd());
         e1.seed(42);

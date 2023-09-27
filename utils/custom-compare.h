@@ -1,5 +1,33 @@
 #include <limits>
 #include <cmath>
+
+typedef union {
+    _Float16 f_;
+    uint16_t i_;
+} Fp16Bits;
+
+template <typename T>
+bool isnan(T elem)
+{
+    return std::isnan(elem);
+}
+
+#ifdef __FLT16_MAX__
+template <>
+bool isnan<_Float16>(_Float16 elem)
+{
+    Fp16Bits temp;
+    temp.f_ = elem;
+    return (temp.i_ & 0x7c00) == 0x7c00;
+}
+#endif
+
+template <typename T>
+bool isunordered(T a, T b)
+{
+    return !isnan(a + b);
+}
+
 /*
  * Custom comparator class to handle NAN's: treats NAN  > INF
  */
@@ -8,17 +36,22 @@ struct compare {
     static constexpr auto op = Comparator {};
     bool operator()(const T a, const T b)
     {
+#ifdef __FLT16_MAX__
+        if constexpr ((std::is_floating_point_v<T>) || (std::is_same_v<T, _Float16>)) {
+#else
         if constexpr (std::is_floating_point_v<T>) {
+#endif
             T inf = std::numeric_limits<T>::infinity();
-            if (!std::isunordered(a, b)) { return op(a, b); }
-            else if ((std::isnan(a)) && (!std::isnan(b))) {
-                return b == inf ? op(inf, 1.) : op(inf, b);
+            T one = (T) 1.0;
+            if (!isunordered(a, b)) { return op(a, b); }
+            else if ((isnan(a)) && (!isnan(b))) {
+                return b == inf ? op(inf, one) : op(inf, b);
             }
-            else if ((!std::isnan(a)) && (std::isnan(b))) {
-                return a == inf ? op(1., inf) : op(a, inf);
+            else if ((!isnan(a)) && (isnan(b))) {
+                return a == inf ? op(one, inf) : op(a, inf);
             }
             else {
-                return op(1., 1.);
+                return op(one, one);
             }
         }
         else {

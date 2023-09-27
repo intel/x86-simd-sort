@@ -119,7 +119,11 @@ TYPED_TEST_P(simdsort, test_partial_qsort)
 
 TYPED_TEST_P(simdsort, test_comparator)
 {
+#ifdef __FLT16_MAX__
+    if constexpr ((std::is_floating_point_v<TypeParam>) || (std::is_same_v<TypeParam, _Float16>)) {
+#else
     if constexpr (std::is_floating_point_v<TypeParam>) {
+#endif
         auto less = compare<TypeParam, std::less<TypeParam>>();
         auto leq = compare<TypeParam, std::less_equal<TypeParam>>();
         auto greater = compare<TypeParam, std::greater<TypeParam>>();
@@ -160,6 +164,10 @@ REGISTER_TYPED_TEST_SUITE_P(simdsort,
 
 using QSortTestTypes = testing::Types<uint16_t,
                                       int16_t,
+// support for _Float16 is incomplete in gcc-12
+#if __GNUC__ >= 13
+                                      _Float16,
+#endif
                                       float,
                                       double,
                                       uint32_t,

@@ -2,23 +2,6 @@
 #include "rand_array.h"
 #include <benchmark/benchmark.h>
 
-#ifdef __FLT16_MAX__
-template <>
-std::vector<_Float16> get_uniform_rand_array(
-        int64_t arrsize,
-        _Float16 max,
-        _Float16 min)
-{
-    (void)(max); (void)(min);
-    std::vector<_Float16> arr;
-    for (auto jj = 0; jj < arrsize; ++jj) {
-        _Float16 temp = (float)rand() / (float)(RAND_MAX);
-        arr.push_back(temp);
-    }
-    return arr;
-}
-#endif
-
 #define MY_BENCHMARK_CAPTURE(func, T, test_case_name, ...) \
     BENCHMARK_PRIVATE_DECLARE(func) \
             = (::benchmark::internal::RegisterBenchmarkInternal( \
