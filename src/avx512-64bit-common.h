@@ -20,10 +20,10 @@
 #define NETWORK_64BIT_4 3, 2, 1, 0, 7, 6, 5, 4
 
 template <typename vtype, typename reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t zmm);
+reg_t sort_zmm_64bit(reg_t zmm);
 
 template <typename vtype, typename reg_t>
-X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_64bit(reg_t zmm);
+reg_t bitonic_merge_zmm_64bit(reg_t zmm);
 
 template <>
 struct ymm_vector<float> {
@@ -96,7 +96,7 @@ struct ymm_vector<float> {
     {
         return _mm512_mask_i64gather_ps(src, mask, index, base, scale);
     }
-    static reg_t i64gather(type_t *arr, int64_t *ind)
+    static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
         return set(arr[ind[7]],
                    arr[ind[6]],
@@ -248,7 +248,7 @@ struct ymm_vector<uint32_t> {
     {
         return _mm512_mask_i64gather_epi32(src, mask, index, base, scale);
     }
-    static reg_t i64gather(type_t *arr, int64_t *ind)
+    static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
         return set(arr[ind[7]],
                    arr[ind[6]],
@@ -394,7 +394,7 @@ struct ymm_vector<int32_t> {
     {
         return _mm512_mask_i64gather_epi32(src, mask, index, base, scale);
     }
-    static reg_t i64gather(type_t *arr, int64_t *ind)
+    static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
         return set(arr[ind[7]],
                    arr[ind[6]],
@@ -543,7 +543,7 @@ struct zmm_vector<int64_t> {
     {
         return _mm512_mask_i64gather_epi64(src, mask, index, base, scale);
     }
-    static reg_t i64gather(type_t *arr, int64_t *ind)
+    static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
         return set(arr[ind[7]],
                    arr[ind[6]],
@@ -673,7 +673,7 @@ struct zmm_vector<uint64_t> {
     {
         return _mm512_mask_i64gather_epi64(src, mask, index, base, scale);
     }
-    static reg_t i64gather(type_t *arr, int64_t *ind)
+    static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
         return set(arr[ind[7]],
                    arr[ind[6]],
@@ -835,7 +835,7 @@ struct zmm_vector<double> {
     {
         return _mm512_mask_i64gather_pd(src, mask, index, base, scale);
     }
-    static reg_t i64gather(type_t *arr, int64_t *ind)
+    static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
         return set(arr[ind[7]],
                    arr[ind[6]],

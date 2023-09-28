@@ -25,10 +25,10 @@
 #define NETWORK_32BIT_7 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8
 
 template <typename vtype, typename reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_zmm_32bit(reg_t zmm);
+reg_t sort_zmm_32bit(reg_t zmm);
 
 template <typename vtype, typename reg_t>
-X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_32bit(reg_t zmm);
+reg_t bitonic_merge_zmm_32bit(reg_t zmm);
 
 template <>
 struct zmm_vector<int32_t> {

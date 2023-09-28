@@ -20,7 +20,7 @@
  * separate files: avx512-16bit-qsort.hpp, avx512-32bit-qsort.hpp and
  * avx512-64bit-qsort.hpp. Article [4] is a good resource for bitonic sorting
  * network. The core implementations of the vectorized qsort functions
- * avx512_qsort<T>(T*, int64_t) are modified versions of avx2 quicksort
+ * avx512_qsort<T>(T*, arrsize_t) are modified versions of avx2 quicksort
  * presented in the paper [2] and source code associated with that paper [3].
  *
  * [1] Fast and Robust Vectorized In-Place Sorting of Primitive Types
@@ -67,7 +67,7 @@
 #define ZMM_MAX_INT16 _mm512_set1_epi16(X86_SIMD_SORT_MAX_INT16)
 #define SHUFFLE_MASK(a, b, c, d) (a << 6) | (b << 4) | (c << 2) | d
 
-#define PRAGMA(x) _Pragma (#x)
+#define PRAGMA(x) _Pragma(#x)
 
 /* Compiler specific macros specific */
 #ifdef _MSC_VER
@@ -100,6 +100,8 @@
 #define X86_SIMD_SORT_UNROLL_LOOP(num)
 #endif
 
+typedef int64_t arrsize_t;
+
 template <typename type>
 struct zmm_vector;
 
@@ -113,9 +115,9 @@ bool is_a_nan(T elem)
 }
 
 template <typename vtype, typename T>
-int64_t replace_nan_with_inf(T *arr, int64_t arrsize)
+X86_SIMD_SORT_INLINE arrsize_t replace_nan_with_inf(T *arr, arrsize_t arrsize)
 {
-    int64_t nan_count = 0;
+    arrsize_t nan_count = 0;
     using opmask_t = typename vtype::opmask_t;
     using reg_t = typename vtype::reg_t;
     opmask_t loadmask;
@@ -138,7 +140,7 @@ int64_t replace_nan_with_inf(T *arr, int64_t arrsize)
 }
 
 template <typename vtype, typename type_t>
-bool has_nan(type_t *arr, int64_t arrsize)
+X86_SIMD_SORT_INLINE bool has_nan(type_t *arr, arrsize_t arrsize)
 {
     using opmask_t = typename vtype::opmask_t;
     using reg_t = typename vtype::reg_t;
@@ -165,9 +167,10 @@ bool has_nan(type_t *arr, int64_t arrsize)
 }
 
 template <typename type_t>
-void replace_inf_with_nan(type_t *arr, int64_t arrsize, int64_t nan_count)
+X86_SIMD_SORT_INLINE void
+replace_inf_with_nan(type_t *arr, arrsize_t arrsize, arrsize_t nan_count)
 {
-    for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
+    for (arrsize_t ii = arrsize - 1; nan_count > 0; --ii) {
         if constexpr (std::is_floating_point_v<type_t>) {
             arr[ii] = std::numeric_limits<type_t>::quiet_NaN();
         }
@@ -183,11 +186,12 @@ void replace_inf_with_nan(type_t *arr, int64_t arrsize, int64_t nan_count)
  * in the array which is not a nan
  */
 template <typename T>
-int64_t move_nans_to_end_of_array(T *arr, int64_t arrsize)
+X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr,
+                                                         arrsize_t arrsize)
 {
-    int64_t jj = arrsize - 1;
-    int64_t ii = 0;
-    int64_t count = 0;
+    arrsize_t jj = arrsize - 1;
+    arrsize_t ii = 0;
+    arrsize_t count = 0;
     while (ii <= jj) {
         if (is_a_nan(arr[ii])) {
             std::swap(arr[ii], arr[jj]);
@@ -202,7 +206,7 @@ int64_t move_nans_to_end_of_array(T *arr, int64_t arrsize)
 }
 
 template <typename vtype, typename T = typename vtype::type_t>
-bool comparison_func(const T &a, const T &b)
+X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b)
 {
     return a < b;
 }
@@ -211,16 +215,17 @@ bool comparison_func(const T &a, const T &b)
  * COEX == Compare and Exchange two registers by swapping min and max values
  */
 template <typename vtype, typename mm_t>
-static void COEX(mm_t &a, mm_t &b)
+X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b)
 {
     mm_t temp = a;
     a = vtype::min(a, b);
     b = vtype::max(temp, b);
 }
+
 template <typename vtype,
           typename reg_t = typename vtype::reg_t,
           typename opmask_t = typename vtype::opmask_t>
-static inline reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
+X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
 {
     reg_t min = vtype::min(in2, in1);
     reg_t max = vtype::max(in2, in1);
@@ -231,13 +236,13 @@ static inline reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
  * number of elements that are greater than or equal to the pivot.
  */
 template <typename vtype, typename type_t, typename reg_t>
-static inline int32_t partition_vec(type_t *arr,
-                                    int64_t left,
-                                    int64_t right,
-                                    const reg_t curr_vec,
-                                    const reg_t pivot_vec,
-                                    reg_t *smallest_vec,
-                                    reg_t *biggest_vec)
+X86_SIMD_SORT_INLINE int32_t partition_vec(type_t *arr,
+                                           arrsize_t left,
+                                           arrsize_t right,
+                                           const reg_t curr_vec,
+                                           const reg_t pivot_vec,
+                                           reg_t *smallest_vec,
+                                           reg_t *biggest_vec)
 {
     /* which elements are larger than or equal to the pivot */
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
@@ -255,12 +260,12 @@ static inline int32_t partition_vec(type_t *arr,
  * first element that is greater than or equal to the pivot.
  */
 template <typename vtype, typename type_t>
-static inline int64_t partition_avx512(type_t *arr,
-                                       int64_t left,
-                                       int64_t right,
-                                       type_t pivot,
-                                       type_t *smallest,
-                                       type_t *biggest)
+X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
+                                                arrsize_t left,
+                                                arrsize_t right,
+                                                type_t pivot,
+                                                type_t *smallest,
+                                                type_t *biggest)
 {
     /* make array length divisible by vtype::numlanes , shortening the array */
     for (int32_t i = (right - left) % vtype::numlanes; i > 0; --i) {
@@ -300,8 +305,8 @@ static inline int64_t partition_avx512(type_t *arr,
     reg_t vec_left = vtype::loadu(arr + left);
     reg_t vec_right = vtype::loadu(arr + (right - vtype::numlanes));
     // store points of the vectors
-    int64_t r_store = right - vtype::numlanes;
-    int64_t l_store = left;
+    arrsize_t r_store = right - vtype::numlanes;
+    arrsize_t l_store = left;
     // indices for loading the elements
     left += vtype::numlanes;
     right -= vtype::numlanes;
@@ -359,12 +364,12 @@ static inline int64_t partition_avx512(type_t *arr,
 template <typename vtype,
           int num_unroll,
           typename type_t = typename vtype::type_t>
-static inline int64_t partition_avx512_unrolled(type_t *arr,
-                                                int64_t left,
-                                                int64_t right,
-                                                type_t pivot,
-                                                type_t *smallest,
-                                                type_t *biggest)
+X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
+                                                         arrsize_t left,
+                                                         arrsize_t right,
+                                                         type_t pivot,
+                                                         type_t *smallest,
+                                                         type_t *biggest)
 {
     if constexpr (num_unroll == 0) {
         return partition_avx512<vtype>(
@@ -399,15 +404,15 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
     // We will now have atleast 16 registers worth of data to process:
     // left and right vtype::numlanes values are partitioned at the end
     reg_t vec_left[num_unroll], vec_right[num_unroll];
-X86_SIMD_SORT_UNROLL_LOOP(8)
+    X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         vec_left[ii] = vtype::loadu(arr + left + vtype::numlanes * ii);
         vec_right[ii] = vtype::loadu(
                 arr + (right - vtype::numlanes * (num_unroll - ii)));
     }
     // store points of the vectors
-    int64_t r_store = right - vtype::numlanes;
-    int64_t l_store = left;
+    arrsize_t r_store = right - vtype::numlanes;
+    arrsize_t l_store = left;
     // indices for loading the elements
     left += num_unroll * vtype::numlanes;
     right -= num_unroll * vtype::numlanes;
@@ -420,20 +425,20 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
          */
         if ((r_store + vtype::numlanes) - right < left - l_store) {
             right -= num_unroll * vtype::numlanes;
-X86_SIMD_SORT_UNROLL_LOOP(8)
+            X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + right + ii * vtype::numlanes);
             }
         }
         else {
-X86_SIMD_SORT_UNROLL_LOOP(8)
+            X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + left + ii * vtype::numlanes);
             }
             left += num_unroll * vtype::numlanes;
         }
-// partition the current vector and save it on both sides of the array
-X86_SIMD_SORT_UNROLL_LOOP(8)
+        // partition the current vector and save it on both sides of the array
+        X86_SIMD_SORT_UNROLL_LOOP(8)
         for (int ii = 0; ii < num_unroll; ++ii) {
             int32_t amount_ge_pivot
                     = partition_vec<vtype>(arr,
@@ -448,8 +453,8 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
         }
     }
 
-/* partition and save vec_left[8] and vec_right[8] */
-X86_SIMD_SORT_UNROLL_LOOP(8)
+    /* partition and save vec_left[8] and vec_right[8] */
+    X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         int32_t amount_ge_pivot
                 = partition_vec<vtype>(arr,
@@ -462,7 +467,7 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
         l_store += (vtype::numlanes - amount_ge_pivot);
         r_store -= amount_ge_pivot;
     }
-X86_SIMD_SORT_UNROLL_LOOP(8)
+    X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         int32_t amount_ge_pivot
                 = partition_vec<vtype>(arr,
@@ -486,7 +491,8 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t>
-static void COEX(reg_t1 &key1, reg_t1 &key2, reg_t2 &index1, reg_t2 &index2)
+X86_SIMD_SORT_INLINE void
+COEX(reg_t1 &key1, reg_t1 &key2, reg_t2 &index1, reg_t2 &index2)
 {
     reg_t1 key_t1 = vtype1::min(key1, key2);
     reg_t1 key_t2 = vtype1::max(key1, key2);
@@ -506,11 +512,11 @@ template <typename vtype1,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t,
           typename opmask_t = typename vtype1::opmask_t>
-static inline reg_t1 cmp_merge(reg_t1 in1,
-                               reg_t1 in2,
-                               reg_t2 &indexes1,
-                               reg_t2 indexes2,
-                               opmask_t mask)
+X86_SIMD_SORT_INLINE reg_t1 cmp_merge(reg_t1 in1,
+                                      reg_t1 in2,
+                                      reg_t2 &indexes1,
+                                      reg_t2 indexes2,
+                                      opmask_t mask)
 {
     reg_t1 tmp_keys = cmp_merge<vtype1>(in1, in2, mask);
     indexes1 = vtype2::mask_mov(indexes2, vtype1::eq(tmp_keys, in1), indexes1);
@@ -527,15 +533,15 @@ template <typename vtype1,
           typename type_t2 = typename vtype2::type_t,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t>
-static inline int32_t partition_vec(type_t1 *keys,
-                                    type_t2 *indexes,
-                                    int64_t left,
-                                    int64_t right,
-                                    const reg_t1 keys_vec,
-                                    const reg_t2 indexes_vec,
-                                    const reg_t1 pivot_vec,
-                                    reg_t1 *smallest_vec,
-                                    reg_t1 *biggest_vec)
+X86_SIMD_SORT_INLINE int32_t partition_vec(type_t1 *keys,
+                                           type_t2 *indexes,
+                                           arrsize_t left,
+                                           arrsize_t right,
+                                           const reg_t1 keys_vec,
+                                           const reg_t2 indexes_vec,
+                                           const reg_t1 pivot_vec,
+                                           reg_t1 *smallest_vec,
+                                           reg_t1 *biggest_vec)
 {
     /* which elements are larger than the pivot */
     typename vtype1::opmask_t gt_mask = vtype1::ge(keys_vec, pivot_vec);
@@ -562,13 +568,13 @@ template <typename vtype1,
           typename type_t2 = typename vtype2::type_t,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t>
-static inline int64_t partition_avx512(type_t1 *keys,
-                                       type_t2 *indexes,
-                                       int64_t left,
-                                       int64_t right,
-                                       type_t1 pivot,
-                                       type_t1 *smallest,
-                                       type_t1 *biggest)
+X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t1 *keys,
+                                                type_t2 *indexes,
+                                                arrsize_t left,
+                                                arrsize_t right,
+                                                type_t1 pivot,
+                                                type_t1 *smallest,
+                                                type_t1 *biggest)
 {
     /* make array length divisible by vtype1::numlanes , shortening the array */
     for (int32_t i = (right - left) % vtype1::numlanes; i > 0; --i) {
@@ -620,8 +626,8 @@ static inline int64_t partition_avx512(type_t1 *keys,
     indexes_vec_right = vtype2::loadu(indexes + (right - vtype1::numlanes));
 
     // store points of the vectors
-    int64_t r_store = right - vtype1::numlanes;
-    int64_t l_store = left;
+    arrsize_t r_store = right - vtype1::numlanes;
+    arrsize_t l_store = left;
     // indices for loading the elements
     left += vtype1::numlanes;
     right -= vtype1::numlanes;
@@ -689,13 +695,13 @@ static inline int64_t partition_avx512(type_t1 *keys,
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot_scalar(type_t *arr,
-                                      const int64_t left,
-                                      const int64_t right)
+                                             const arrsize_t left,
+                                             const arrsize_t right)
 {
-    constexpr int64_t numSamples = vtype::numlanes;
+    constexpr arrsize_t numSamples = vtype::numlanes;
     type_t samples[numSamples];
 
-    int64_t delta = (right - left) / numSamples;
+    arrsize_t delta = (right - left) / numSamples;
 
     for (int i = 0; i < numSamples; i++) {
         samples[i] = arr[left + i * delta];
@@ -708,11 +714,11 @@ X86_SIMD_SORT_INLINE type_t get_pivot_scalar(type_t *arr,
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right)
+                                            const arrsize_t left,
+                                            const arrsize_t right)
 {
     // median of 32
-    int64_t size = (right - left) / 32;
+    arrsize_t size = (right - left) / 32;
     type_t vec_arr[32] = {arr[left],
                           arr[left + size],
                           arr[left + 2 * size],
@@ -752,11 +758,11 @@ X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right)
+                                            const arrsize_t left,
+                                            const arrsize_t right)
 {
     // median of 16
-    int64_t size = (right - left) / 16;
+    arrsize_t size = (right - left) / 16;
     using reg_t = typename vtype::reg_t;
     type_t vec_arr[16] = {arr[left + size],
                           arr[left + 2 * size],
@@ -782,11 +788,11 @@ X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right)
+                                            const arrsize_t left,
+                                            const arrsize_t right)
 {
     // median of 8
-    int64_t size = (right - left) / 8;
+    arrsize_t size = (right - left) / 8;
     using reg_t = typename vtype::reg_t;
     reg_t rand_vec = vtype::set(arr[left + size],
                                 arr[left + 2 * size],
@@ -803,8 +809,8 @@ X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot(type_t *arr,
-                                      const int64_t left,
-                                      const int64_t right)
+                                      const arrsize_t left,
+                                      const arrsize_t right)
 {
     if constexpr (vtype::numlanes == 8)
         return get_pivot_64bit<vtype>(arr, left, right);
@@ -816,11 +822,12 @@ X86_SIMD_SORT_INLINE type_t get_pivot(type_t *arr,
         return get_pivot_scalar<vtype>(arr, left, right);
 }
 
-template <typename vtype, int64_t maxN>
-X86_SIMD_SORT_INLINE void sort_n(typename vtype::type_t *arr, int N);
+template <typename vtype, int maxN>
+void sort_n(typename vtype::type_t *arr, int N);
 
 template <typename vtype, typename type_t>
-static void qsort_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
+X86_SIMD_SORT_INLINE void
+qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -842,7 +849,7 @@ static void qsort_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
 
-    int64_t pivot_index
+    arrsize_t pivot_index
             = partition_avx512_unrolled<vtype, vtype::partition_unroll_factor>(
                     arr, left, right + 1, pivot, &smallest, &biggest);
 
@@ -852,11 +859,11 @@ static void qsort_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
 }
 
 template <typename vtype, typename type_t>
-static void qselect_(type_t *arr,
-                     int64_t pos,
-                     int64_t left,
-                     int64_t right,
-                     int64_t max_iters)
+X86_SIMD_SORT_INLINE void qselect_(type_t *arr,
+                                   arrsize_t pos,
+                                   arrsize_t left,
+                                   arrsize_t right,
+                                   arrsize_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -878,7 +885,7 @@ static void qselect_(type_t *arr,
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
 
-    int64_t pivot_index
+    arrsize_t pivot_index
             = partition_avx512_unrolled<vtype, vtype::partition_unroll_factor>(
                     arr, left, right + 1, pivot, &smallest, &biggest);
 
@@ -890,30 +897,29 @@ static void qselect_(type_t *arr,
 
 // Regular quicksort routines:
 template <typename T>
-void avx512_qsort(T *arr, int64_t arrsize)
+X86_SIMD_SORT_INLINE void avx512_qsort(T *arr, arrsize_t arrsize)
 {
     if (arrsize > 1) {
         /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
         if constexpr (std::is_floating_point_v<T>) {
-            int64_t nan_count
+            arrsize_t nan_count
                     = replace_nan_with_inf<zmm_vector<T>>(arr, arrsize);
             qsort_<zmm_vector<T>, T>(
-                    arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
             replace_inf_with_nan(arr, arrsize, nan_count);
         }
         else {
             qsort_<zmm_vector<T>, T>(
-                    arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         }
     }
 }
 
-void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize);
-
 template <typename T>
-void avx512_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+X86_SIMD_SORT_INLINE void
+avx512_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
 {
-    int64_t indx_last_elem = arrsize - 1;
+    arrsize_t indx_last_elem = arrsize - 1;
     /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
     if constexpr (std::is_floating_point_v<T>) {
         if (UNLIKELY(hasnan)) {
@@ -922,29 +928,18 @@ void avx512_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
     }
     if (indx_last_elem >= k) {
         qselect_<zmm_vector<T>, T>(
-                arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
+                arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
     }
 }
 
-void avx512_qselect_fp16(uint16_t *arr,
-                         int64_t k,
-                         int64_t arrsize,
-                         bool hasnan = false);
-
 template <typename T>
-inline void
-avx512_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+X86_SIMD_SORT_INLINE void avx512_partial_qsort(T *arr,
+                                               arrsize_t k,
+                                               arrsize_t arrsize,
+                                               bool hasnan = false)
 {
     avx512_qselect<T>(arr, k - 1, arrsize, hasnan);
     avx512_qsort<T>(arr, k - 1);
-}
-inline void avx512_partial_qsort_fp16(uint16_t *arr,
-                                      int64_t k,
-                                      int64_t arrsize,
-                                      bool hasnan = false)
-{
-    avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
-    avx512_qsort_fp16(arr, k - 1);
 }
 
 #endif // AVX512_QSORT_COMMON

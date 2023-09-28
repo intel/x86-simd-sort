@@ -151,21 +151,21 @@ bool is_a_nan<_Float16>(_Float16 elem)
 }
 
 template <>
-void replace_inf_with_nan(_Float16 *arr, int64_t arrsize, int64_t nan_count)
+void replace_inf_with_nan(_Float16 *arr, arrsize_t arrsize, arrsize_t nan_count)
 {
     memset(arr + arrsize - nan_count, 0xFF, nan_count * 2);
 }
 
 /* Specialized template function for _Float16 qsort_*/
 template <>
-void avx512_qsort(_Float16 *arr, int64_t arrsize)
+void avx512_qsort(_Float16 *arr, arrsize_t arrsize)
 {
     if (arrsize > 1) {
-        int64_t nan_count
+        arrsize_t nan_count
                 = replace_nan_with_inf<zmm_vector<_Float16>, _Float16>(arr,
                                                                        arrsize);
         qsort_<zmm_vector<_Float16>, _Float16>(
-                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+                arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);
     }
 }

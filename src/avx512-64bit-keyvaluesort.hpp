@@ -365,11 +365,12 @@ template <typename vtype1,
           typename vtype2,
           typename type1_t = typename vtype1::type_t,
           typename type2_t = typename vtype2::type_t>
-void heapify(type1_t *keys, type2_t *indexes, int64_t idx, int64_t size)
+X86_SIMD_SORT_INLINE void
+heapify(type1_t *keys, type2_t *indexes, arrsize_t idx, arrsize_t size)
 {
-    int64_t i = idx;
+    arrsize_t i = idx;
     while (true) {
-        int64_t j = 2 * i + 1;
+        arrsize_t j = 2 * i + 1;
         if (j >= size || j < 0) { break; }
         int k = j + 1;
         if (k < size && keys[j] < keys[k]) { j = k; }
@@ -383,12 +384,13 @@ template <typename vtype1,
           typename vtype2,
           typename type1_t = typename vtype1::type_t,
           typename type2_t = typename vtype2::type_t>
-void heap_sort(type1_t *keys, type2_t *indexes, int64_t size)
+X86_SIMD_SORT_INLINE void
+heap_sort(type1_t *keys, type2_t *indexes, arrsize_t size)
 {
-    for (int64_t i = size / 2 - 1; i >= 0; i--) {
+    for (arrsize_t i = size / 2 - 1; i >= 0; i--) {
         heapify<vtype1, vtype2>(keys, indexes, i, size);
     }
-    for (int64_t i = size - 1; i > 0; i--) {
+    for (arrsize_t i = size - 1; i > 0; i--) {
         std::swap(keys[0], keys[i]);
         std::swap(indexes[0], indexes[i]);
         heapify<vtype1, vtype2>(keys, indexes, 0, i);
@@ -399,11 +401,11 @@ template <typename vtype1,
           typename vtype2,
           typename type1_t = typename vtype1::type_t,
           typename type2_t = typename vtype2::type_t>
-void qsort_64bit_(type1_t *keys,
-                  type2_t *indexes,
-                  int64_t left,
-                  int64_t right,
-                  int64_t max_iters)
+X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
+                                       type2_t *indexes,
+                                       arrsize_t left,
+                                       arrsize_t right,
+                                       arrsize_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -427,7 +429,7 @@ void qsort_64bit_(type1_t *keys,
     type1_t pivot = get_pivot<vtype1>(keys, left, right);
     type1_t smallest = vtype1::type_max();
     type1_t biggest = vtype1::type_min();
-    int64_t pivot_index = partition_avx512<vtype1, vtype2>(
+    arrsize_t pivot_index = partition_avx512<vtype1, vtype2>(
             keys, indexes, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest) {
         qsort_64bit_<vtype1, vtype2>(
@@ -440,19 +442,28 @@ void qsort_64bit_(type1_t *keys,
 }
 
 template <typename T1, typename T2>
-void avx512_qsort_kv(T1 *keys, T2 *indexes, int64_t arrsize)
+X86_SIMD_SORT_INLINE void
+avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize)
 {
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T1>) {
-            int64_t nan_count
+            arrsize_t nan_count
                     = replace_nan_with_inf<zmm_vector<double>>(keys, arrsize);
             qsort_64bit_<zmm_vector<T1>, zmm_vector<T2>>(
-                    keys, indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+                    keys,
+                    indexes,
+                    0,
+                    arrsize - 1,
+                    2 * (arrsize_t)log2(arrsize));
             replace_inf_with_nan(keys, arrsize, nan_count);
         }
         else {
             qsort_64bit_<zmm_vector<T1>, zmm_vector<T2>>(
-                    keys, indexes, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+                    keys,
+                    indexes,
+                    0,
+                    arrsize - 1,
+                    2 * (arrsize_t)log2(arrsize));
         }
     }
 }
