@@ -10,12 +10,13 @@
 #include <type_traits>
 #include <vector>
 #include <algorithm>
+#include "custom-float.h"
 
 template <typename T>
 static std::vector<T> get_uniform_rand_array(
         int64_t arrsize,
-        T max = std::numeric_limits<T>::max(),
-        T min = std::numeric_limits<T>::min())
+        T max = xss::fp::max<T>(),
+        T min = xss::fp::min<T>())
 {
     std::vector<T> arr;
     std::random_device rd;
@@ -30,7 +31,6 @@ static std::vector<T> get_uniform_rand_array(
 #ifdef __FLT16_MAX__
     else if constexpr(std::is_same_v<T, _Float16>) {
         (void)(max); (void)(min);
-        std::vector<_Float16> arr;
         for (auto jj = 0; jj < arrsize; ++jj) {
             float temp = (float)rand() / (float)(RAND_MAX);
             arr.push_back((_Float16)temp);
@@ -51,8 +51,8 @@ static std::vector<T> get_uniform_rand_array(
 template <typename T>
 static std::vector<T>
 get_uniform_rand_array_with_uniquevalues(int64_t arrsize,
-                                         T max = std::numeric_limits<T>::max(),
-                                         T min = std::numeric_limits<T>::min())
+                                         T max = xss::fp::max<T>(),
+                                         T min = xss::fp::min<T>())
 {
     std::vector<T> arr = get_uniform_rand_array<T>(arrsize, max, min);
     typename std::vector<T>::iterator ip
@@ -65,8 +65,8 @@ template <typename T>
 static std::vector<T>
 get_array(std::string arrtype,
           int64_t arrsize,
-          T min = std::numeric_limits<T>::min(),
-          T max = std::numeric_limits<T>::max())
+          T min = xss::fp::min<T>(),
+          T max = xss::fp::max<T>())
 {
     std::vector<T> arr;
     if (arrtype == "random") { arr = get_uniform_rand_array<T>(arrsize, max, min); }
@@ -90,8 +90,8 @@ get_array(std::string arrtype,
     }
     else if (arrtype == "max_at_the_end") {
         arr = get_uniform_rand_array<T>(arrsize, max, min);
-        if (std::numeric_limits<T>::has_infinity) {
-            arr[arrsize - 1] = std::numeric_limits<T>::infinity();
+        if (xss::fp::is_floating_point_v<T>) {
+            arr[arrsize - 1] = xss::fp::infinity<T>();
         }
         else {
             arr[arrsize - 1] = std::numeric_limits<T>::max();
@@ -103,8 +103,8 @@ get_array(std::string arrtype,
         std::vector<int64_t> rand_indx
             = get_uniform_rand_array<int64_t>(num_nans, arrsize-1, 0);
         T val;
-        if constexpr (std::is_floating_point_v<T>) {
-            val = std::numeric_limits<T>::quiet_NaN();
+        if constexpr (xss::fp::is_floating_point_v<T>) {
+            val = xss::fp::quiet_NaN<T>();
         }
         else {
             val = std::numeric_limits<T>::max();
@@ -116,8 +116,8 @@ get_array(std::string arrtype,
     else if (arrtype == "rand_max") {
         arr = get_uniform_rand_array<T>(arrsize, max, min);
         T val;
-        if constexpr (std::is_floating_point_v<T>) {
-            val = std::numeric_limits<T>::infinity();
+        if constexpr (xss::fp::is_floating_point_v<T>) {
+            val = xss::fp::infinity<T>();
         }
         else {
             val = std::numeric_limits<T>::max();

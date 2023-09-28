@@ -21,11 +21,7 @@
 template <typename T>
 void IS_SORTED(std::vector<T> sorted, std::vector<T> arr, std::string type)
 {
-#ifdef __FLT16_MAX__
-    if constexpr ((std::is_floating_point_v<T>) || (std::is_same_v<T, _Float16>)) {
-#else
-    if constexpr (std::is_floating_point_v<T>) {
-#endif
+    if constexpr (xss::fp::is_floating_point_v<T>) {
         auto cmp_func = compare<T, std::less<T>>();
         if (!std::is_sorted(arr.begin(), arr.end(), cmp_func)) {
             REPORT_FAIL("Array not sorted", arr.size(), type, -1);

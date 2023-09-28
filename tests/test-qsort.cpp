@@ -119,18 +119,14 @@ TYPED_TEST_P(simdsort, test_partial_qsort)
 
 TYPED_TEST_P(simdsort, test_comparator)
 {
-#ifdef __FLT16_MAX__
-    if constexpr ((std::is_floating_point_v<TypeParam>) || (std::is_same_v<TypeParam, _Float16>)) {
-#else
-    if constexpr (std::is_floating_point_v<TypeParam>) {
-#endif
+    if constexpr (xss::fp::is_floating_point_v<TypeParam>) {
         auto less = compare<TypeParam, std::less<TypeParam>>();
         auto leq = compare<TypeParam, std::less_equal<TypeParam>>();
         auto greater = compare<TypeParam, std::greater<TypeParam>>();
         auto geq = compare<TypeParam, std::greater_equal<TypeParam>>();
         auto equal = compare<TypeParam, std::equal_to<TypeParam>>();
-        TypeParam nan = std::numeric_limits<TypeParam>::quiet_NaN();
-        TypeParam inf = std::numeric_limits<TypeParam>::infinity();
+        TypeParam nan = xss::fp::quiet_NaN<TypeParam>();
+        TypeParam inf = xss::fp::infinity<TypeParam>();
         ASSERT_EQ(less(nan, inf), false);
         ASSERT_EQ(less(nan, nan), false);
         ASSERT_EQ(less(inf, nan), true);
