@@ -440,16 +440,16 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
             X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + right + ii * vtype::numlanes);
+                _mm_prefetch(arr + right + ii * vtype::numlanes - num_unroll * vtype::numlanes, _MM_HINT_T0);
             }
-            _mm_prefetch(arr + right - num_unroll * vtype::numlanes, _MM_HINT_T0);
         }
         else {
             X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + left + ii * vtype::numlanes);
+                _mm_prefetch(arr + left + ii * vtype::numlanes + num_unroll * vtype::numlanes, _MM_HINT_T0);
             }
             left += num_unroll * vtype::numlanes;
-            _mm_prefetch(arr + left, _MM_HINT_T0);
         }
         // partition the current vector and save it on both sides of the array
         X86_SIMD_SORT_UNROLL_LOOP(8)
