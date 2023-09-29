@@ -9,7 +9,7 @@
 #define EXPECT_UNIQUE(arg) \
     auto sorted_arg = arg; \
     std::sort(sorted_arg.begin(), sorted_arg.end()); \
-    std::vector<int64_t> expected_arg(sorted_arg.size()); \
+    std::vector<size_t> expected_arg(sorted_arg.size()); \
     std::iota(expected_arg.begin(), expected_arg.end(), 0); \
     EXPECT_EQ(sorted_arg, expected_arg) \
             << "Indices aren't unique. Array size = " << sorted_arg.size();
@@ -29,7 +29,7 @@ void IS_SORTED(std::vector<T> sorted, std::vector<T> arr, std::string type)
 template <typename T>
 void IS_ARG_SORTED(std::vector<T> sortedarr,
                    std::vector<T> arr,
-                   std::vector<int64_t> arg,
+                   std::vector<size_t> arg,
                    std::string type)
 {
     EXPECT_UNIQUE(arg)
@@ -42,7 +42,7 @@ void IS_ARG_SORTED(std::vector<T> sortedarr,
 
 template <typename T>
 void IS_ARR_PARTITIONED(std::vector<T> arr,
-                        int64_t k,
+                        size_t k,
                         T true_kth,
                         std::string type)
 {
@@ -64,7 +64,7 @@ void IS_ARR_PARTITIONED(std::vector<T> arr,
         }
     }
     // 3) Elements to the right of k should be atleast arr[k]
-    if (k != (int64_t)(arr.size() - 1)) {
+    if (k != (size_t)(arr.size() - 1)) {
         T min_right
                 = *std::min_element(arr.begin() + k + 1, arr.end(), cmp_less);
         if (!cmp_leq(arr[k], min_right)) {
@@ -75,7 +75,7 @@ void IS_ARR_PARTITIONED(std::vector<T> arr,
 
 template <typename T>
 void IS_ARR_PARTIALSORTED(std::vector<T> arr,
-                          int64_t k,
+                          size_t k,
                           std::vector<T> sorted,
                           std::string type)
 {
@@ -86,9 +86,9 @@ void IS_ARR_PARTIALSORTED(std::vector<T> arr,
 
 template <typename T>
 void IS_ARG_PARTITIONED(std::vector<T> arr,
-                        std::vector<int64_t> arg,
+                        std::vector<size_t> arg,
                         T true_kth,
-                        int64_t k,
+                        size_t k,
                         std::string type)
 {
     EXPECT_UNIQUE(arg)

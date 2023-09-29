@@ -5,32 +5,32 @@
 namespace xss {
 namespace avx512 {
     template <>
-    void qsort(uint16_t *arr, int64_t size)
+    void qsort(uint16_t *arr, size_t size)
     {
         avx512_qsort(arr, size);
     }
     template <>
-    void qselect(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+    void qselect(uint16_t *arr, size_t k, size_t arrsize, bool hasnan)
     {
         avx512_qselect(arr, k, arrsize, hasnan);
     }
     template <>
-    void partial_qsort(uint16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+    void partial_qsort(uint16_t *arr, size_t k, size_t arrsize, bool hasnan)
     {
         avx512_partial_qsort(arr, k, arrsize, hasnan);
     }
     template <>
-    void qsort(int16_t *arr, int64_t size)
+    void qsort(int16_t *arr, size_t size)
     {
         avx512_qsort(arr, size);
     }
     template <>
-    void qselect(int16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+    void qselect(int16_t *arr, size_t k, size_t arrsize, bool hasnan)
     {
         avx512_qselect(arr, k, arrsize, hasnan);
     }
     template <>
-    void partial_qsort(int16_t *arr, int64_t k, int64_t arrsize, bool hasnan)
+    void partial_qsort(int16_t *arr, size_t k, size_t arrsize, bool hasnan)
     {
         avx512_partial_qsort(arr, k, arrsize, hasnan);
     }

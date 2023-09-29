@@ -21,7 +21,7 @@ public:
                    "rand_with_nan"};
     }
     std::vector<std::string> arrtype;
-    std::vector<int64_t> arrsize = std::vector<int64_t>(1024);
+    std::vector<size_t> arrsize = std::vector<size_t>(1024);
 };
 
 TYPED_TEST_SUITE_P(simdsort);
@@ -64,7 +64,7 @@ TYPED_TEST_P(simdsort, test_qselect)
 {
     for (auto type : this->arrtype) {
         for (auto size : this->arrsize) {
-            int64_t k = rand() % size;
+            size_t k = rand() % size;
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
             std::nth_element(sortedarr.begin(),
@@ -83,7 +83,7 @@ TYPED_TEST_P(simdsort, test_argselect)
 {
     for (auto type : this->arrtype) {
         for (auto size : this->arrsize) {
-            int64_t k = rand() % size;
+            size_t k = rand() % size;
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
             std::sort(sortedarr.begin(),
@@ -103,7 +103,7 @@ TYPED_TEST_P(simdsort, test_partial_qsort)
     for (auto type : this->arrtype) {
         for (auto size : this->arrsize) {
             // k should be at least 1
-            int64_t k = std::max(0x1l, rand() % size);
+            size_t k = std::max(0x1ul, rand() % size);
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
             std::sort(sortedarr.begin(),

@@ -100,7 +100,7 @@
 #define X86_SIMD_SORT_UNROLL_LOOP(num)
 #endif
 
-typedef int64_t arrsize_t;
+typedef size_t arrsize_t;
 
 template <typename type>
 struct zmm_vector;
@@ -115,49 +115,49 @@ bool is_a_nan(T elem)
 }
 
 template <typename vtype, typename T>
-X86_SIMD_SORT_INLINE arrsize_t replace_nan_with_inf(T *arr, arrsize_t arrsize)
+X86_SIMD_SORT_INLINE arrsize_t replace_nan_with_inf(T *arr, arrsize_t size)
 {
     arrsize_t nan_count = 0;
     using opmask_t = typename vtype::opmask_t;
     using reg_t = typename vtype::reg_t;
     opmask_t loadmask;
     reg_t in;
-    while (arrsize > 0) {
-        if (arrsize < vtype::numlanes) {
-            loadmask = vtype::get_partial_loadmask(arrsize);
-            in = vtype::maskz_loadu(loadmask, arr);
+    /*
+     * (ii + numlanes) can never overflow: max val of size is 2**63 on 64-bit
+     * and 2**31 on 32-bit systems
+     */
+    for (arrsize_t ii = 0; ii < size; ii = ii + vtype::numlanes) {
+        if (size - ii < vtype::numlanes) {
+            loadmask = vtype::get_partial_loadmask(size - ii);
+            in = vtype::maskz_loadu(loadmask, arr + ii);
         }
         else {
-            in = vtype::loadu(arr);
+            in = vtype::loadu(arr + ii);
         }
         opmask_t nanmask = vtype::template fpclass<0x01 | 0x80>(in);
         nan_count += _mm_popcnt_u32((int32_t)nanmask);
-        vtype::mask_storeu(arr, nanmask, vtype::zmm_max());
-        arr += vtype::numlanes;
-        arrsize -= vtype::numlanes;
+        vtype::mask_storeu(arr + ii, nanmask, vtype::zmm_max());
     }
     return nan_count;
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE bool has_nan(type_t *arr, arrsize_t arrsize)
+X86_SIMD_SORT_INLINE bool has_nan(type_t *arr, arrsize_t size)
 {
     using opmask_t = typename vtype::opmask_t;
     using reg_t = typename vtype::reg_t;
     bool found_nan = false;
     opmask_t loadmask;
     reg_t in;
-    while (arrsize > 0) {
-        if (arrsize < vtype::numlanes) {
-            loadmask = vtype::get_partial_loadmask(arrsize);
-            in = vtype::maskz_loadu(loadmask, arr);
+    for (arrsize_t ii = 0; ii < size; ii = ii + vtype::numlanes) {
+        if (size - ii < vtype::numlanes) {
+            loadmask = vtype::get_partial_loadmask(size - ii);
+            in = vtype::maskz_loadu(loadmask, arr + ii);
         }
         else {
-            in = vtype::loadu(arr);
+            in = vtype::loadu(arr + ii);
         }
         opmask_t nanmask = vtype::template fpclass<0x01 | 0x80>(in);
-        arr += vtype::numlanes;
-        arrsize -= vtype::numlanes;
         if (nanmask != 0x00) {
             found_nan = true;
             break;
@@ -168,9 +168,9 @@ X86_SIMD_SORT_INLINE bool has_nan(type_t *arr, arrsize_t arrsize)
 
 template <typename type_t>
 X86_SIMD_SORT_INLINE void
-replace_inf_with_nan(type_t *arr, arrsize_t arrsize, arrsize_t nan_count)
+replace_inf_with_nan(type_t *arr, arrsize_t size, arrsize_t nan_count)
 {
-    for (arrsize_t ii = arrsize - 1; nan_count > 0; --ii) {
+    for (arrsize_t ii = size - 1; nan_count > 0; --ii) {
         if constexpr (std::is_floating_point_v<type_t>) {
             arr[ii] = std::numeric_limits<type_t>::quiet_NaN();
         }
@@ -187,9 +187,9 @@ replace_inf_with_nan(type_t *arr, arrsize_t arrsize, arrsize_t nan_count)
  */
 template <typename T>
 X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr,
-                                                         arrsize_t arrsize)
+                                                         arrsize_t size)
 {
-    arrsize_t jj = arrsize - 1;
+    arrsize_t jj = size - 1;
     arrsize_t ii = 0;
     arrsize_t count = 0;
     while (ii <= jj) {
@@ -202,7 +202,7 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr,
             ii += 1;
         }
     }
-    return arrsize - count - 1;
+    return size - count - 1;
 }
 
 template <typename vtype, typename T = typename vtype::type_t>

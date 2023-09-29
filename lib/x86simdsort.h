@@ -6,18 +6,18 @@
 namespace x86simdsort {
 // quicksort
 template <typename T>
-void qsort(T *arr, int64_t arrsize);
+void qsort(T *arr, size_t arrsize);
 // quickselect
 template <typename T>
-void qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false);
+void qselect(T *arr, size_t k, size_t arrsize, bool hasnan = false);
 // partial sort
 template <typename T>
-void partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false);
+void partial_qsort(T *arr, size_t k, size_t arrsize, bool hasnan = false);
 // argsort
 template <typename T>
-std::vector<int64_t> argsort(T *arr, int64_t arrsize);
+std::vector<size_t> argsort(T *arr, size_t arrsize);
 // argselect
 template <typename T>
-std::vector<int64_t> argselect(T *arr, int64_t k, int64_t arrsize);
+std::vector<size_t> argselect(T *arr, size_t k, size_t arrsize);
 } // namespace x86simdsort
 #endif

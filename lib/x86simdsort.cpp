@@ -53,47 +53,47 @@ dispatch_requested(std::string_view cpurequested,
 #define CAT(a, b) CAT_(a, b)
 
 #define DECLARE_INTERNAL_qsort(TYPE) \
-    static void (*internal_qsort##TYPE)(TYPE *, int64_t) = NULL; \
+    static void (*internal_qsort##TYPE)(TYPE *, size_t) = NULL; \
     template <> \
-    void qsort(TYPE *arr, int64_t arrsize) \
+    void qsort(TYPE *arr, size_t arrsize) \
     { \
         (*internal_qsort##TYPE)(arr, arrsize); \
     }
 
 #define DECLARE_INTERNAL_qselect(TYPE) \
-    static void (*internal_qselect##TYPE)(TYPE *, int64_t, int64_t, bool) \
+    static void (*internal_qselect##TYPE)(TYPE *, size_t, size_t, bool) \
             = NULL; \
     template <> \
-    void qselect(TYPE *arr, int64_t k, int64_t arrsize, bool hasnan) \
+    void qselect(TYPE *arr, size_t k, size_t arrsize, bool hasnan) \
     { \
         (*internal_qselect##TYPE)(arr, k, arrsize, hasnan); \
     }
 
 #define DECLARE_INTERNAL_partial_qsort(TYPE) \
     static void (*internal_partial_qsort##TYPE)( \
-            TYPE *, int64_t, int64_t, bool) \
+            TYPE *, size_t, size_t, bool) \
             = NULL; \
     template <> \
-    void partial_qsort(TYPE *arr, int64_t k, int64_t arrsize, bool hasnan) \
+    void partial_qsort(TYPE *arr, size_t k, size_t arrsize, bool hasnan) \
     { \
         (*internal_partial_qsort##TYPE)(arr, k, arrsize, hasnan); \
     }
 
 #define DECLARE_INTERNAL_argsort(TYPE) \
-    static std::vector<int64_t> (*internal_argsort##TYPE)(TYPE *, int64_t) \
+    static std::vector<size_t> (*internal_argsort##TYPE)(TYPE *, size_t) \
             = NULL; \
     template <> \
-    std::vector<int64_t> argsort(TYPE *arr, int64_t arrsize) \
+    std::vector<size_t> argsort(TYPE *arr, size_t arrsize) \
     { \
         return (*internal_argsort##TYPE)(arr, arrsize); \
     }
 
 #define DECLARE_INTERNAL_argselect(TYPE) \
-    static std::vector<int64_t> (*internal_argselect##TYPE)( \
-            TYPE *, int64_t, int64_t) \
+    static std::vector<size_t> (*internal_argselect##TYPE)( \
+            TYPE *, size_t, size_t) \
             = NULL; \
     template <> \
-    std::vector<int64_t> argselect(TYPE *arr, int64_t k, int64_t arrsize) \
+    std::vector<size_t> argselect(TYPE *arr, size_t k, size_t arrsize) \
     { \
         return (*internal_argselect##TYPE)(arr, k, arrsize); \
     }

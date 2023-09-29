@@ -1,11 +1,11 @@
 template <typename T>
-std::vector<int64_t> stdargsort(const std::vector<T> &array)
+std::vector<size_t> stdargsort(const std::vector<T> &array)
 {
-    std::vector<int64_t> indices(array.size());
+    std::vector<size_t> indices(array.size());
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(),
               indices.end(),
-              [&array](int64_t left, int64_t right) -> bool {
+              [&array](size_t left, size_t right) -> bool {
                   // sort indices according to corresponding array element
                   return array[left] < array[right];
               });
@@ -22,7 +22,7 @@ static void scalarargsort(benchmark::State &state, Args &&...args)
     std::string arrtype = std::get<1>(args_tuple);
     // set up array
     std::vector<T> arr = get_array<T>(arrtype, arrsize);
-    std::vector<int64_t> inx;
+    std::vector<size_t> inx;
     // benchmark
     for (auto _ : state) {
         inx = stdargsort(arr);
@@ -38,7 +38,7 @@ static void simdargsort(benchmark::State &state, Args &&...args)
     std::string arrtype = std::get<1>(args_tuple);
     // set up array
     std::vector<T> arr = get_array<T>(arrtype, arrsize);
-    std::vector<int64_t> inx;
+    std::vector<size_t> inx;
     // benchmark
     for (auto _ : state) {
         inx = x86simdsort::argsort(arr.data(), arrsize);

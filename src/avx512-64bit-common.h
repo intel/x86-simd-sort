@@ -708,6 +708,10 @@ struct zmm_vector<uint64_t> {
     {
         return _mm512_mask_compressstoreu_epi64(mem, mask, x);
     }
+    static reg_t maskz_loadu(opmask_t mask, void const *mem)
+    {
+        return _mm512_maskz_loadu_epi64(mask, mem);
+    }
     static reg_t mask_loadu(reg_t x, opmask_t mask, void const *mem)
     {
         return _mm512_mask_loadu_epi64(x, mask, mem);
