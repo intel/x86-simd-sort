@@ -20,10 +20,10 @@
 #define NETWORK_64BIT_4 3, 2, 1, 0, 7, 6, 5, 4
 
 template <typename vtype, typename reg_t>
-reg_t sort_zmm_64bit(reg_t zmm);
+X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t zmm);
 
 template <typename vtype, typename reg_t>
-reg_t bitonic_merge_zmm_64bit(reg_t zmm);
+X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_64bit(reg_t zmm);
 
 template <>
 struct ymm_vector<float> {

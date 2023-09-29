@@ -31,7 +31,7 @@ static int check_cpu_feature_support(std::string_view cpufeature)
 }
 
 std::string_view
-find_preferred_cpu(std::initializer_list<std::string_view> cpulist)
+static find_preferred_cpu(std::initializer_list<std::string_view> cpulist)
 {
     for (auto cpu : cpulist) {
         if (check_cpu_feature_support(cpu)) return cpu;

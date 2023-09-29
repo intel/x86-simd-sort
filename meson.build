@@ -8,8 +8,8 @@ lib = include_directories('lib')
 bench = include_directories('benchmarks')
 utils = include_directories('utils')
 tests = include_directories('tests')
-gtest_dep = dependency('gtest_main', required : true, static: true)
-gbench_dep = dependency('benchmark', required : true, static: true)
+gtest_dep = dependency('gtest_main', required : false, static: false)
+gbench_dep = dependency('benchmark', required : false, static: false)
 
 fp16code = '''#include<immintrin.h>
 int main() {
@@ -19,35 +19,41 @@ int main() {
 }
 '''
 cancompilefp16 = cpp.compiles(fp16code, args:'-march=sapphirerapids')
+flags_hide_symbols = ['-fvisibility=hidden', '-fvisibility-inlines-hidden']
 
 subdir('lib')
-subdir('tests')
-subdir('benchmarks')
-
 libsimdsort = shared_library('x86simdsort',
                              'lib/x86simdsort.cpp',
                              include_directories : [utils, lib],
-                             link_whole : [libtargets],
-                             cpp_args : ['-O3'],
+                             link_with : [libtargets],
+                             cpp_args : ['-O3', flags_hide_symbols],
                             )
 
-testexe = executable('testexe',
+if gtest_dep.found()
+  subdir('tests')
+  testexe = executable('testexe',
                      include_directories : [lib, utils],
                      dependencies : gtest_dep,
                      link_whole : [libtests],
                      link_with : libsimdsort,
                     )
+endif
 
-benchexe = executable('benchexe',
+if gbench_dep.found()
+  subdir('benchmarks')
+  benchexe = executable('benchexe',
                       include_directories : [src, lib, utils, bench],
                       dependencies : [gbench_dep],
                       link_args: ['-lbenchmark_main'],
                       link_whole : [libbench],
                       link_with : libsimdsort,
                      )
+endif
 
 summary({
   'Can compile AVX-512 FP16 ISA': cancompilefp16,
+  'Built test content': gtest_dep.found(),
+  'Built benchmarks': gbench_dep.found(),
   },
   section: 'Configuration',
   bool_yn: true
