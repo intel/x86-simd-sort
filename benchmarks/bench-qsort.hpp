@@ -51,4 +51,3 @@ BENCH_BOTH_QSORT(double)
 #ifdef __FLT16_MAX__
 BENCH_BOTH_QSORT(_Float16)
 #endif
-

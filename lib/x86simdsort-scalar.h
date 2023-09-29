@@ -1,6 +1,6 @@
+#include "custom-compare.h"
 #include <algorithm>
 #include <numeric>
-#include "custom-compare.h"
 
 namespace xss {
 namespace scalar {
@@ -13,7 +13,8 @@ namespace scalar {
     void qselect(T *arr, size_t k, size_t arrsize, bool hasnan)
     {
         if (hasnan) {
-            std::nth_element(arr, arr + k, arr + arrsize, compare<T, std::less<T>>());
+            std::nth_element(
+                    arr, arr + k, arr + arrsize, compare<T, std::less<T>>());
         }
         else {
             std::nth_element(arr, arr + k, arr + arrsize);
@@ -23,7 +24,8 @@ namespace scalar {
     void partial_qsort(T *arr, size_t k, size_t arrsize, bool hasnan)
     {
         if (hasnan) {
-            std::partial_sort(arr, arr + k, arr + arrsize, compare<T, std::less<T>>());
+            std::partial_sort(
+                    arr, arr + k, arr + arrsize, compare<T, std::less<T>>());
         }
         else {
             std::partial_sort(arr, arr + k, arr + arrsize);

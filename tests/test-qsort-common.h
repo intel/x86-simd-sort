@@ -1,8 +1,8 @@
 #ifndef AVX512_TEST_COMMON
 #define AVX512_TEST_COMMON
 
-#include "rand_array.h"
 #include "custom-compare.h"
+#include "rand_array.h"
 #include "x86simdsort.h"
 #include <gtest/gtest.h>
 

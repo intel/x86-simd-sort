@@ -186,8 +186,7 @@ replace_inf_with_nan(type_t *arr, arrsize_t size, arrsize_t nan_count)
  * in the array which is not a nan
  */
 template <typename T>
-X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr,
-                                                         arrsize_t size)
+X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr, arrsize_t size)
 {
     arrsize_t jj = size - 1;
     arrsize_t ii = 0;

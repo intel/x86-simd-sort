@@ -1,5 +1,6 @@
 #ifndef UTILS_FLOAT
 #define UTILS_FLOAT
+#include <cstdint>
 namespace xss {
 namespace fp
 {

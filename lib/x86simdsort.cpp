@@ -30,8 +30,8 @@ static int check_cpu_feature_support(std::string_view cpufeature)
     return 0;
 }
 
-std::string_view
-static find_preferred_cpu(std::initializer_list<std::string_view> cpulist)
+std::string_view static find_preferred_cpu(
+        std::initializer_list<std::string_view> cpulist)
 {
     for (auto cpu : cpulist) {
         if (check_cpu_feature_support(cpu)) return cpu;
@@ -70,8 +70,7 @@ dispatch_requested(std::string_view cpurequested,
     }
 
 #define DECLARE_INTERNAL_partial_qsort(TYPE) \
-    static void (*internal_partial_qsort##TYPE)( \
-            TYPE *, size_t, size_t, bool) \
+    static void (*internal_partial_qsort##TYPE)(TYPE *, size_t, size_t, bool) \
             = NULL; \
     template <> \
     void partial_qsort(TYPE *arr, size_t k, size_t arrsize, bool hasnan) \
