@@ -26,6 +26,6 @@ if cancompilefp16
       'x86simdsort-spr.cpp',
       ),
     include_directories : [src],
-    cpp_args : ['-O3', 'march=sapphirerapids', flags_hide_symbols],
+    cpp_args : ['-O3', '-march=sapphirerapids', flags_hide_symbols],
     )
 endif
