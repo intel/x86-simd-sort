@@ -58,7 +58,7 @@ X86_SIMD_SORT_FINLINE void internal_merge_n_vec(typename vtype::reg_t * reg){
     using reg_t = typename vtype::reg_t;
     using swizzle = typename vtype::swizzle_ops;
     if constexpr (scale <= 1){
-        UNUSED(regs);
+        UNUSED(reg);
         return;
     }else{
         if constexpr (first){
@@ -131,10 +131,10 @@ template <typename vtype,
           typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void merge_n_vec(reg_t *regs)
 {
-    if constexpr (numPer > vtype::numlanes)
+    if constexpr (numPer > vtype::numlanes){
         UNUSED(regs);
         return;
-    else {
+    }else {
         merge_step_n_vec<vtype, numVecs, numPer>(regs);
         merge_n_vec<vtype, numVecs, numPer * 2>(regs);
     }

@@ -240,7 +240,7 @@ X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
  * number of elements that are greater than or equal to the pivot.
  */
 template <typename vtype, typename type_t, typename reg_t>
-X86_SIMD_SORT_INLINE int32_t partition_vec(type_t *arr,
+X86_SIMD_SORT_INLINE void partition_vec(type_t *arr,
                                            arrsize_t& left,
                                            arrsize_t& unpartitioned,
                                            const reg_t curr_vec,
@@ -399,6 +399,9 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
         bufferStored += amount_ge_pivot;
         leftStore += vtype::numlanes - amount_ge_pivot;
     }
+    
+    *smallest = vtype::reducemin(min_vec);
+    *biggest = vtype::reducemax(max_vec);
     
     // We can't just store the buffer on the right, since this would override data that has no copies elsewhere
     // Instead, copy the data that is currently on the right, and store it on the left side in the space between leftStore and left
