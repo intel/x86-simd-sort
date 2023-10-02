@@ -408,4 +408,20 @@ avx512_argselect(T *arr, arrsize_t k, arrsize_t arrsize)
     return indices;
 }
 
+/* To maintain compatibility with NumPy build */
+template <typename T>
+X86_SIMD_SORT_INLINE void
+avx512_argselect(T *arr, int64_t *arg, arrsize_t k, arrsize_t arrsize)
+{
+    avx512_argselect(arr, reinterpret_cast<arrsize_t*>(arg), k, arrsize);
+}
+
+template <typename T>
+X86_SIMD_SORT_INLINE void
+avx512_argsort(T *arr, int64_t *arg, arrsize_t arrsize)
+{
+    avx512_argsort(arr, reinterpret_cast<arrsize_t*>(arg), arrsize);
+}
+
+
 #endif // AVX512_ARGSORT_64BIT
