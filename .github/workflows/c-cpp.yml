@@ -50,3 +50,6 @@ jobs:
 
     - name: Run test suite on TGL
       run: sde -tgl -- ./builddir/testexe
+
+    - name: Run test suite on SPR
+      run: sde -spr -- ./builddir/testexe
