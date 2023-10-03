@@ -445,7 +445,8 @@ arrsize_t replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr,
 template <>
 bool is_a_nan<uint16_t>(uint16_t elem)
 {
-    return (elem & 0x7c00) == 0x7c00;
+    return ((elem & 0x7c00u) == 0x7c00u) &&
+           ((elem & 0x03ffu) != 0);
 }
 
 X86_SIMD_SORT_INLINE

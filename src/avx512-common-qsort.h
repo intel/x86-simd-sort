@@ -191,7 +191,7 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr, arrsize_t size)
     arrsize_t jj = size - 1;
     arrsize_t ii = 0;
     arrsize_t count = 0;
-    while (ii <= jj) {
+    while (ii < jj) {
         if (is_a_nan(arr[ii])) {
             std::swap(arr[ii], arr[jj]);
             jj -= 1;
@@ -200,6 +200,10 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr, arrsize_t size)
         else {
             ii += 1;
         }
+    }
+    /* Haven't checked for nan when ii == jj */
+    if (is_a_nan(arr[ii])) {
+        count++;
     }
     return size - count - 1;
 }
