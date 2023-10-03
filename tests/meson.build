@@ -4,7 +4,6 @@ libtests += static_library('tests_qsort',
   files('test-qsort.cpp', ),
   dependencies: gtest_dep,
   include_directories : [lib, utils],
-  cpp_args : ['-O3'],
   )
 
 #if cancompilefp16

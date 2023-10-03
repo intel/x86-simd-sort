@@ -26,7 +26,7 @@ libsimdsort = shared_library('x86simdsort',
                              'lib/x86simdsort.cpp',
                              include_directories : [utils, lib],
                              link_with : [libtargets],
-                             cpp_args : ['-O3', flags_hide_symbols],
+                             cpp_args : [flags_hide_symbols],
                             )
 
 if gtest_dep.found()

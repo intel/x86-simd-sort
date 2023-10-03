@@ -26,7 +26,7 @@ build_branch() {
         fi
     fi
     cd $dir_name
-    meson setup --warnlevel 0 --buildtype plain builddir
+    meson setup --warnlevel 0 --buildtype release builddir
     cd builddir
     ninja
     cd ../../
