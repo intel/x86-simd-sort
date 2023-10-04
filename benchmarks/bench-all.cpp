@@ -1,12 +1,5 @@
-#ifndef AVX512_BENCH_COMMON
-#define AVX512_BENCH_COMMON
-
-#include "avx512-16bit-qsort.hpp"
-#include "avx512-32bit-qsort.hpp"
-#include "avx512-64bit-argsort.hpp"
-#include "avx512-64bit-qsort.hpp"
-
 #include "rand_array.h"
+#include "x86simdsort.h"
 #include <benchmark/benchmark.h>
 
 #define MY_BENCHMARK_CAPTURE(func, T, test_case_name, ...) \
@@ -18,11 +11,15 @@
                                 func<T>(st, __VA_ARGS__); \
                             })))
 
-#define BENCH(func, type) \
-    MY_BENCHMARK_CAPTURE(func, type, smallrandom_128, 128, std::string("random")); \
-    MY_BENCHMARK_CAPTURE(func, type, smallrandom_256, 256, std::string("random")); \
-    MY_BENCHMARK_CAPTURE(func, type, smallrandom_512, 512, std::string("random")); \
-    MY_BENCHMARK_CAPTURE(func, type, smallrandom_1k, 1024, std::string("random")); \
+#define BENCH_SORT(func, type) \
+    MY_BENCHMARK_CAPTURE( \
+            func, type, smallrandom_128, 128, std::string("random")); \
+    MY_BENCHMARK_CAPTURE( \
+            func, type, smallrandom_256, 256, std::string("random")); \
+    MY_BENCHMARK_CAPTURE( \
+            func, type, smallrandom_512, 512, std::string("random")); \
+    MY_BENCHMARK_CAPTURE( \
+            func, type, smallrandom_1k, 1024, std::string("random")); \
     MY_BENCHMARK_CAPTURE(func, type, random_5k, 5000, std::string("random")); \
     MY_BENCHMARK_CAPTURE( \
             func, type, random_100k, 100000, std::string("random")); \
@@ -37,4 +34,13 @@
     MY_BENCHMARK_CAPTURE( \
             func, type, reverse_10k, 10000, std::string("reverse"));
 
-#endif
+#define BENCH_PARTIAL(func, type) \
+    MY_BENCHMARK_CAPTURE(func, type, k10, 10000, 10); \
+    MY_BENCHMARK_CAPTURE(func, type, k100, 10000, 100); \
+    MY_BENCHMARK_CAPTURE(func, type, k1000, 10000, 1000); \
+    MY_BENCHMARK_CAPTURE(func, type, k5000, 10000, 5000);
+
+#include "bench-argsort.hpp"
+#include "bench-partial-qsort.hpp"
+#include "bench-qselect.hpp"
+#include "bench-qsort.hpp"

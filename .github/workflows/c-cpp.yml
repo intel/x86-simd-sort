@@ -7,9 +7,9 @@ on:
     branches: [ "main" ]
 
 jobs:
-  ICX:
+  SKL:
 
-    runs-on: ubuntu-latest
+    runs-on: intel-ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -y install g++-10 libgtest-dev meson curl git cmake
+        sudo apt -y install g++-13 libgtest-dev meson curl git cmake
 
     - name: Install google benchmarks
       run: |
@@ -29,25 +29,100 @@ jobs:
 
     - name: Install Intel SDE
       run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/732268/sde-external-9.7.0-2022-05-09-lin.tar.xz
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
 
     - name: Build
       env:
-        CXX: g++-10
+        CXX: g++-13
       run: |
         make clean
-        meson setup --warnlevel 2 --werror --buildtype plain builddir
+        meson setup --warnlevel 2 --werror --buildtype release builddir
         cd builddir
         ninja
 
-    - name: Run test suite on ICX
-      run: sde -icx -- ./builddir/testexe
+    - name: Run test suite on SKL
+      run: sde -skl -- ./builddir/testexe
+
+  SKX:
+
+    runs-on: intel-ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install g++-13 libgtest-dev meson curl git cmake
+
+    - name: Install google benchmarks
+      run: |
+        git clone https://github.com/google/benchmark.git
+        cd benchmark
+        cmake -E make_directory "build"
+        cmake -E chdir "build" cmake -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release ../
+        sudo cmake --build "build" --config Release --target install
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Build
+      env:
+        CXX: g++-13
+      run: |
+        make clean
+        meson setup --warnlevel 2 --werror --buildtype release builddir
+        cd builddir
+        ninja
+
+    - name: Run test suite on SKX
+      run: sde -skx -- ./builddir/testexe
+
+  TGL:
+
+    runs-on: intel-ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install g++-13 libgtest-dev meson curl git cmake
+
+    - name: Install google benchmarks
+      run: |
+        git clone https://github.com/google/benchmark.git
+        cd benchmark
+        cmake -E make_directory "build"
+        cmake -E chdir "build" cmake -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release ../
+        sudo cmake --build "build" --config Release --target install
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Build
+      env:
+        CXX: g++-13
+      run: |
+        make clean
+        meson setup --warnlevel 2 --werror --buildtype release builddir
+        cd builddir
+        ninja
+    - name: Run test suite on TGL
+      run: sde -tgl -- ./builddir/testexe
 
   SPR:
 
-    runs-on: ubuntu-latest
+    runs-on: intel-ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -55,7 +130,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -y install g++-12 libgtest-dev meson curl git cmake
+        sudo apt -y install g++-13 libgtest-dev meson curl git cmake
 
     - name: Install google benchmarks
       run: |
@@ -67,58 +142,18 @@ jobs:
 
     - name: Install Intel SDE
       run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/732268/sde-external-9.7.0-2022-05-09-lin.tar.xz
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
 
     - name: Build
       env:
-        CXX: g++-12
+        CXX: g++-13
       run: |
         make clean
-        meson setup --warnlevel 2 --werror --buildtype plain builddir
+        meson setup --warnlevel 2 --werror --buildtype release builddir
         cd builddir
         ninja
 
-    - name: Run _Float16 test suite on SPR
-      run: sde -spr -- ./builddir/testexe --gtest_filter="*float16*"
-
-  compare-benchmarks-with-main:
-    if: ${{ false }}  # disable for now
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-        path: x86-simd-sort
-
-    - name: Specify branch name
-      working-directory: ${{ github.workspace }}/x86-simd-sort
-      run: git switch -c pr-branch
-
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt -y install g++-12 libgtest-dev meson curl git cmake
-
-    - name: Install google benchmarks
-      run: |
-        git clone https://github.com/google/benchmark.git
-        cd benchmark
-        pip3 install -r tools/requirements.txt
-        cmake -E make_directory "build"
-        cmake -E chdir "build" cmake -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release ../
-        sudo cmake --build "build" --config Release --target install
-
-    - name: Run bench-compare
-      working-directory: ${{ github.workspace }}/x86-simd-sort
-      env:
-        CXX: g++-12
-        GBENCH: ${{ github.workspace }}/benchmark
-      run: bash -x scripts/branch-compare.sh avx
+    - name: Run test suite on SPR
+      run: sde -spr -- ./builddir/testexe

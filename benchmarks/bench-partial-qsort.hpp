@@ -1,17 +1,10 @@
-#include "bench-qsort-common.h"
-
-template <typename T>
-static void avx512_partial_qsort(benchmark::State &state)
+template <typename T, class... Args>
+static void simdpartialsort(benchmark::State &state, Args &&...args)
 {
-    if (!__builtin_cpu_supports("avx512bw")) {
-        state.SkipWithMessage("Requires AVX512 BW ISA");
-    }
-    if ((sizeof(T) == 2) && (!__builtin_cpu_supports("avx512vbmi2"))) {
-        state.SkipWithMessage("Requires AVX512 VBMI2 ISA");
-    }
     // Perform setup here
-    int64_t K = state.range(0);
-    size_t ARRSIZE = 10000;
+    auto args_tuple = std::make_tuple(std::move(args)...);
+    int64_t ARRSIZE = std::get<0>(args_tuple);
+    int64_t k = std::get<1>(args_tuple);
     std::vector<T> arr;
     std::vector<T> arr_bkp;
 
@@ -19,9 +12,9 @@ static void avx512_partial_qsort(benchmark::State &state)
     arr = get_uniform_rand_array<T>(ARRSIZE);
     arr_bkp = arr;
 
-    /* call avx512_partial_qsort */
+    /* call simdpartialsort */
     for (auto _ : state) {
-        avx512_partial_qsort<T>(arr.data(), K, ARRSIZE);
+        x86simdsort::partial_qsort<T>(arr.data(), k, ARRSIZE);
 
         state.PauseTiming();
         arr = arr_bkp;
@@ -29,12 +22,13 @@ static void avx512_partial_qsort(benchmark::State &state)
     }
 }
 
-template <typename T>
-static void stdpartialsort(benchmark::State &state)
+template <typename T, class... Args>
+static void scalarpartialsort(benchmark::State &state, Args &&...args)
 {
     // Perform setup here
-    int64_t K = state.range(0);
-    size_t ARRSIZE = 10000;
+    auto args_tuple = std::make_tuple(std::move(args)...);
+    int64_t ARRSIZE = std::get<0>(args_tuple);
+    int64_t k = std::get<1>(args_tuple);
     std::vector<T> arr;
     std::vector<T> arr_bkp;
 
@@ -44,7 +38,7 @@ static void stdpartialsort(benchmark::State &state)
 
     /* call std::partial_sort */
     for (auto _ : state) {
-        std::partial_sort(arr.begin(), arr.begin() + K, arr.end());
+        std::partial_sort(arr.begin(), arr.begin() + k, arr.end());
 
         state.PauseTiming();
         arr = arr_bkp;
@@ -52,51 +46,18 @@ static void stdpartialsort(benchmark::State &state)
     }
 }
 
-// Register the function as a benchmark
-BENCHMARK(avx512_partial_qsort<float>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(stdpartialsort<float>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_partial_qsort<uint32_t>)
-        ->Arg(10)
-        ->Arg(100)
-        ->Arg(1000)
-        ->Arg(5000);
-BENCHMARK(stdpartialsort<uint32_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_partial_qsort<int32_t>)
-        ->Arg(10)
-        ->Arg(100)
-        ->Arg(1000)
-        ->Arg(5000);
-BENCHMARK(stdpartialsort<int32_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
+#define BENCH_BOTH_PARTIAL(type) \
+    BENCH_PARTIAL(simdpartialsort, type) \
+    BENCH_PARTIAL(scalarpartialsort, type)
 
-BENCHMARK(avx512_partial_qsort<double>)
-        ->Arg(10)
-        ->Arg(100)
-        ->Arg(1000)
-        ->Arg(5000);
-BENCHMARK(stdpartialsort<double>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_partial_qsort<uint64_t>)
-        ->Arg(10)
-        ->Arg(100)
-        ->Arg(1000)
-        ->Arg(5000);
-BENCHMARK(stdpartialsort<uint64_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_partial_qsort<int64_t>)
-        ->Arg(10)
-        ->Arg(100)
-        ->Arg(1000)
-        ->Arg(5000);
-BENCHMARK(stdpartialsort<int64_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-
-//BENCHMARK(avx512_partial_qsort<float16>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_partial_qsort<uint16_t>)
-        ->Arg(10)
-        ->Arg(100)
-        ->Arg(1000)
-        ->Arg(5000);
-BENCHMARK(stdpartialsort<uint16_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
-BENCHMARK(avx512_partial_qsort<int16_t>)
-        ->Arg(10)
-        ->Arg(100)
-        ->Arg(1000)
-        ->Arg(5000);
-BENCHMARK(stdpartialsort<int16_t>)->Arg(10)->Arg(100)->Arg(1000)->Arg(5000);
+BENCH_BOTH_PARTIAL(uint64_t)
+BENCH_BOTH_PARTIAL(int64_t)
+BENCH_BOTH_PARTIAL(uint32_t)
+BENCH_BOTH_PARTIAL(int32_t)
+BENCH_BOTH_PARTIAL(uint16_t)
+BENCH_BOTH_PARTIAL(int16_t)
+BENCH_BOTH_PARTIAL(float)
+BENCH_BOTH_PARTIAL(double)
+#ifdef __FLT16_MAX__
+BENCH_BOTH_PARTIAL(_Float16)
+#endif

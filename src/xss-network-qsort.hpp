@@ -3,16 +3,14 @@
 
 #include "avx512-common-qsort.h"
 
-template <typename vtype,
-          int64_t numVecs,
-          typename reg_t = typename vtype::reg_t>
+template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE void bitonic_clean_n_vec(reg_t *regs)
 {
-X86_SIMD_SORT_UNROLL_LOOP(64)
+    X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int num = numVecs / 2; num >= 2; num /= 2) {
-X86_SIMD_SORT_UNROLL_LOOP(64)
+        X86_SIMD_SORT_UNROLL_LOOP(64)
         for (int j = 0; j < numVecs; j += num) {
-X86_SIMD_SORT_UNROLL_LOOP(64)
+            X86_SIMD_SORT_UNROLL_LOOP(64)
             for (int i = 0; i < num / 2; i++) {
                 COEX<vtype>(regs[i + j], regs[i + j + num / 2]);
             }
@@ -20,9 +18,7 @@ X86_SIMD_SORT_UNROLL_LOOP(64)
     }
 }
 
-template <typename vtype,
-          int64_t numVecs,
-          typename reg_t = typename vtype::reg_t>
+template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE void bitonic_merge_n_vec(reg_t *regs)
 {
     // Do the reverse part
@@ -31,8 +27,8 @@ X86_SIMD_SORT_INLINE void bitonic_merge_n_vec(reg_t *regs)
         COEX<vtype>(regs[0], regs[1]);
     }
     else if constexpr (numVecs > 2) {
-// Reverse upper half
-X86_SIMD_SORT_UNROLL_LOOP(64)
+        // Reverse upper half
+        X86_SIMD_SORT_UNROLL_LOOP(64)
         for (int i = 0; i < numVecs / 2; i++) {
             reg_t rev = vtype::reverse(regs[numVecs - i - 1]);
             reg_t maxV = vtype::max(regs[i], rev);
@@ -45,23 +41,23 @@ X86_SIMD_SORT_UNROLL_LOOP(64)
     // Call cleaner
     bitonic_clean_n_vec<vtype, numVecs>(regs);
 
-// Now do bitonic_merge
-X86_SIMD_SORT_UNROLL_LOOP(64)
+    // Now do bitonic_merge
+    X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = 0; i < numVecs; i++) {
         regs[i] = vtype::bitonic_merge(regs[i]);
     }
 }
 
 template <typename vtype,
-          int64_t numVecs,
-          int64_t numPer = 2,
+          int numVecs,
+          int numPer = 2,
           typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE void bitonic_fullmerge_n_vec(reg_t *regs)
 {
     if constexpr (numPer > numVecs)
         return;
     else {
-X86_SIMD_SORT_UNROLL_LOOP(64)
+        X86_SIMD_SORT_UNROLL_LOOP(64)
         for (int i = 0; i < numVecs / numPer; i++) {
             bitonic_merge_n_vec<vtype, numPer>(regs + i * numPer);
         }
@@ -70,7 +66,7 @@ X86_SIMD_SORT_UNROLL_LOOP(64)
 }
 
 template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
+X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
 {
     if constexpr (numVecs > 1) {
         if (N * 2 <= numVecs * vtype::numlanes) {
@@ -80,10 +76,10 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int32_t N)
     }
 
     reg_t vecs[numVecs];
-    
+
     // Generate masks for loading and storing
     typename vtype::opmask_t ioMasks[numVecs - numVecs / 2];
-X86_SIMD_SORT_UNROLL_LOOP(64)
+    X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         int64_t num_to_read
                 = std::min((int64_t)std::max(0, N - i * vtype::numlanes),
@@ -91,20 +87,20 @@ X86_SIMD_SORT_UNROLL_LOOP(64)
         ioMasks[j] = ((0x1ull << num_to_read) - 0x1ull);
     }
 
-// Unmasked part of the load
-X86_SIMD_SORT_UNROLL_LOOP(64)
+    // Unmasked part of the load
+    X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = 0; i < numVecs / 2; i++) {
         vecs[i] = vtype::loadu(arr + i * vtype::numlanes);
     }
-// Masked part of the load
-X86_SIMD_SORT_UNROLL_LOOP(64)
+    // Masked part of the load
+    X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         vecs[i] = vtype::mask_loadu(
                 vtype::zmm_max(), ioMasks[j], arr + i * vtype::numlanes);
     }
 
-// Sort each loaded vector
-X86_SIMD_SORT_UNROLL_LOOP(64)
+    // Sort each loaded vector
+    X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = 0; i < numVecs; i++) {
         vecs[i] = vtype::sort_vec(vecs[i]);
     }
@@ -112,19 +108,19 @@ X86_SIMD_SORT_UNROLL_LOOP(64)
     // Run the full merger
     bitonic_fullmerge_n_vec<vtype, numVecs>(&vecs[0]);
 
-// Unmasked part of the store
-X86_SIMD_SORT_UNROLL_LOOP(64)
+    // Unmasked part of the store
+    X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = 0; i < numVecs / 2; i++) {
         vtype::storeu(arr + i * vtype::numlanes, vecs[i]);
     }
-// Masked part of the store
-X86_SIMD_SORT_UNROLL_LOOP(64)
+    // Masked part of the store
+    X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         vtype::mask_storeu(arr + i * vtype::numlanes, ioMasks[j], vecs[i]);
     }
 }
 
-template <typename vtype, int64_t maxN>
+template <typename vtype, int maxN>
 X86_SIMD_SORT_INLINE void sort_n(typename vtype::type_t *arr, int N)
 {
     constexpr int numVecs = maxN / vtype::numlanes;

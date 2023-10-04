@@ -12,13 +12,13 @@
 #include "avx512-common-argsort.h"
 
 template <typename T>
-void std_argselect_withnan(
-        T *arr, int64_t *arg, int64_t k, int64_t left, int64_t right)
+X86_SIMD_SORT_INLINE void std_argselect_withnan(
+        T *arr, arrsize_t *arg, arrsize_t k, arrsize_t left, arrsize_t right)
 {
     std::nth_element(arg + left,
                      arg + k,
                      arg + right,
-                     [arr](int64_t a, int64_t b) -> bool {
+                     [arr](arrsize_t a, arrsize_t b) -> bool {
                          if ((!std::isnan(arr[a])) && (!std::isnan(arr[b]))) {
                              return arr[a] < arr[b];
                          }
@@ -33,11 +33,12 @@ void std_argselect_withnan(
 
 /* argsort using std::sort */
 template <typename T>
-void std_argsort_withnan(T *arr, int64_t *arg, int64_t left, int64_t right)
+X86_SIMD_SORT_INLINE void
+std_argsort_withnan(T *arr, arrsize_t *arg, arrsize_t left, arrsize_t right)
 {
     std::sort(arg + left,
               arg + right,
-              [arr](int64_t left, int64_t right) -> bool {
+              [arr](arrsize_t left, arrsize_t right) -> bool {
                   if ((!std::isnan(arr[left])) && (!std::isnan(arr[right]))) {
                       return arr[left] < arr[right];
                   }
@@ -52,18 +53,20 @@ void std_argsort_withnan(T *arr, int64_t *arg, int64_t left, int64_t right)
 
 /* argsort using std::sort */
 template <typename T>
-void std_argsort(T *arr, int64_t *arg, int64_t left, int64_t right)
+X86_SIMD_SORT_INLINE void
+std_argsort(T *arr, arrsize_t *arg, arrsize_t left, arrsize_t right)
 {
     std::sort(arg + left,
               arg + right,
-              [arr](int64_t left, int64_t right) -> bool {
+              [arr](arrsize_t left, arrsize_t right) -> bool {
                   // sort indices according to corresponding array element
                   return arr[left] < arr[right];
               });
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void argsort_8_64bit(type_t *arr, int64_t *arg, int32_t N)
+X86_SIMD_SORT_INLINE void
+argsort_8_64bit(type_t *arr, arrsize_t *arg, int32_t N)
 {
     using reg_t = typename vtype::reg_t;
     typename vtype::opmask_t load_mask = (0x01 << N) - 0x01;
@@ -75,7 +78,8 @@ X86_SIMD_SORT_INLINE void argsort_8_64bit(type_t *arr, int64_t *arg, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void argsort_16_64bit(type_t *arr, int64_t *arg, int32_t N)
+X86_SIMD_SORT_INLINE void
+argsort_16_64bit(type_t *arr, arrsize_t *arg, int32_t N)
 {
     if (N <= 8) {
         argsort_8_64bit<vtype>(arr, arg, N);
@@ -97,7 +101,8 @@ X86_SIMD_SORT_INLINE void argsort_16_64bit(type_t *arr, int64_t *arg, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
+X86_SIMD_SORT_INLINE void
+argsort_32_64bit(type_t *arr, arrsize_t *arg, int32_t N)
 {
     if (N <= 16) {
         argsort_16_64bit<vtype>(arr, arg, N);
@@ -108,7 +113,7 @@ X86_SIMD_SORT_INLINE void argsort_32_64bit(type_t *arr, int64_t *arg, int32_t N)
     reg_t arrzmm[4];
     argreg_t argzmm[4];
 
-X86_SIMD_SORT_UNROLL_LOOP(2)
+    X86_SIMD_SORT_UNROLL_LOOP(2)
     for (int ii = 0; ii < 2; ++ii) {
         argzmm[ii] = argtype::loadu(arg + 8 * ii);
         arrzmm[ii] = vtype::i64gather(arr, arg + 8 * ii);
@@ -117,7 +122,7 @@ X86_SIMD_SORT_UNROLL_LOOP(2)
 
     uint64_t combined_mask = (0x1ull << (N - 16)) - 0x1ull;
     opmask_t load_mask[2] = {0xFF, 0xFF};
-X86_SIMD_SORT_UNROLL_LOOP(2)
+    X86_SIMD_SORT_UNROLL_LOOP(2)
     for (int ii = 0; ii < 2; ++ii) {
         load_mask[ii] = (combined_mask >> (ii * 8)) & 0xFF;
         argzmm[ii + 2] = argtype::maskz_loadu(load_mask[ii], arg + 16 + 8 * ii);
@@ -140,7 +145,8 @@ X86_SIMD_SORT_UNROLL_LOOP(2)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
+X86_SIMD_SORT_INLINE void
+argsort_64_64bit(type_t *arr, arrsize_t *arg, int32_t N)
 {
     if (N <= 32) {
         argsort_32_64bit<vtype>(arr, arg, N);
@@ -151,7 +157,7 @@ X86_SIMD_SORT_INLINE void argsort_64_64bit(type_t *arr, int64_t *arg, int32_t N)
     reg_t arrzmm[8];
     argreg_t argzmm[8];
 
-X86_SIMD_SORT_UNROLL_LOOP(4)
+    X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
         argzmm[ii] = argtype::loadu(arg + 8 * ii);
         arrzmm[ii] = vtype::i64gather(arr, arg + 8 * ii);
@@ -160,7 +166,7 @@ X86_SIMD_SORT_UNROLL_LOOP(4)
 
     opmask_t load_mask[4] = {0xFF, 0xFF, 0xFF, 0xFF};
     uint64_t combined_mask = (0x1ull << (N - 32)) - 0x1ull;
-X86_SIMD_SORT_UNROLL_LOOP(4)
+    X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
         load_mask[ii] = (combined_mask >> (ii * 8)) & 0xFF;
         argzmm[ii + 4] = argtype::maskz_loadu(load_mask[ii], arg + 32 + 8 * ii);
@@ -170,7 +176,7 @@ X86_SIMD_SORT_UNROLL_LOOP(4)
                                                         argzmm[ii + 4]);
     }
 
-X86_SIMD_SORT_UNROLL_LOOP(4)
+    X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 8; ii = ii + 2) {
         bitonic_merge_two_zmm_64bit<vtype, argtype>(
                 arrzmm[ii], arrzmm[ii + 1], argzmm[ii], argzmm[ii + 1]);
@@ -179,11 +185,11 @@ X86_SIMD_SORT_UNROLL_LOOP(4)
     bitonic_merge_four_zmm_64bit<vtype, argtype>(arrzmm + 4, argzmm + 4);
     bitonic_merge_eight_zmm_64bit<vtype, argtype>(arrzmm, argzmm);
 
-X86_SIMD_SORT_UNROLL_LOOP(4)
+    X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
         argtype::storeu(arg + 8 * ii, argzmm[ii]);
     }
-X86_SIMD_SORT_UNROLL_LOOP(4)
+    X86_SIMD_SORT_UNROLL_LOOP(4)
     for (int ii = 0; ii < 4; ++ii) {
         argtype::mask_storeu(arg + 32 + 8 * ii, load_mask[ii], argzmm[ii + 4]);
     }
@@ -192,7 +198,7 @@ X86_SIMD_SORT_UNROLL_LOOP(4)
 /* arsort 128 doesn't seem to make much of a difference to perf*/
 //template <typename vtype, typename type_t>
 //X86_SIMD_SORT_INLINE void
-//argsort_128_64bit(type_t *arr, int64_t *arg, int32_t N)
+//argsort_128_64bit(type_t *arr, arrsize_t *arg, int32_t N)
 //{
 //    if (N <= 64) {
 //        argsort_64_64bit<vtype>(arr, arg, N);
@@ -212,7 +218,7 @@ X86_SIMD_SORT_UNROLL_LOOP(4)
 //
 //    opmask_t load_mask[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 //    if (N != 128) {
-//    uint64_t combined_mask = (0x1ull << (N - 64)) - 0x1ull;
+//    uarrsize_t combined_mask = (0x1ull << (N - 64)) - 0x1ull;
 //X86_SIMD_SORT_UNROLL_LOOP(8)
 //        for (int ii = 0; ii < 8; ++ii) {
 //            load_mask[ii] = (combined_mask >> (ii*8)) & 0xFF;
@@ -248,14 +254,14 @@ X86_SIMD_SORT_UNROLL_LOOP(4)
 //}
 
 template <typename vtype, typename type_t>
-type_t get_pivot_64bit(type_t *arr,
-                       int64_t *arg,
-                       const int64_t left,
-                       const int64_t right)
+X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
+                                            arrsize_t *arg,
+                                            const arrsize_t left,
+                                            const arrsize_t right)
 {
     if (right - left >= vtype::numlanes) {
         // median of 8
-        int64_t size = (right - left) / 8;
+        arrsize_t size = (right - left) / 8;
         using reg_t = typename vtype::reg_t;
         reg_t rand_vec = vtype::set(arr[arg[left + size]],
                                     arr[arg[left + 2 * size]],
@@ -275,11 +281,11 @@ type_t get_pivot_64bit(type_t *arr,
 }
 
 template <typename vtype, typename type_t>
-inline void argsort_64bit_(type_t *arr,
-                           int64_t *arg,
-                           int64_t left,
-                           int64_t right,
-                           int64_t max_iters)
+X86_SIMD_SORT_INLINE void argsort_64bit_(type_t *arr,
+                                         arrsize_t *arg,
+                                         arrsize_t left,
+                                         arrsize_t right,
+                                         arrsize_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -298,7 +304,7 @@ inline void argsort_64bit_(type_t *arr,
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
-    int64_t pivot_index = partition_avx512_unrolled<vtype, 4>(
+    arrsize_t pivot_index = partition_avx512_unrolled<vtype, 4>(
             arr, arg, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest)
         argsort_64bit_<vtype>(arr, arg, left, pivot_index - 1, max_iters - 1);
@@ -307,12 +313,12 @@ inline void argsort_64bit_(type_t *arr,
 }
 
 template <typename vtype, typename type_t>
-static void argselect_64bit_(type_t *arr,
-                             int64_t *arg,
-                             int64_t pos,
-                             int64_t left,
-                             int64_t right,
-                             int64_t max_iters)
+X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
+                                           arrsize_t *arg,
+                                           arrsize_t pos,
+                                           arrsize_t left,
+                                           arrsize_t right,
+                                           arrsize_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -331,7 +337,7 @@ static void argselect_64bit_(type_t *arr,
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
-    int64_t pivot_index = partition_avx512_unrolled<vtype, 4>(
+    arrsize_t pivot_index = partition_avx512_unrolled<vtype, 4>(
             arr, arg, left, right + 1, pivot, &smallest, &biggest);
     if ((pivot != smallest) && (pos < pivot_index))
         argselect_64bit_<vtype>(
@@ -343,7 +349,8 @@ static void argselect_64bit_(type_t *arr,
 
 /* argsort methods for 32-bit and 64-bit dtypes */
 template <typename T>
-void avx512_argsort(T *arr, int64_t *arg, int64_t arrsize)
+X86_SIMD_SORT_INLINE void
+avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize)
 {
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               ymm_vector<T>,
@@ -356,14 +363,15 @@ void avx512_argsort(T *arr, int64_t *arg, int64_t arrsize)
             }
         }
         argsort_64bit_<vectype>(
-                arr, arg, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+                arr, arg, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
 }
 
 template <typename T>
-std::vector<int64_t> avx512_argsort(T *arr, int64_t arrsize)
+X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx512_argsort(T *arr,
+                                                           arrsize_t arrsize)
 {
-    std::vector<int64_t> indices(arrsize);
+    std::vector<arrsize_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
     avx512_argsort<T>(arr, indices.data(), arrsize);
     return indices;
@@ -371,7 +379,8 @@ std::vector<int64_t> avx512_argsort(T *arr, int64_t arrsize)
 
 /* argselect methods for 32-bit and 64-bit dtypes */
 template <typename T>
-void avx512_argselect(T *arr, int64_t *arg, int64_t k, int64_t arrsize)
+X86_SIMD_SORT_INLINE void
+avx512_argselect(T *arr, arrsize_t *arg, arrsize_t k, arrsize_t arrsize)
 {
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               ymm_vector<T>,
@@ -385,17 +394,34 @@ void avx512_argselect(T *arr, int64_t *arg, int64_t k, int64_t arrsize)
             }
         }
         argselect_64bit_<vectype>(
-                arr, arg, k, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+                arr, arg, k, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
 }
 
 template <typename T>
-std::vector<int64_t> avx512_argselect(T *arr, int64_t k, int64_t arrsize)
+X86_SIMD_SORT_INLINE std::vector<arrsize_t>
+avx512_argselect(T *arr, arrsize_t k, arrsize_t arrsize)
 {
-    std::vector<int64_t> indices(arrsize);
+    std::vector<arrsize_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
     avx512_argselect<T>(arr, indices.data(), k, arrsize);
     return indices;
 }
+
+/* To maintain compatibility with NumPy build */
+template <typename T>
+X86_SIMD_SORT_INLINE void
+avx512_argselect(T *arr, int64_t *arg, arrsize_t k, arrsize_t arrsize)
+{
+    avx512_argselect(arr, reinterpret_cast<arrsize_t*>(arg), k, arrsize);
+}
+
+template <typename T>
+X86_SIMD_SORT_INLINE void
+avx512_argsort(T *arr, int64_t *arg, arrsize_t arrsize)
+{
+    avx512_argsort(arr, reinterpret_cast<arrsize_t*>(arg), arrsize);
+}
+
 
 #endif // AVX512_ARGSORT_64BIT

@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <vector>
 
-using argtype = zmm_vector<int64_t>;
+using argtype = zmm_vector<arrsize_t>;
 using argreg_t = typename argtype::reg_t;
 
 /*
@@ -20,14 +20,14 @@ using argreg_t = typename argtype::reg_t;
  * last element that is less than equal to the pivot.
  */
 template <typename vtype, typename type_t, typename reg_t>
-static inline int32_t partition_vec(type_t *arg,
-                                    int64_t left,
-                                    int64_t right,
-                                    const argreg_t arg_vec,
-                                    const reg_t curr_vec,
-                                    const reg_t pivot_vec,
-                                    reg_t *smallest_vec,
-                                    reg_t *biggest_vec)
+X86_SIMD_SORT_INLINE int32_t partition_vec(type_t *arg,
+                                           arrsize_t left,
+                                           arrsize_t right,
+                                           const argreg_t arg_vec,
+                                           const reg_t curr_vec,
+                                           const reg_t pivot_vec,
+                                           reg_t *smallest_vec,
+                                           reg_t *biggest_vec)
 {
     /* which elements are larger than the pivot */
     typename vtype::opmask_t gt_mask = vtype::ge(curr_vec, pivot_vec);
@@ -45,13 +45,13 @@ static inline int32_t partition_vec(type_t *arg,
  * last element that is less than equal to the pivot.
  */
 template <typename vtype, typename type_t>
-static inline int64_t partition_avx512(type_t *arr,
-                                       int64_t *arg,
-                                       int64_t left,
-                                       int64_t right,
-                                       type_t pivot,
-                                       type_t *smallest,
-                                       type_t *biggest)
+X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
+                                                arrsize_t *arg,
+                                                arrsize_t left,
+                                                arrsize_t right,
+                                                type_t pivot,
+                                                type_t *smallest,
+                                                type_t *biggest)
 {
     /* make array length divisible by vtype::numlanes , shortening the array */
     for (int32_t i = (right - left) % vtype::numlanes; i > 0; --i) {
@@ -95,8 +95,8 @@ static inline int64_t partition_avx512(type_t *arr,
     argreg_t argvec_right = argtype::loadu(arg + (right - vtype::numlanes));
     reg_t vec_right = vtype::i64gather(arr, arg + (right - vtype::numlanes));
     // store points of the vectors
-    int64_t r_store = right - vtype::numlanes;
-    int64_t l_store = left;
+    arrsize_t r_store = right - vtype::numlanes;
+    arrsize_t l_store = left;
     // indices for loading the elements
     left += vtype::numlanes;
     right -= vtype::numlanes;
@@ -160,13 +160,13 @@ static inline int64_t partition_avx512(type_t *arr,
 template <typename vtype,
           int num_unroll,
           typename type_t = typename vtype::type_t>
-static inline int64_t partition_avx512_unrolled(type_t *arr,
-                                                int64_t *arg,
-                                                int64_t left,
-                                                int64_t right,
-                                                type_t pivot,
-                                                type_t *smallest,
-                                                type_t *biggest)
+X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
+                                                         arrsize_t *arg,
+                                                         arrsize_t left,
+                                                         arrsize_t right,
+                                                         type_t pivot,
+                                                         type_t *smallest,
+                                                         type_t *biggest)
 {
     if (right - left <= 8 * num_unroll * vtype::numlanes) {
         return partition_avx512<vtype>(
@@ -196,7 +196,7 @@ static inline int64_t partition_avx512_unrolled(type_t *arr,
     // first and last vtype::numlanes values are partitioned at the end
     reg_t vec_left[num_unroll], vec_right[num_unroll];
     argreg_t argvec_left[num_unroll], argvec_right[num_unroll];
-X86_SIMD_SORT_UNROLL_LOOP(8)
+    X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         argvec_left[ii] = argtype::loadu(arg + left + vtype::numlanes * ii);
         vec_left[ii] = vtype::i64gather(arr, arg + left + vtype::numlanes * ii);
@@ -206,8 +206,8 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
                 arr, arg + (right - vtype::numlanes * (num_unroll - ii)));
     }
     // store points of the vectors
-    int64_t r_store = right - vtype::numlanes;
-    int64_t l_store = left;
+    arrsize_t r_store = right - vtype::numlanes;
+    arrsize_t l_store = left;
     // indices for loading the elements
     left += num_unroll * vtype::numlanes;
     right -= num_unroll * vtype::numlanes;
@@ -221,7 +221,7 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
          */
         if ((r_store + vtype::numlanes) - right < left - l_store) {
             right -= num_unroll * vtype::numlanes;
-X86_SIMD_SORT_UNROLL_LOOP(8)
+            X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 arg_vec[ii]
                         = argtype::loadu(arg + right + ii * vtype::numlanes);
@@ -230,7 +230,7 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
             }
         }
         else {
-X86_SIMD_SORT_UNROLL_LOOP(8)
+            X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 arg_vec[ii] = argtype::loadu(arg + left + ii * vtype::numlanes);
                 curr_vec[ii] = vtype::i64gather(
@@ -239,7 +239,7 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
             left += num_unroll * vtype::numlanes;
         }
         // partition the current vector and save it on both sides of the array
-X86_SIMD_SORT_UNROLL_LOOP(8)
+        X86_SIMD_SORT_UNROLL_LOOP(8)
         for (int ii = 0; ii < num_unroll; ++ii) {
             int32_t amount_gt_pivot
                     = partition_vec<vtype>(arg,
@@ -256,7 +256,7 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
     }
 
     /* partition and save vec_left and vec_right */
-X86_SIMD_SORT_UNROLL_LOOP(8)
+    X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         int32_t amount_gt_pivot
                 = partition_vec<vtype>(arg,
@@ -270,7 +270,7 @@ X86_SIMD_SORT_UNROLL_LOOP(8)
         l_store += (vtype::numlanes - amount_gt_pivot);
         r_store -= amount_gt_pivot;
     }
-X86_SIMD_SORT_UNROLL_LOOP(8)
+    X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         int32_t amount_gt_pivot
                 = partition_vec<vtype>(arg,
