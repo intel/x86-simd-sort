@@ -2,6 +2,7 @@
 #define X86_SIMD_SORT
 #include <stdint.h>
 #include <vector>
+#include <cstddef>
 
 #define XSS_EXPORT_SYMBOL __attribute__((visibility("default")))
 #define XSS_HIDE_SYMBOL __attribute__((visibility("hidden")))
