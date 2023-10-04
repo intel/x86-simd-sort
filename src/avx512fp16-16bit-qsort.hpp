@@ -24,7 +24,7 @@ struct zmm_vector<_Float16> {
     static const uint8_t numlanes = 32;
     static constexpr int network_sort_threshold = 128;
     static constexpr int partition_unroll_factor = 0;
-    
+
     using swizzle_ops = avx512_16bit_swizzle_ops;
 
     static __m512i get_network(int index)
@@ -138,10 +138,12 @@ struct zmm_vector<_Float16> {
     {
         return sort_zmm_16bit<zmm_vector<type_t>>(x);
     }
-    static reg_t cast_from(__m512i v){
+    static reg_t cast_from(__m512i v)
+    {
         return _mm512_castsi512_ph(v);
     }
-    static __m512i cast_to(reg_t v){
+    static __m512i cast_to(reg_t v)
+    {
         return _mm512_castph_si512(v);
     }
 };

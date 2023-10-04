@@ -203,9 +203,7 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr, arrsize_t size)
         }
     }
     /* Haven't checked for nan when ii == jj */
-    if (is_a_nan(arr[ii])) {
-        count++;
-    }
+    if (is_a_nan(arr[ii])) { count++; }
     return size - count - 1;
 }
 
@@ -241,25 +239,24 @@ X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
  */
 template <typename vtype, typename type_t, typename reg_t>
 X86_SIMD_SORT_INLINE void partition_vec(type_t *arr,
-                                           arrsize_t& left,
-                                           arrsize_t& unpartitioned,
-                                           const reg_t curr_vec,
-                                           const reg_t pivot_vec,
-                                           reg_t &smallest_vec,
-                                           reg_t &biggest_vec)
+                                        arrsize_t &left,
+                                        arrsize_t &unpartitioned,
+                                        const reg_t curr_vec,
+                                        const reg_t pivot_vec,
+                                        reg_t &smallest_vec,
+                                        reg_t &biggest_vec)
 {
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
     uint64_t amount_ge_pivot = _mm_popcnt_u64(ge_mask);
     vtype::mask_compressstoreu(
             arr + left, vtype::knot_opmask(ge_mask), curr_vec);
-    
+
     left += (vtype::numlanes - amount_ge_pivot);
-            
-    vtype::mask_compressstoreu(
-            arr + left + unpartitioned, ge_mask, curr_vec);
-    
+
+    vtype::mask_compressstoreu(arr + left + unpartitioned, ge_mask, curr_vec);
+
     unpartitioned -= vtype::numlanes;
-    
+
     smallest_vec = vtype::min(curr_vec, smallest_vec);
     biggest_vec = vtype::max(curr_vec, biggest_vec);
 }
@@ -299,9 +296,10 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
         reg_t vec = vtype::loadu(arr + left);
         uint64_t unpartitioned = right - left - vtype::numlanes;
         uint64_t l_store = left;
-        
-        partition_vec<vtype>(arr, l_store, unpartitioned, vec, pivot_vec, min_vec, max_vec);
-        
+
+        partition_vec<vtype>(
+                arr, l_store, unpartitioned, vec, pivot_vec, min_vec, max_vec);
+
         return l_store;
     }
 
@@ -321,7 +319,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
          * then next elements are loaded from the right side,
          * otherwise from the left side
          */
-        if ((l_store + unpartitioned + vtype::numlanes) - right < left - l_store) {
+        if ((l_store + unpartitioned + vtype::numlanes) - right
+            < left - l_store) {
             right -= vtype::numlanes;
             curr_vec = vtype::loadu(arr + right);
         }
@@ -330,13 +329,26 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
             left += vtype::numlanes;
         }
         // partition the current vector and save it on both sides of the array
-        partition_vec<vtype>(arr, l_store, unpartitioned, curr_vec, pivot_vec, min_vec, max_vec);
+        partition_vec<vtype>(arr,
+                             l_store,
+                             unpartitioned,
+                             curr_vec,
+                             pivot_vec,
+                             min_vec,
+                             max_vec);
     }
 
     /* partition and save vec_left and vec_right */
-    partition_vec<vtype>(arr, l_store, unpartitioned, vec_left, pivot_vec, min_vec, max_vec);
-    partition_vec<vtype>(arr, l_store, unpartitioned, vec_right, pivot_vec, min_vec, max_vec);
-    
+    partition_vec<vtype>(
+            arr, l_store, unpartitioned, vec_left, pivot_vec, min_vec, max_vec);
+    partition_vec<vtype>(arr,
+                         l_store,
+                         unpartitioned,
+                         vec_right,
+                         pivot_vec,
+                         min_vec,
+                         max_vec);
+
     *smallest = vtype::reducemin(min_vec);
     *biggest = vtype::reducemax(max_vec);
     return l_store;
@@ -358,8 +370,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
     }
 
     /* make array length divisible by vtype::numlanes , shortening the array */
-    for (int32_t i = ((right - left) % (vtype::numlanes)); i > 0;
-         --i) {
+    for (int32_t i = ((right - left) % (vtype::numlanes)); i > 0; --i) {
         *smallest = std::min(*smallest, arr[left], comparison_func<vtype>);
         *biggest = std::max(*biggest, arr[left], comparison_func<vtype>);
         if (!comparison_func<vtype>(arr[left], pivot)) {
@@ -369,46 +380,48 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
             ++left;
         }
     }
-    
+
     if (left == right)
         return left; /* less than vtype::numlanes elements in the array */
-    
+
     using reg_t = typename vtype::reg_t;
     reg_t pivot_vec = vtype::set1(pivot);
     reg_t min_vec = vtype::set1(*smallest);
     reg_t max_vec = vtype::set1(*biggest);
-    
+
     int64_t vecsToPartition = ((right - left) / vtype::numlanes) % num_unroll;
     type_t buffer[num_unroll * vtype::numlanes];
     int32_t bufferStored = 0;
     int64_t leftStore = left;
-    
-    for (int32_t i = 0; i < vecsToPartition; i++){
+
+    for (int32_t i = 0; i < vecsToPartition; i++) {
         reg_t curr_vec = vtype::loadu(arr + left + i * vtype::numlanes);
         typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
         int32_t amount_ge_pivot = _mm_popcnt_u64((int64_t)ge_mask);
         vtype::mask_compressstoreu(
                 arr + leftStore, vtype::knot_opmask(ge_mask), curr_vec);
-                
-        vtype::mask_compressstoreu(
-                buffer + bufferStored, ge_mask, curr_vec);
-                
+
+        vtype::mask_compressstoreu(buffer + bufferStored, ge_mask, curr_vec);
+
         min_vec = vtype::min(curr_vec, min_vec);
         max_vec = vtype::max(curr_vec, max_vec);
-        
+
         bufferStored += amount_ge_pivot;
         leftStore += vtype::numlanes - amount_ge_pivot;
     }
-    
+
     *smallest = vtype::reducemin(min_vec);
     *biggest = vtype::reducemax(max_vec);
-    
+
     // We can't just store the buffer on the right, since this would override data that has no copies elsewhere
     // Instead, copy the data that is currently on the right, and store it on the left side in the space between leftStore and left
     // Then we copy the buffer onto the right side
-    std::memcpy(arr + leftStore, arr + right - bufferStored, bufferStored * sizeof(type_t));
-    std::memcpy(arr + right - bufferStored, buffer, bufferStored * sizeof(type_t));
-    
+    std::memcpy(arr + leftStore,
+                arr + right - bufferStored,
+                bufferStored * sizeof(type_t));
+    std::memcpy(
+            arr + right - bufferStored, buffer, bufferStored * sizeof(type_t));
+
     // The change to left depends only on numVecs, since we store the data replaced by the buffer on the left side
     left += vecsToPartition * vtype::numlanes - bufferStored;
     right -= bufferStored;
@@ -438,37 +451,60 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
          * then next elements are loaded from the right side,
          * otherwise from the left side
          */
-        if ((l_store + unpartitioned + vtype::numlanes) - right < left - l_store) {
+        if ((l_store + unpartitioned + vtype::numlanes) - right
+            < left - l_store) {
             right -= num_unroll * vtype::numlanes;
             X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + right + ii * vtype::numlanes);
-                _mm_prefetch(arr + right + ii * vtype::numlanes - num_unroll * vtype::numlanes, _MM_HINT_T0);
+                _mm_prefetch(arr + right + ii * vtype::numlanes
+                                     - num_unroll * vtype::numlanes,
+                             _MM_HINT_T0);
             }
         }
         else {
             X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + left + ii * vtype::numlanes);
-                _mm_prefetch(arr + left + ii * vtype::numlanes + num_unroll * vtype::numlanes, _MM_HINT_T0);
+                _mm_prefetch(arr + left + ii * vtype::numlanes
+                                     + num_unroll * vtype::numlanes,
+                             _MM_HINT_T0);
             }
             left += num_unroll * vtype::numlanes;
         }
         // partition the current vector and save it on both sides of the array
         X86_SIMD_SORT_UNROLL_LOOP(8)
         for (int ii = 0; ii < num_unroll; ++ii) {
-            partition_vec<vtype>(arr, l_store, unpartitioned, curr_vec[ii], pivot_vec, min_vec, max_vec);
+            partition_vec<vtype>(arr,
+                                 l_store,
+                                 unpartitioned,
+                                 curr_vec[ii],
+                                 pivot_vec,
+                                 min_vec,
+                                 max_vec);
         }
     }
 
     /* partition and save vec_left[8] and vec_right[8] */
     X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
-        partition_vec<vtype>(arr, l_store, unpartitioned, vec_left[ii], pivot_vec, min_vec, max_vec);
+        partition_vec<vtype>(arr,
+                             l_store,
+                             unpartitioned,
+                             vec_left[ii],
+                             pivot_vec,
+                             min_vec,
+                             max_vec);
     }
     X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
-        partition_vec<vtype>(arr, l_store, unpartitioned, vec_right[ii], pivot_vec, min_vec, max_vec);
+        partition_vec<vtype>(arr,
+                             l_store,
+                             unpartitioned,
+                             vec_right[ii],
+                             pivot_vec,
+                             min_vec,
+                             max_vec);
     }
     *smallest = vtype::reducemin(min_vec);
     *biggest = vtype::reducemax(max_vec);
@@ -816,10 +852,13 @@ template <typename vtype, int maxN>
 void sort_n(typename vtype::type_t *arr, int N);
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_blocks(type_t * arr, uint64_t left, uint64_t right);
+X86_SIMD_SORT_INLINE type_t get_pivot_blocks(type_t *arr,
+                                             uint64_t left,
+                                             uint64_t right);
 
 template <typename vtype, typename type_t>
-static void qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
+static void
+qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
