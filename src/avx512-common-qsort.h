@@ -68,6 +68,7 @@
 #define SHUFFLE_MASK(a, b, c, d) (a << 6) | (b << 4) | (c << 2) | d
 
 #define PRAGMA(x) _Pragma(#x)
+#define UNUSED(x) (void)(x)
 
 /* Compiler specific macros specific */
 #ifdef _MSC_VER
@@ -929,6 +930,7 @@ avx512_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
             indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
         }
     }
+    UNUSED(hasnan);
     if (indx_last_elem >= k) {
         qselect_<zmm_vector<T>, T>(
                 arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));

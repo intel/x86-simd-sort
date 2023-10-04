@@ -54,8 +54,10 @@ template <typename vtype,
           typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE void bitonic_fullmerge_n_vec(reg_t *regs)
 {
-    if constexpr (numPer > numVecs)
+    if constexpr (numPer > numVecs) {
+        UNUSED(regs);
         return;
+    }
     else {
         X86_SIMD_SORT_UNROLL_LOOP(64)
         for (int i = 0; i < numVecs / numPer; i++) {
