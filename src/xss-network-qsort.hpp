@@ -5,24 +5,7 @@
 #include "xss-optimal-networks.hpp"
 
 template <typename vtype,
-          int64_t numVecs,
-          typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_FINLINE void bitonic_clean_n_vec(reg_t *regs)
-{
-    X86_SIMD_SORT_UNROLL_LOOP(512)
-    for (int num = numVecs / 2; num >= 2; num /= 2) {
-        X86_SIMD_SORT_UNROLL_LOOP(512)
-        for (int j = 0; j < numVecs; j += num) {
-            X86_SIMD_SORT_UNROLL_LOOP(512)
-            for (int i = 0; i < num / 2; i++) {
-                COEX<vtype>(regs[i + j], regs[i + j + num / 2]);
-            }
-        }
-    }
-}
-
-template <typename vtype,
-          int64_t numVecs,
+          int numVecs,
           typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void bitonic_sort_n_vec(reg_t *regs)
 {
@@ -46,20 +29,11 @@ X86_SIMD_SORT_FINLINE void bitonic_sort_n_vec(reg_t *regs)
         optimal_sort_32<vtype>(regs);
     }
     else {
-        // TODO should we remove this branch? I believe it is never used in the current code
-        bitonic_sort_n_vec<vtype, numVecs / 2>(regs);
-        bitonic_sort_n_vec<vtype, numVecs / 2>(regs + numVecs / 2);
-
-        X86_SIMD_SORT_UNROLL_LOOP(64)
-        for (int i = 0; i < numVecs / 2; i++) {
-            COEX<vtype>(regs[i], regs[numVecs - 1 - i]);
-        }
-
-        bitonic_clean_n_vec<vtype, numVecs>(regs);
+        static_assert(numVecs == -1, "should not reach here");
     }
 }
 
-template <typename vtype, int64_t numVecs, int64_t scale, bool first = true>
+template <typename vtype, int numVecs, int scale, bool first = true>
 X86_SIMD_SORT_FINLINE void internal_merge_n_vec(typename vtype::reg_t *reg)
 {
     using reg_t = typename vtype::reg_t;
@@ -94,8 +68,8 @@ X86_SIMD_SORT_FINLINE void internal_merge_n_vec(typename vtype::reg_t *reg)
 }
 
 template <typename vtype,
-          int64_t numVecs,
-          int64_t scale,
+          int numVecs,
+          int scale,
           typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void merge_substep_n_vec(reg_t *regs)
 {
@@ -121,8 +95,8 @@ X86_SIMD_SORT_FINLINE void merge_substep_n_vec(reg_t *regs)
 }
 
 template <typename vtype,
-          int64_t numVecs,
-          int64_t scale,
+          int numVecs,
+          int scale,
           typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void merge_step_n_vec(reg_t *regs)
 {
@@ -134,8 +108,8 @@ X86_SIMD_SORT_FINLINE void merge_step_n_vec(reg_t *regs)
 }
 
 template <typename vtype,
-          int64_t numVecs,
-          int64_t numPer = 2,
+          int numVecs,
+          int numPer = 2,
           typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void merge_n_vec(reg_t *regs)
 {
@@ -216,13 +190,13 @@ X86_SIMD_SORT_INLINE void sort_n(typename vtype::type_t *arr, int N)
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot(type_t *arr,
-                                      const int64_t left,
-                                      const int64_t right);
+                                      const arrsize_t left,
+                                      const arrsize_t right);
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot_blocks(type_t *arr,
-                                             uint64_t left,
-                                             uint64_t right)
+                                             arrsize_t left,
+                                             arrsize_t right)
 {
 
     if (right - left <= 1024) { return get_pivot<vtype>(arr, left, right); }
@@ -230,8 +204,8 @@ X86_SIMD_SORT_INLINE type_t get_pivot_blocks(type_t *arr,
     using reg_t = typename vtype::reg_t;
     constexpr int numVecs = 5;
 
-    uint64_t width = (right - vtype::numlanes) - left;
-    uint64_t delta = width / numVecs;
+    arrsize_t width = (right - vtype::numlanes) - left;
+    arrsize_t delta = width / numVecs;
 
     reg_t vecs[numVecs];
     // Load data

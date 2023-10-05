@@ -247,7 +247,7 @@ X86_SIMD_SORT_INLINE void partition_vec(type_t *arr,
                                         reg_t &biggest_vec)
 {
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
-    uint64_t amount_ge_pivot = _mm_popcnt_u64(ge_mask);
+    arrsize_t amount_ge_pivot = _mm_popcnt_u64(ge_mask);
     vtype::mask_compressstoreu(
             arr + left, vtype::knot_opmask(ge_mask), curr_vec);
 
@@ -294,8 +294,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
 
     if (right - left == vtype::numlanes) {
         reg_t vec = vtype::loadu(arr + left);
-        uint64_t unpartitioned = right - left - vtype::numlanes;
-        uint64_t l_store = left;
+        arrsize_t unpartitioned = right - left - vtype::numlanes;
+        arrsize_t l_store = left;
 
         partition_vec<vtype>(
                 arr, l_store, unpartitioned, vec, pivot_vec, min_vec, max_vec);
@@ -389,12 +389,12 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
     reg_t min_vec = vtype::set1(*smallest);
     reg_t max_vec = vtype::set1(*biggest);
 
-    int64_t vecsToPartition = ((right - left) / vtype::numlanes) % num_unroll;
+    int vecsToPartition = ((right - left) / vtype::numlanes) % num_unroll;
     type_t buffer[num_unroll * vtype::numlanes];
     int32_t bufferStored = 0;
-    int64_t leftStore = left;
+    arrsize_t leftStore = left;
 
-    for (int32_t i = 0; i < vecsToPartition; i++) {
+    for (int i = 0; i < vecsToPartition; i++) {
         reg_t curr_vec = vtype::loadu(arr + left + i * vtype::numlanes);
         typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
         int32_t amount_ge_pivot = _mm_popcnt_u64((int64_t)ge_mask);
@@ -853,8 +853,8 @@ void sort_n(typename vtype::type_t *arr, int N);
 
 template <typename vtype, typename type_t>
 X86_SIMD_SORT_INLINE type_t get_pivot_blocks(type_t *arr,
-                                             uint64_t left,
-                                             uint64_t right);
+                                             arrsize_t left,
+                                             arrsize_t right);
 
 template <typename vtype, typename type_t>
 static void
