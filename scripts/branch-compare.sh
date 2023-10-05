@@ -5,7 +5,8 @@ BASE_DIR=$(dirname $SCRIPT_DIR)
 branch=$(git rev-parse --abbrev-ref HEAD)
 #br_commit=$(git rev-parse $branch)
 #main_commit=$(git rev-parse main)
-echo "Comparing main branch with $branch"
+basebranch=$1
+echo "Comparing $basebranch branch with $branch"
 
 build_branch() {
     dir_name=$1
@@ -39,14 +40,14 @@ if [ ! -d google-benchmark ]; then
 fi
 compare=$(realpath google-benchmark/tools/compare.py)
 build_branch $branch
-build_branch "main"
+build_branch $basebranch
 contender=$(realpath ${branch}/builddir/benchexe)
-baseline=$(realpath main/builddir/benchexe)
+baseline=$(realpath ${basebranch}/builddir/benchexe)
 
-if [ -z "$1" ]; then
+if [ -z "$2" ]; then
     echo "Comparing all benchmarks .."
     $compare benchmarks $baseline $contender
 else
-    echo "Comparing benchmark $1 .."
-    $compare benchmarksfiltered $baseline $1 $contender $1
+    echo "Comparing benchmark $2 .."
+    $compare benchmarksfiltered $baseline $2 $contender $2
 fi
