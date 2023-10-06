@@ -104,6 +104,7 @@
 typedef size_t arrsize_t;
 
 #include "xss-pivot-selection.hpp"
+#include "xss-network-qsort.hpp"
 
 template <typename type>
 struct zmm_vector;

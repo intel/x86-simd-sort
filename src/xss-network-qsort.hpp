@@ -1,7 +1,6 @@
 #ifndef XSS_NETWORK_QSORT
 #define XSS_NETWORK_QSORT
 
-#include "avx512-common-qsort.h"
 #include "xss-optimal-networks.hpp"
 
 template <typename vtype,
