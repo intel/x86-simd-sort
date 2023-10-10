@@ -383,6 +383,11 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
         return partition_avx512<vtype>(
                 arr, left, right, pivot, smallest, biggest);
     }
+    
+    if (right - left < 4 * vtype::numlanes){
+        return partition_avx512<vtype>(
+                arr, left, right, pivot, smallest, biggest);
+    }
 
     /* make array length divisible by vtype::numlanes , shortening the array */
     for (int32_t i = ((right - left) % (vtype::numlanes)); i > 0; --i) {
@@ -398,6 +403,10 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
 
     if (left == right)
         return left; /* less than vtype::numlanes elements in the array */
+    
+    // store points of the vectors
+    arrsize_t unpartitioned = right - left - vtype::numlanes;
+    arrsize_t l_store = left;
 
     using reg_t = typename vtype::reg_t;
     reg_t pivot_vec = vtype::set1(pivot);
@@ -405,42 +414,14 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
     reg_t max_vec = vtype::set1(*biggest);
 
     int vecsToPartition = ((right - left) / vtype::numlanes) % num_unroll;
-    type_t buffer[num_unroll * vtype::numlanes];
-    int32_t bufferStored = 0;
-    arrsize_t leftStore = left;
+
+    reg_t vec_align[num_unroll];
 
     for (int i = 0; i < vecsToPartition; i++) {
-        reg_t curr_vec = vtype::loadu(arr + left + i * vtype::numlanes);
-        
-        int32_t amount_ge_pivot = partition_vec<vtype>(arr + leftStore,
-                             buffer + num_unroll * vtype::numlanes - bufferStored - vtype::numlanes,
-                             curr_vec,
-                             pivot_vec,
-                             min_vec,
-                             max_vec);
-
-        bufferStored += amount_ge_pivot;
-        leftStore += vtype::numlanes - amount_ge_pivot;
+        vec_align[i] = vtype::loadu(arr + left + i * vtype::numlanes);
     }
 
-    *smallest = vtype::reducemin(min_vec);
-    *biggest = vtype::reducemax(max_vec);
-
-    // We can't just store the buffer on the right, since this would override data that has no copies elsewhere
-    // Instead, copy the data that is currently on the right, and store it on the left side in the space between leftStore and left
-    // Then we copy the buffer onto the right side
-    std::memcpy(arr + leftStore,
-                arr + right - bufferStored,
-                bufferStored * sizeof(type_t));
-    std::memcpy(
-            arr + right - bufferStored, buffer + num_unroll * vtype::numlanes - bufferStored, bufferStored * sizeof(type_t));
-
-    // The change to left depends only on numVecs, since we store the data replaced by the buffer on the left side
-    left += vecsToPartition * vtype::numlanes - bufferStored;
-    right -= bufferStored;
-
-    if (left == right)
-        return left; /* less than vtype::numlanes elements in the array */
+    left += vecsToPartition * vtype::numlanes;
 
     // We will now have atleast 16 registers worth of data to process:
     // left and right vtype::numlanes values are partitioned at the end
@@ -451,9 +432,6 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
         vec_right[ii] = vtype::loadu(
                 arr + (right - vtype::numlanes * (num_unroll - ii)));
     }
-    // store points of the vectors
-    arrsize_t unpartitioned = right - left - vtype::numlanes;
-    arrsize_t l_store = left;
     // indices for loading the elements
     left += num_unroll * vtype::numlanes;
     right -= num_unroll * vtype::numlanes;
@@ -522,6 +500,19 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
         l_store += (vtype::numlanes - amount_ge_pivot);
         unpartitioned -= vtype::numlanes;
     }
+    
+    X86_SIMD_SORT_UNROLL_LOOP(8)
+    for (int ii = 0; ii < vecsToPartition; ++ii) {
+        arrsize_t amount_ge_pivot = partition_vec<vtype>(arr + l_store,
+                             arr + l_store + unpartitioned,
+                             vec_align[ii],
+                             pivot_vec,
+                             min_vec,
+                             max_vec);
+        l_store += (vtype::numlanes - amount_ge_pivot);
+        unpartitioned -= vtype::numlanes;
+    }
+    
     *smallest = vtype::reducemin(min_vec);
     *biggest = vtype::reducemax(max_vec);
     return l_store;
