@@ -411,15 +411,13 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
 
     for (int i = 0; i < vecsToPartition; i++) {
         reg_t curr_vec = vtype::loadu(arr + left + i * vtype::numlanes);
-        typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
-        int32_t amount_ge_pivot = _mm_popcnt_u64((int64_t)ge_mask);
-        vtype::mask_compressstoreu(
-                arr + leftStore, vtype::knot_opmask(ge_mask), curr_vec);
-
-        vtype::mask_compressstoreu(buffer + bufferStored, ge_mask, curr_vec);
-
-        min_vec = vtype::min(curr_vec, min_vec);
-        max_vec = vtype::max(curr_vec, max_vec);
+        
+        int32_t amount_ge_pivot = partition_vec<vtype>(arr + leftStore,
+                             buffer + num_unroll * vtype::numlanes - bufferStored - vtype::numlanes,
+                             curr_vec,
+                             pivot_vec,
+                             min_vec,
+                             max_vec);
 
         bufferStored += amount_ge_pivot;
         leftStore += vtype::numlanes - amount_ge_pivot;
@@ -435,7 +433,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
                 arr + right - bufferStored,
                 bufferStored * sizeof(type_t));
     std::memcpy(
-            arr + right - bufferStored, buffer, bufferStored * sizeof(type_t));
+            arr + right - bufferStored, buffer + num_unroll * vtype::numlanes - bufferStored, bufferStored * sizeof(type_t));
 
     // The change to left depends only on numVecs, since we store the data replaced by the buffer on the left side
     left += vecsToPartition * vtype::numlanes - bufferStored;
