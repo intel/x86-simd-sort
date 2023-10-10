@@ -369,6 +369,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
     return l_store;
 }
 
+#include <iostream>
+
 template <typename vtype,
           int num_unroll,
           typename type_t = typename vtype::type_t>
@@ -384,9 +386,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
                 arr, left, right, pivot, smallest, biggest);
     }
     
-    if (right - left < 4 * vtype::numlanes){
-        return partition_avx512<vtype>(
-                arr, left, right, pivot, smallest, biggest);
+    if (right - left < 3 * num_unroll * vtype::numlanes){
+        return partition_avx512<vtype>(arr, left, right, pivot, smallest, biggest);
     }
 
     /* make array length divisible by vtype::numlanes , shortening the array */
