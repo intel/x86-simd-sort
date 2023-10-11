@@ -20,7 +20,11 @@ struct zmm_vector<float16> {
     using halfreg_t = __m256i;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+#ifdef XSS_MINIMAL_NETWORK_SORT
+    static constexpr int network_sort_threshold = numlanes;
+#else
     static constexpr int network_sort_threshold = 512;
+#endif
     static constexpr int partition_unroll_factor = 0;
 
     using swizzle_ops = avx512_16bit_swizzle_ops;
@@ -182,7 +186,11 @@ struct zmm_vector<int16_t> {
     using halfreg_t = __m256i;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+#ifdef XSS_MINIMAL_NETWORK_SORT
+    static constexpr int network_sort_threshold = numlanes;
+#else
     static constexpr int network_sort_threshold = 512;
+#endif
     static constexpr int partition_unroll_factor = 0;
 
     using swizzle_ops = avx512_16bit_swizzle_ops;
@@ -301,7 +309,11 @@ struct zmm_vector<uint16_t> {
     using halfreg_t = __m256i;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+#ifdef XSS_MINIMAL_NETWORK_SORT
+    static constexpr int network_sort_threshold = numlanes;
+#else
     static constexpr int network_sort_threshold = 512;
+#endif
     static constexpr int partition_unroll_factor = 0;
 
     using swizzle_ops = avx512_16bit_swizzle_ops;

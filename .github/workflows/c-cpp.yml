@@ -125,3 +125,34 @@ jobs:
 
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe
+
+  SPR-gcc13-min-networksort:
+
+    runs-on: intel-ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install g++-13 libgtest-dev meson curl git cmake
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Build
+      env:
+        CXX: g++-13
+        CXXFLAGS: -DXSS_MINIMAL_NETWORK_SORT
+      run: |
+        make clean
+        meson setup --warnlevel 2 --werror --buildtype release builddir
+        cd builddir
+        ninja
+
+    - name: Run test suite on SPR
+      run: sde -spr -- ./builddir/testexe
