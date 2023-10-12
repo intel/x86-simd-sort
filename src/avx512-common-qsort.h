@@ -305,6 +305,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
         l_store += (vtype::numlanes - amount_ge_pivot);
         unpartitioned -= vtype::numlanes;
 
+        *smallest = vtype::reducemin(min_vec);
+        *biggest = vtype::reducemax(max_vec);
 
         return l_store;
     }
@@ -368,8 +370,6 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
     *biggest = vtype::reducemax(max_vec);
     return l_store;
 }
-
-#include <iostream>
 
 template <typename vtype,
           int num_unroll,
