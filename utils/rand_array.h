@@ -22,7 +22,9 @@ static std::vector<T> get_uniform_rand_array(
     std::random_device rd;
     if constexpr(std::is_floating_point_v<T>) {
         std::mt19937 gen(rd());
+#ifndef XSS_DO_NOT_SET_SEED
         gen.seed(42);
+#endif
         std::uniform_real_distribution<T> dis(min, max);
         for (int64_t ii = 0; ii < arrsize; ++ii) {
             arr.emplace_back(dis(gen));
@@ -39,7 +41,9 @@ static std::vector<T> get_uniform_rand_array(
 #endif
     else if constexpr(std::is_integral_v<T>) {
         std::default_random_engine e1(rd());
+#ifndef XSS_DO_NOT_SET_SEED
         e1.seed(42);
+#endif
         std::uniform_int_distribution<T> uniform_dist(min, max);
         for (int64_t ii = 0; ii < arrsize; ++ii) {
             arr.emplace_back(uniform_dist(e1));

@@ -1,6 +1,8 @@
 #ifndef AVX512_TEST_COMMON
 #define AVX512_TEST_COMMON
 
+#define XSS_DO_NOT_SET_SEED
+
 #include "custom-compare.h"
 #include "rand_array.h"
 #include "x86simdsort.h"
