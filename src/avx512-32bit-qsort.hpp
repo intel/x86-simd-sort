@@ -10,7 +10,6 @@
 
 #include "avx512-common-qsort.h"
 
-
 /*
  * Constants used in sorting 16 elements in a ZMM registers. Based on Bitonic
  * sorting network (see

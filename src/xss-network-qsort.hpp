@@ -3,9 +3,7 @@
 
 #include "xss-optimal-networks.hpp"
 
-template <typename vtype,
-          int numVecs,
-          typename reg_t = typename vtype::reg_t>
+template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void bitonic_sort_n_vec(reg_t *regs)
 {
     if constexpr (numVecs == 1) {

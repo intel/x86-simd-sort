@@ -9,5 +9,4 @@
 
 #include "avx512-64bit-common.h"
 
-
 #endif // AVX512_QSORT_64BIT

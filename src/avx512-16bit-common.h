@@ -9,7 +9,6 @@
 
 #include "avx512-common-qsort.h"
 
-
 /*
  * Constants used in sorting 32 elements in a ZMM registers. Based on Bitonic
  * sorting network (see
@@ -93,74 +92,221 @@ X86_SIMD_SORT_INLINE reg_t sort_zmm_16bit(reg_t zmm)
     return zmm;
 }
 
-struct avx512_16bit_swizzle_ops{
+struct avx512_16bit_swizzle_ops {
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg){
+    X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg)
+    {
         __m512i v = vtype::cast_to(reg);
-        
-        if constexpr (scale == 2){
-            __m512i mask = _mm512_set_epi16(30, 31, 28, 29, 26, 27, 24, 25, 22, 23, 20, 21, 18, 19, 16, 17, 14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1);
+
+        if constexpr (scale == 2) {
+            __m512i mask = _mm512_set_epi16(30,
+                                            31,
+                                            28,
+                                            29,
+                                            26,
+                                            27,
+                                            24,
+                                            25,
+                                            22,
+                                            23,
+                                            20,
+                                            21,
+                                            18,
+                                            19,
+                                            16,
+                                            17,
+                                            14,
+                                            15,
+                                            12,
+                                            13,
+                                            10,
+                                            11,
+                                            8,
+                                            9,
+                                            6,
+                                            7,
+                                            4,
+                                            5,
+                                            2,
+                                            3,
+                                            0,
+                                            1);
             v = _mm512_permutexvar_epi16(mask, v);
-        }else if constexpr (scale == 4){
+        }
+        else if constexpr (scale == 4) {
             v = _mm512_shuffle_epi32(v, (_MM_PERM_ENUM)0b10110001);
-        }else if constexpr (scale == 8){
+        }
+        else if constexpr (scale == 8) {
             v = _mm512_shuffle_epi32(v, (_MM_PERM_ENUM)0b01001110);
-        }else if constexpr (scale == 16){
+        }
+        else if constexpr (scale == 16) {
             v = _mm512_shuffle_i64x2(v, v, 0b10110001);
-        }else if constexpr (scale == 32){
+        }
+        else if constexpr (scale == 32) {
             v = _mm512_shuffle_i64x2(v, v, 0b01001110);
-        }else{
+        }
+        else {
             static_assert(scale == -1, "should not be reached");
         }
-        
-        return vtype::cast_from(v);
-    } 
-    
-    template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t reverse_n(typename vtype::reg_t reg){
-        __m512i v = vtype::cast_to(reg);
-        
-        if constexpr (scale == 2){
-            return swap_n<vtype, 2>(reg);
-        }else if constexpr (scale == 4){
-            __m512i mask = _mm512_set_epi16(28, 29, 30, 31, 24, 25, 26, 27, 20, 21, 22, 23, 16, 17, 18, 19, 12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3);
-            v = _mm512_permutexvar_epi16(mask, v);
-        }else if constexpr (scale == 8){
-            __m512i mask = _mm512_set_epi16(24, 25, 26, 27, 28, 29, 30, 31, 16, 17, 18, 19, 20, 21, 22, 23, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7);
-            v = _mm512_permutexvar_epi16(mask, v);
-        }else if constexpr (scale == 16){
-            __m512i mask = _mm512_set_epi16(16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-            v = _mm512_permutexvar_epi16(mask, v);
-        }else if constexpr (scale == 32){
-            return vtype::reverse(reg);
-        }else{
-            static_assert(scale == -1, "should not be reached");
-        }
-        
+
         return vtype::cast_from(v);
     }
-    
+
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t merge_n(typename vtype::reg_t reg, typename vtype::reg_t other){
-        __m512i v1 = vtype::cast_to(reg);
-        __m512i v2 = vtype::cast_to(other);
-        
-        if constexpr (scale == 2){
-            v1 = _mm512_mask_blend_epi16(0b01010101010101010101010101010101, v1, v2);
-        }else if constexpr (scale == 4){
-            v1 = _mm512_mask_blend_epi16(0b00110011001100110011001100110011, v1, v2);
-        }else if constexpr (scale == 8){
-            v1 = _mm512_mask_blend_epi16(0b00001111000011110000111100001111, v1, v2);
-        }else if constexpr (scale == 16){
-            v1 = _mm512_mask_blend_epi16(0b00000000111111110000000011111111, v1, v2);
-        }else if constexpr (scale == 32){
-            v1 = _mm512_mask_blend_epi16(0b00000000000000001111111111111111, v1, v2);
-        }else{
+    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    reverse_n(typename vtype::reg_t reg)
+    {
+        __m512i v = vtype::cast_to(reg);
+
+        if constexpr (scale == 2) { return swap_n<vtype, 2>(reg); }
+        else if constexpr (scale == 4) {
+            __m512i mask = _mm512_set_epi16(28,
+                                            29,
+                                            30,
+                                            31,
+                                            24,
+                                            25,
+                                            26,
+                                            27,
+                                            20,
+                                            21,
+                                            22,
+                                            23,
+                                            16,
+                                            17,
+                                            18,
+                                            19,
+                                            12,
+                                            13,
+                                            14,
+                                            15,
+                                            8,
+                                            9,
+                                            10,
+                                            11,
+                                            4,
+                                            5,
+                                            6,
+                                            7,
+                                            0,
+                                            1,
+                                            2,
+                                            3);
+            v = _mm512_permutexvar_epi16(mask, v);
+        }
+        else if constexpr (scale == 8) {
+            __m512i mask = _mm512_set_epi16(24,
+                                            25,
+                                            26,
+                                            27,
+                                            28,
+                                            29,
+                                            30,
+                                            31,
+                                            16,
+                                            17,
+                                            18,
+                                            19,
+                                            20,
+                                            21,
+                                            22,
+                                            23,
+                                            8,
+                                            9,
+                                            10,
+                                            11,
+                                            12,
+                                            13,
+                                            14,
+                                            15,
+                                            0,
+                                            1,
+                                            2,
+                                            3,
+                                            4,
+                                            5,
+                                            6,
+                                            7);
+            v = _mm512_permutexvar_epi16(mask, v);
+        }
+        else if constexpr (scale == 16) {
+            __m512i mask = _mm512_set_epi16(16,
+                                            17,
+                                            18,
+                                            19,
+                                            20,
+                                            21,
+                                            22,
+                                            23,
+                                            24,
+                                            25,
+                                            26,
+                                            27,
+                                            28,
+                                            29,
+                                            30,
+                                            31,
+                                            0,
+                                            1,
+                                            2,
+                                            3,
+                                            4,
+                                            5,
+                                            6,
+                                            7,
+                                            8,
+                                            9,
+                                            10,
+                                            11,
+                                            12,
+                                            13,
+                                            14,
+                                            15);
+            v = _mm512_permutexvar_epi16(mask, v);
+        }
+        else if constexpr (scale == 32) {
+            return vtype::reverse(reg);
+        }
+        else {
             static_assert(scale == -1, "should not be reached");
         }
-        
+
+        return vtype::cast_from(v);
+    }
+
+    template <typename vtype, int scale>
+    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    merge_n(typename vtype::reg_t reg, typename vtype::reg_t other)
+    {
+        __m512i v1 = vtype::cast_to(reg);
+        __m512i v2 = vtype::cast_to(other);
+
+        if constexpr (scale == 2) {
+            v1 = _mm512_mask_blend_epi16(
+                    0b01010101010101010101010101010101, v1, v2);
+        }
+        else if constexpr (scale == 4) {
+            v1 = _mm512_mask_blend_epi16(
+                    0b00110011001100110011001100110011, v1, v2);
+        }
+        else if constexpr (scale == 8) {
+            v1 = _mm512_mask_blend_epi16(
+                    0b00001111000011110000111100001111, v1, v2);
+        }
+        else if constexpr (scale == 16) {
+            v1 = _mm512_mask_blend_epi16(
+                    0b00000000111111110000000011111111, v1, v2);
+        }
+        else if constexpr (scale == 32) {
+            v1 = _mm512_mask_blend_epi16(
+                    0b00000000000000001111111111111111, v1, v2);
+        }
+        else {
+            static_assert(scale == -1, "should not be reached");
+        }
+
         return vtype::cast_from(v1);
-    } 
+    }
 };
 
 #endif // AVX512_16BIT_COMMON

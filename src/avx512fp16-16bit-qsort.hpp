@@ -9,7 +9,6 @@
 
 #include "avx512-16bit-common.h"
 
-
 typedef union {
     _Float16 f_;
     uint16_t i_;
