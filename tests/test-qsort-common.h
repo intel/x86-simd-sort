@@ -23,7 +23,7 @@
 template <typename T>
 void IS_SORTED(std::vector<T> sorted, std::vector<T> arr, std::string type)
 {
-    if (memcmp(arr.data(), sorted.data(), arr.size() * sizeof(T) != 0)) {
+    if (memcmp(arr.data(), sorted.data(), arr.size() * sizeof(T)) != 0) {
         REPORT_FAIL("Array not sorted", arr.size(), type, -1);
     }
 }
