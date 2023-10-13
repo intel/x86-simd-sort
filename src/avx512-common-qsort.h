@@ -85,7 +85,7 @@
 #define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
 #elif defined(__GNUC__)
 #define X86_SIMD_SORT_INLINE static inline
-#define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
+#define X86_SIMD_SORT_FINLINE static inline __attribute__((always_inline))
 #define LIKELY(x) __builtin_expect((x), 1)
 #define UNLIKELY(x) __builtin_expect((x), 0)
 #else
@@ -102,6 +102,9 @@
 #endif
 
 typedef size_t arrsize_t;
+
+#include "xss-pivot-selection.hpp"
+#include "xss-network-qsort.hpp"
 
 template <typename type>
 struct zmm_vector;
@@ -203,9 +206,7 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr, arrsize_t size)
         }
     }
     /* Haven't checked for nan when ii == jj */
-    if (is_a_nan(arr[ii])) {
-        count++;
-    }
+    if (is_a_nan(arr[ii])) { count++; }
     return size - count - 1;
 }
 
@@ -240,23 +241,23 @@ X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
  * number of elements that are greater than or equal to the pivot.
  */
 template <typename vtype, typename type_t, typename reg_t>
-X86_SIMD_SORT_INLINE int32_t partition_vec(type_t *arr,
-                                           arrsize_t left,
-                                           arrsize_t right,
-                                           const reg_t curr_vec,
-                                           const reg_t pivot_vec,
-                                           reg_t *smallest_vec,
-                                           reg_t *biggest_vec)
+X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
+                                             type_t *r_store,
+                                             const reg_t curr_vec,
+                                             const reg_t pivot_vec,
+                                             reg_t &smallest_vec,
+                                             reg_t &biggest_vec)
 {
-    /* which elements are larger than or equal to the pivot */
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
-    int32_t amount_ge_pivot = _mm_popcnt_u32((int32_t)ge_mask);
+    arrsize_t amount_ge_pivot = _mm_popcnt_u64(ge_mask);
+
+    vtype::mask_compressstoreu(l_store, vtype::knot_opmask(ge_mask), curr_vec);
     vtype::mask_compressstoreu(
-            arr + left, vtype::knot_opmask(ge_mask), curr_vec);
-    vtype::mask_compressstoreu(
-            arr + right - amount_ge_pivot, ge_mask, curr_vec);
-    *smallest_vec = vtype::min(curr_vec, *smallest_vec);
-    *biggest_vec = vtype::max(curr_vec, *biggest_vec);
+            r_store + vtype::numlanes - amount_ge_pivot, ge_mask, curr_vec);
+
+    smallest_vec = vtype::min(curr_vec, smallest_vec);
+    biggest_vec = vtype::max(curr_vec, biggest_vec);
+
     return amount_ge_pivot;
 }
 /*
@@ -293,23 +294,27 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
 
     if (right - left == vtype::numlanes) {
         reg_t vec = vtype::loadu(arr + left);
-        int32_t amount_ge_pivot = partition_vec<vtype>(arr,
-                                                       left,
-                                                       left + vtype::numlanes,
-                                                       vec,
-                                                       pivot_vec,
-                                                       &min_vec,
-                                                       &max_vec);
+        arrsize_t unpartitioned = right - left - vtype::numlanes;
+        arrsize_t l_store = left;
+
+        arrsize_t amount_ge_pivot
+                = partition_vec<vtype>(arr + l_store,
+                                       arr + l_store + unpartitioned,
+                                       vec,
+                                       pivot_vec,
+                                       min_vec,
+                                       max_vec);
+        l_store += (vtype::numlanes - amount_ge_pivot);
         *smallest = vtype::reducemin(min_vec);
         *biggest = vtype::reducemax(max_vec);
-        return left + (vtype::numlanes - amount_ge_pivot);
+        return l_store;
     }
 
     // first and last vtype::numlanes values are partitioned at the end
     reg_t vec_left = vtype::loadu(arr + left);
     reg_t vec_right = vtype::loadu(arr + (right - vtype::numlanes));
     // store points of the vectors
-    arrsize_t r_store = right - vtype::numlanes;
+    arrsize_t unpartitioned = right - left - vtype::numlanes;
     arrsize_t l_store = left;
     // indices for loading the elements
     left += vtype::numlanes;
@@ -321,7 +326,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
          * then next elements are loaded from the right side,
          * otherwise from the left side
          */
-        if ((r_store + vtype::numlanes) - right < left - l_store) {
+        if ((l_store + unpartitioned + vtype::numlanes) - right
+            < left - l_store) {
             right -= vtype::numlanes;
             curr_vec = vtype::loadu(arr + right);
         }
@@ -330,36 +336,37 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
             left += vtype::numlanes;
         }
         // partition the current vector and save it on both sides of the array
-        int32_t amount_ge_pivot
-                = partition_vec<vtype>(arr,
-                                       l_store,
-                                       r_store + vtype::numlanes,
+        arrsize_t amount_ge_pivot
+                = partition_vec<vtype>(arr + l_store,
+                                       arr + l_store + unpartitioned,
                                        curr_vec,
                                        pivot_vec,
-                                       &min_vec,
-                                       &max_vec);
-        ;
-        r_store -= amount_ge_pivot;
+                                       min_vec,
+                                       max_vec);
         l_store += (vtype::numlanes - amount_ge_pivot);
+        unpartitioned -= vtype::numlanes;
     }
 
     /* partition and save vec_left and vec_right */
-    int32_t amount_ge_pivot = partition_vec<vtype>(arr,
-                                                   l_store,
-                                                   r_store + vtype::numlanes,
-                                                   vec_left,
-                                                   pivot_vec,
-                                                   &min_vec,
-                                                   &max_vec);
+    arrsize_t amount_ge_pivot
+            = partition_vec<vtype>(arr + l_store,
+                                   arr + l_store + unpartitioned,
+                                   vec_left,
+                                   pivot_vec,
+                                   min_vec,
+                                   max_vec);
     l_store += (vtype::numlanes - amount_ge_pivot);
-    amount_ge_pivot = partition_vec<vtype>(arr,
-                                           l_store,
-                                           l_store + vtype::numlanes,
+    unpartitioned -= vtype::numlanes;
+
+    amount_ge_pivot = partition_vec<vtype>(arr + l_store,
+                                           arr + l_store + unpartitioned,
                                            vec_right,
                                            pivot_vec,
-                                           &min_vec,
-                                           &max_vec);
+                                           min_vec,
+                                           max_vec);
     l_store += (vtype::numlanes - amount_ge_pivot);
+    unpartitioned -= vtype::numlanes;
+
     *smallest = vtype::reducemin(min_vec);
     *biggest = vtype::reducemax(max_vec);
     return l_store;
@@ -380,13 +387,14 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
                 arr, left, right, pivot, smallest, biggest);
     }
 
-    if (right - left <= 2 * num_unroll * vtype::numlanes) {
+    /* Use regular partition_avx512 for smaller arrays */
+    if (right - left < 3 * num_unroll * vtype::numlanes) {
         return partition_avx512<vtype>(
                 arr, left, right, pivot, smallest, biggest);
     }
-    /* make array length divisible by 8*vtype::numlanes , shortening the array */
-    for (int32_t i = ((right - left) % (num_unroll * vtype::numlanes)); i > 0;
-         --i) {
+
+    /* make array length divisible by vtype::numlanes, shortening the array */
+    for (int32_t i = ((right - left) % (vtype::numlanes)); i > 0; --i) {
         *smallest = std::min(*smallest, arr[left], comparison_func<vtype>);
         *biggest = std::max(*biggest, arr[left], comparison_func<vtype>);
         if (!comparison_func<vtype>(arr[left], pivot)) {
@@ -397,16 +405,28 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
         }
     }
 
-    if (left == right)
-        return left; /* less than vtype::numlanes elements in the array */
+    arrsize_t unpartitioned = right - left - vtype::numlanes;
+    arrsize_t l_store = left;
 
     using reg_t = typename vtype::reg_t;
     reg_t pivot_vec = vtype::set1(pivot);
     reg_t min_vec = vtype::set1(*smallest);
     reg_t max_vec = vtype::set1(*biggest);
 
-    // We will now have atleast 16 registers worth of data to process:
-    // left and right vtype::numlanes values are partitioned at the end
+    /* Calculate and load more registers to make the rest of the array a
+     * multiple of num_unroll. These registers will be partitioned at the very
+     * end. */
+    int vecsToPartition = ((right - left) / vtype::numlanes) % num_unroll;
+    reg_t vec_align[num_unroll];
+    for (int i = 0; i < vecsToPartition; i++) {
+        vec_align[i] = vtype::loadu(arr + left + i * vtype::numlanes);
+    }
+    left += vecsToPartition * vtype::numlanes;
+
+    /* We will now have atleast 3*num_unroll registers worth of data to
+     * process. Load left and right vtype::numlanes*num_unroll values into
+     * registers to make space for in-place parition. The vec_left and
+     * vec_right registers are partitioned at the end */
     reg_t vec_left[num_unroll], vec_right[num_unroll];
     X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
@@ -414,10 +434,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
         vec_right[ii] = vtype::loadu(
                 arr + (right - vtype::numlanes * (num_unroll - ii)));
     }
-    // store points of the vectors
-    arrsize_t r_store = right - vtype::numlanes;
-    arrsize_t l_store = left;
-    // indices for loading the elements
+    /* indices for loading the elements */
     left += num_unroll * vtype::numlanes;
     right -= num_unroll * vtype::numlanes;
     while (right - left != 0) {
@@ -427,63 +444,83 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
          * then next elements are loaded from the right side,
          * otherwise from the left side
          */
-        if ((r_store + vtype::numlanes) - right < left - l_store) {
+        if ((l_store + unpartitioned + vtype::numlanes) - right
+            < left - l_store) {
             right -= num_unroll * vtype::numlanes;
             X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + right + ii * vtype::numlanes);
+                _mm_prefetch(arr + right + ii * vtype::numlanes
+                                     - num_unroll * vtype::numlanes,
+                             _MM_HINT_T0);
             }
         }
         else {
             X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + left + ii * vtype::numlanes);
+                _mm_prefetch(arr + left + ii * vtype::numlanes
+                                     + num_unroll * vtype::numlanes,
+                             _MM_HINT_T0);
             }
             left += num_unroll * vtype::numlanes;
         }
-        // partition the current vector and save it on both sides of the array
+        /* partition the current vector and save it on both sides of the array
+         * */
         X86_SIMD_SORT_UNROLL_LOOP(8)
         for (int ii = 0; ii < num_unroll; ++ii) {
-            int32_t amount_ge_pivot
-                    = partition_vec<vtype>(arr,
-                                           l_store,
-                                           r_store + vtype::numlanes,
+            arrsize_t amount_ge_pivot
+                    = partition_vec<vtype>(arr + l_store,
+                                           arr + l_store + unpartitioned,
                                            curr_vec[ii],
                                            pivot_vec,
-                                           &min_vec,
-                                           &max_vec);
+                                           min_vec,
+                                           max_vec);
             l_store += (vtype::numlanes - amount_ge_pivot);
-            r_store -= amount_ge_pivot;
+            unpartitioned -= vtype::numlanes;
         }
     }
 
-    /* partition and save vec_left[8] and vec_right[8] */
+    /* partition and save vec_left[num_unroll] and vec_right[num_unroll] */
     X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
-        int32_t amount_ge_pivot
-                = partition_vec<vtype>(arr,
-                                       l_store,
-                                       r_store + vtype::numlanes,
+        arrsize_t amount_ge_pivot
+                = partition_vec<vtype>(arr + l_store,
+                                       arr + l_store + unpartitioned,
                                        vec_left[ii],
                                        pivot_vec,
-                                       &min_vec,
-                                       &max_vec);
+                                       min_vec,
+                                       max_vec);
         l_store += (vtype::numlanes - amount_ge_pivot);
-        r_store -= amount_ge_pivot;
+        unpartitioned -= vtype::numlanes;
     }
     X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
-        int32_t amount_ge_pivot
-                = partition_vec<vtype>(arr,
-                                       l_store,
-                                       r_store + vtype::numlanes,
+        arrsize_t amount_ge_pivot
+                = partition_vec<vtype>(arr + l_store,
+                                       arr + l_store + unpartitioned,
                                        vec_right[ii],
                                        pivot_vec,
-                                       &min_vec,
-                                       &max_vec);
+                                       min_vec,
+                                       max_vec);
         l_store += (vtype::numlanes - amount_ge_pivot);
-        r_store -= amount_ge_pivot;
+        unpartitioned -= vtype::numlanes;
     }
+
+    /* partition and save vec_align[vecsToPartition] */
+    X86_SIMD_SORT_UNROLL_LOOP(8)
+    for (int ii = 0; ii < vecsToPartition; ++ii) {
+        arrsize_t amount_ge_pivot
+                = partition_vec<vtype>(arr + l_store,
+                                       arr + l_store + unpartitioned,
+                                       vec_align[ii],
+                                       pivot_vec,
+                                       min_vec,
+                                       max_vec);
+        l_store += (vtype::numlanes - amount_ge_pivot);
+        unpartitioned -= vtype::numlanes;
+    }
+
     *smallest = vtype::reducemin(min_vec);
     *biggest = vtype::reducemax(max_vec);
     return l_store;
@@ -697,140 +734,11 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t1 *keys,
     return l_store;
 }
 
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_scalar(type_t *arr,
-                                             const arrsize_t left,
-                                             const arrsize_t right)
-{
-    constexpr arrsize_t numSamples = vtype::numlanes;
-    type_t samples[numSamples];
-
-    arrsize_t delta = (right - left) / numSamples;
-
-    for (int i = 0; i < numSamples; i++) {
-        samples[i] = arr[left + i * delta];
-    }
-
-    auto vec = vtype::loadu(samples);
-    vec = vtype::sort_vec(vec);
-    return ((type_t *)&vec)[numSamples / 2];
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_16bit(type_t *arr,
-                                            const arrsize_t left,
-                                            const arrsize_t right)
-{
-    // median of 32
-    arrsize_t size = (right - left) / 32;
-    type_t vec_arr[32] = {arr[left],
-                          arr[left + size],
-                          arr[left + 2 * size],
-                          arr[left + 3 * size],
-                          arr[left + 4 * size],
-                          arr[left + 5 * size],
-                          arr[left + 6 * size],
-                          arr[left + 7 * size],
-                          arr[left + 8 * size],
-                          arr[left + 9 * size],
-                          arr[left + 10 * size],
-                          arr[left + 11 * size],
-                          arr[left + 12 * size],
-                          arr[left + 13 * size],
-                          arr[left + 14 * size],
-                          arr[left + 15 * size],
-                          arr[left + 16 * size],
-                          arr[left + 17 * size],
-                          arr[left + 18 * size],
-                          arr[left + 19 * size],
-                          arr[left + 20 * size],
-                          arr[left + 21 * size],
-                          arr[left + 22 * size],
-                          arr[left + 23 * size],
-                          arr[left + 24 * size],
-                          arr[left + 25 * size],
-                          arr[left + 26 * size],
-                          arr[left + 27 * size],
-                          arr[left + 28 * size],
-                          arr[left + 29 * size],
-                          arr[left + 30 * size],
-                          arr[left + 31 * size]};
-    typename vtype::reg_t rand_vec = vtype::loadu(vec_arr);
-    typename vtype::reg_t sort = vtype::sort_vec(rand_vec);
-    return ((type_t *)&sort)[16];
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
-                                            const arrsize_t left,
-                                            const arrsize_t right)
-{
-    // median of 16
-    arrsize_t size = (right - left) / 16;
-    using reg_t = typename vtype::reg_t;
-    type_t vec_arr[16] = {arr[left + size],
-                          arr[left + 2 * size],
-                          arr[left + 3 * size],
-                          arr[left + 4 * size],
-                          arr[left + 5 * size],
-                          arr[left + 6 * size],
-                          arr[left + 7 * size],
-                          arr[left + 8 * size],
-                          arr[left + 9 * size],
-                          arr[left + 10 * size],
-                          arr[left + 11 * size],
-                          arr[left + 12 * size],
-                          arr[left + 13 * size],
-                          arr[left + 14 * size],
-                          arr[left + 15 * size],
-                          arr[left + 16 * size]};
-    reg_t rand_vec = vtype::loadu(vec_arr);
-    reg_t sort = vtype::sort_vec(rand_vec);
-    // pivot will never be a nan, since there are no nan's!
-    return ((type_t *)&sort)[8];
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
-                                            const arrsize_t left,
-                                            const arrsize_t right)
-{
-    // median of 8
-    arrsize_t size = (right - left) / 8;
-    using reg_t = typename vtype::reg_t;
-    reg_t rand_vec = vtype::set(arr[left + size],
-                                arr[left + 2 * size],
-                                arr[left + 3 * size],
-                                arr[left + 4 * size],
-                                arr[left + 5 * size],
-                                arr[left + 6 * size],
-                                arr[left + 7 * size],
-                                arr[left + 8 * size]);
-    // pivot will never be a nan, since there are no nan's!
-    reg_t sort = vtype::sort_vec(rand_vec);
-    return ((type_t *)&sort)[4];
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot(type_t *arr,
-                                      const arrsize_t left,
-                                      const arrsize_t right)
-{
-    if constexpr (vtype::numlanes == 8)
-        return get_pivot_64bit<vtype>(arr, left, right);
-    else if constexpr (vtype::numlanes == 16)
-        return get_pivot_32bit<vtype>(arr, left, right);
-    else if constexpr (vtype::numlanes == 32)
-        return get_pivot_16bit<vtype>(arr, left, right);
-    else
-        return get_pivot_scalar<vtype>(arr, left, right);
-}
-
 template <typename vtype, int maxN>
 void sort_n(typename vtype::type_t *arr, int N);
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE void
+static void
 qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
 {
     /*
@@ -849,7 +757,7 @@ qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
         return;
     }
 
-    type_t pivot = get_pivot<vtype, type_t>(arr, left, right);
+    type_t pivot = get_pivot_blocks<vtype, type_t>(arr, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
 

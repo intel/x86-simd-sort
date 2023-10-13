@@ -1,6 +1,8 @@
 #ifndef AVX512_TEST_COMMON
 #define AVX512_TEST_COMMON
 
+#define XSS_DO_NOT_SET_SEED
+
 #include "custom-compare.h"
 #include "rand_array.h"
 #include "x86simdsort.h"
@@ -21,7 +23,7 @@
 template <typename T>
 void IS_SORTED(std::vector<T> sorted, std::vector<T> arr, std::string type)
 {
-    if (memcmp(arr.data(), sorted.data(), arr.size() * sizeof(T) != 0)) {
+    if (memcmp(arr.data(), sorted.data(), arr.size() * sizeof(T)) != 0) {
         REPORT_FAIL("Array not sorted", arr.size(), type, -1);
     }
 }

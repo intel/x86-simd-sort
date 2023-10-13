@@ -1,75 +1,148 @@
 #ifndef XSS_NETWORK_QSORT
 #define XSS_NETWORK_QSORT
 
-#include "avx512-common-qsort.h"
+#include "xss-optimal-networks.hpp"
 
 template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE void bitonic_clean_n_vec(reg_t *regs)
+X86_SIMD_SORT_FINLINE void bitonic_sort_n_vec(reg_t *regs)
 {
-    X86_SIMD_SORT_UNROLL_LOOP(64)
-    for (int num = numVecs / 2; num >= 2; num /= 2) {
-        X86_SIMD_SORT_UNROLL_LOOP(64)
-        for (int j = 0; j < numVecs; j += num) {
-            X86_SIMD_SORT_UNROLL_LOOP(64)
-            for (int i = 0; i < num / 2; i++) {
-                COEX<vtype>(regs[i + j], regs[i + j + num / 2]);
-            }
-        }
+    if constexpr (numVecs == 1) {
+        UNUSED(regs);
+        return;
+    }
+    else if constexpr (numVecs == 2) {
+        COEX<vtype>(regs[0], regs[1]);
+    }
+    else if constexpr (numVecs == 4) {
+        optimal_sort_4<vtype>(regs);
+    }
+    else if constexpr (numVecs == 8) {
+        optimal_sort_8<vtype>(regs);
+    }
+    else if constexpr (numVecs == 16) {
+        optimal_sort_16<vtype>(regs);
+    }
+    else if constexpr (numVecs == 32) {
+        optimal_sort_32<vtype>(regs);
+    }
+    else {
+        static_assert(numVecs == -1, "should not reach here");
     }
 }
 
-template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_n_vec(reg_t *regs)
+/*
+ * Swizzle ops explained:
+ * swap_n<scale>: swap neighbouring blocks of size <scale/2> within block of size <scale>
+ * reg i        = [7,6,5,4,3,2,1,0]
+ * swap_n<2>:   = [[6,7],[4,5],[2,3],[0,1]]
+ * swap_n<4>:   = [[5,4,7,6],[1,0,3,2]]
+ * swap_n<8>:   = [[3,2,1,0,7,6,5,4]]
+ * reverse_n<scale>: reverse elements within block of size <scale>
+ * reg i        = [7,6,5,4,3,2,1,0]
+ * rev_n<2>:    = [[6,7],[4,5],[2,3],[0,1]]
+ * rev_n<4>:    = [[4,5,6,7],[0,1,2,3]]
+ * rev_n<8>:    = [[0,1,2,3,4,5,6,7]]
+ * merge_n<scale>: merge blocks of <scale/2> elements from two regs
+ * reg b,a      = [a,a,a,a,a,a,a,a], [b,b,b,b,b,b,b,b]
+ * merge_n<2>   = [a,b,a,b,a,b,a,b]
+ * merge_n<4>   = [a,a,b,b,a,a,b,b]
+ * merge_n<8>   = [a,a,a,a,b,b,b,b]
+ */
+
+template <typename vtype, int numVecs, int scale, bool first = true>
+X86_SIMD_SORT_FINLINE void internal_merge_n_vec(typename vtype::reg_t *reg)
 {
-    // Do the reverse part
-    if constexpr (numVecs == 2) {
-        regs[1] = vtype::reverse(regs[1]);
-        COEX<vtype>(regs[0], regs[1]);
+    using reg_t = typename vtype::reg_t;
+    using swizzle = typename vtype::swizzle_ops;
+    if constexpr (scale <= 1) {
+        UNUSED(reg);
+        return;
     }
-    else if constexpr (numVecs > 2) {
-        // Reverse upper half
-        X86_SIMD_SORT_UNROLL_LOOP(64)
-        for (int i = 0; i < numVecs / 2; i++) {
-            reg_t rev = vtype::reverse(regs[numVecs - i - 1]);
-            reg_t maxV = vtype::max(regs[i], rev);
-            reg_t minV = vtype::min(regs[i], rev);
-            regs[numVecs - i - 1] = vtype::reverse(maxV);
-            regs[i] = minV;
+    else {
+        if constexpr (first) {
+            // Use reverse then merge
+            X86_SIMD_SORT_UNROLL_LOOP(64)
+            for (int i = 0; i < numVecs; i++) {
+                reg_t &v = reg[i];
+                reg_t rev = swizzle::template reverse_n<vtype, scale>(v);
+                COEX<vtype>(rev, v);
+                v = swizzle::template merge_n<vtype, scale>(v, rev);
+            }
         }
+        else {
+            // Use swap then merge
+            X86_SIMD_SORT_UNROLL_LOOP(64)
+            for (int i = 0; i < numVecs; i++) {
+                reg_t &v = reg[i];
+                reg_t swap = swizzle::template swap_n<vtype, scale>(v);
+                COEX<vtype>(swap, v);
+                v = swizzle::template merge_n<vtype, scale>(v, swap);
+            }
+        }
+        internal_merge_n_vec<vtype, numVecs, scale / 2, false>(reg);
+    }
+}
+
+template <typename vtype,
+          int numVecs,
+          int scale,
+          typename reg_t = typename vtype::reg_t>
+X86_SIMD_SORT_FINLINE void merge_substep_n_vec(reg_t *regs)
+{
+    using swizzle = typename vtype::swizzle_ops;
+    if constexpr (numVecs <= 1) {
+        UNUSED(regs);
+        return;
     }
 
-    // Call cleaner
-    bitonic_clean_n_vec<vtype, numVecs>(regs);
-
-    // Now do bitonic_merge
+    // Reverse upper half of vectors
     X86_SIMD_SORT_UNROLL_LOOP(64)
-    for (int i = 0; i < numVecs; i++) {
-        regs[i] = vtype::bitonic_merge(regs[i]);
+    for (int i = numVecs / 2; i < numVecs; i++) {
+        regs[i] = swizzle::template reverse_n<vtype, scale>(regs[i]);
     }
+    // Do compare exchanges
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = 0; i < numVecs / 2; i++) {
+        COEX<vtype>(regs[i], regs[numVecs - 1 - i]);
+    }
+
+    merge_substep_n_vec<vtype, numVecs / 2, scale>(regs);
+    merge_substep_n_vec<vtype, numVecs / 2, scale>(regs + numVecs / 2);
+}
+
+template <typename vtype,
+          int numVecs,
+          int scale,
+          typename reg_t = typename vtype::reg_t>
+X86_SIMD_SORT_FINLINE void merge_step_n_vec(reg_t *regs)
+{
+    // Do cross vector merges
+    merge_substep_n_vec<vtype, numVecs, scale>(regs);
+
+    // Do internal vector merges
+    internal_merge_n_vec<vtype, numVecs, scale>(regs);
 }
 
 template <typename vtype,
           int numVecs,
           int numPer = 2,
           typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE void bitonic_fullmerge_n_vec(reg_t *regs)
+X86_SIMD_SORT_FINLINE void merge_n_vec(reg_t *regs)
 {
-    if constexpr (numPer > numVecs) {
+    if constexpr (numPer > vtype::numlanes) {
         UNUSED(regs);
         return;
     }
     else {
-        X86_SIMD_SORT_UNROLL_LOOP(64)
-        for (int i = 0; i < numVecs / numPer; i++) {
-            bitonic_merge_n_vec<vtype, numPer>(regs + i * numPer);
-        }
-        bitonic_fullmerge_n_vec<vtype, numVecs, numPer * 2>(regs);
+        merge_step_n_vec<vtype, numVecs, numPer>(regs);
+        merge_n_vec<vtype, numVecs, numPer * 2>(regs);
     }
 }
 
 template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
 {
+    static_assert(numVecs > 0, "numVecs should be > 0");
     if constexpr (numVecs > 1) {
         if (N * 2 <= numVecs * vtype::numlanes) {
             sort_n_vec<vtype, numVecs / 2>(arr, N);
@@ -101,14 +174,13 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
                 vtype::zmm_max(), ioMasks[j], arr + i * vtype::numlanes);
     }
 
-    // Sort each loaded vector
-    X86_SIMD_SORT_UNROLL_LOOP(64)
-    for (int i = 0; i < numVecs; i++) {
-        vecs[i] = vtype::sort_vec(vecs[i]);
-    }
+    /* Run the initial sorting network to sort the columns of the [numVecs x
+     * num_lanes] matrix
+     */
+    bitonic_sort_n_vec<vtype, numVecs>(vecs);
 
-    // Run the full merger
-    bitonic_fullmerge_n_vec<vtype, numVecs>(&vecs[0]);
+    // Merge the vectors using bitonic merging networks
+    merge_n_vec<vtype, numVecs>(vecs);
 
     // Unmasked part of the store
     X86_SIMD_SORT_UNROLL_LOOP(64)
@@ -133,5 +205,4 @@ X86_SIMD_SORT_INLINE void sort_n(typename vtype::type_t *arr, int N)
 
     sort_n_vec<vtype, numVecs>(arr, N);
 }
-
 #endif

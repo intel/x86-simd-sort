@@ -20,8 +20,14 @@ struct zmm_vector<float16> {
     using halfreg_t = __m256i;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+#ifdef XSS_MINIMAL_NETWORK_SORT
+    static constexpr int network_sort_threshold = numlanes;
+#else
     static constexpr int network_sort_threshold = 512;
-    static constexpr int partition_unroll_factor = 0;
+#endif
+    static constexpr int partition_unroll_factor = 8;
+
+    using swizzle_ops = avx512_16bit_swizzle_ops;
 
     static reg_t get_network(int index)
     {
@@ -159,13 +165,17 @@ struct zmm_vector<float16> {
         const auto rev_index = get_network(4);
         return permutexvar(rev_index, zmm);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_zmm_16bit<zmm_vector<float16>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
         return sort_zmm_16bit<zmm_vector<float16>>(x);
+    }
+    static reg_t cast_from(__m512i v)
+    {
+        return v;
+    }
+    static __m512i cast_to(reg_t v)
+    {
+        return v;
     }
 };
 
@@ -176,8 +186,14 @@ struct zmm_vector<int16_t> {
     using halfreg_t = __m256i;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+#ifdef XSS_MINIMAL_NETWORK_SORT
+    static constexpr int network_sort_threshold = numlanes;
+#else
     static constexpr int network_sort_threshold = 512;
-    static constexpr int partition_unroll_factor = 0;
+#endif
+    static constexpr int partition_unroll_factor = 8;
+
+    using swizzle_ops = avx512_16bit_swizzle_ops;
 
     static reg_t get_network(int index)
     {
@@ -273,13 +289,17 @@ struct zmm_vector<int16_t> {
         const auto rev_index = get_network(4);
         return permutexvar(rev_index, zmm);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
         return sort_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t cast_from(__m512i v)
+    {
+        return v;
+    }
+    static __m512i cast_to(reg_t v)
+    {
+        return v;
     }
 };
 template <>
@@ -289,8 +309,14 @@ struct zmm_vector<uint16_t> {
     using halfreg_t = __m256i;
     using opmask_t = __mmask32;
     static const uint8_t numlanes = 32;
+#ifdef XSS_MINIMAL_NETWORK_SORT
+    static constexpr int network_sort_threshold = numlanes;
+#else
     static constexpr int network_sort_threshold = 512;
-    static constexpr int partition_unroll_factor = 0;
+#endif
+    static constexpr int partition_unroll_factor = 8;
+
+    using swizzle_ops = avx512_16bit_swizzle_ops;
 
     static reg_t get_network(int index)
     {
@@ -384,13 +410,17 @@ struct zmm_vector<uint16_t> {
         const auto rev_index = get_network(4);
         return permutexvar(rev_index, zmm);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_zmm_16bit<zmm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
         return sort_zmm_16bit<zmm_vector<type_t>>(x);
+    }
+    static reg_t cast_from(__m512i v)
+    {
+        return v;
+    }
+    static __m512i cast_to(reg_t v)
+    {
+        return v;
     }
 };
 
@@ -445,8 +475,7 @@ arrsize_t replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr,
 template <>
 bool is_a_nan<uint16_t>(uint16_t elem)
 {
-    return ((elem & 0x7c00u) == 0x7c00u) &&
-           ((elem & 0x03ffu) != 0);
+    return ((elem & 0x7c00u) == 0x7c00u) && ((elem & 0x03ffu) != 0);
 }
 
 X86_SIMD_SORT_INLINE

@@ -170,3 +170,4 @@ Skylake https://arxiv.org/pdf/1704.08579.pdf
 
 * [4] http://mitp-content-server.mit.edu:18180/books/content/sectbyfn?collid=books_pres_0&fn=Chapter%2027.pdf&id=8030
 
+* [5] https://bertdobbelaere.github.io/sorting_networks.html
