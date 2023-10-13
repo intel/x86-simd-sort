@@ -30,6 +30,25 @@ X86_SIMD_SORT_FINLINE void bitonic_sort_n_vec(reg_t *regs)
     }
 }
 
+/*
+ * Swizzle ops explained:
+ * swap_n<scale>: swap neighbouring blocks of size <scale/2> within block of size <scale>
+ * reg i        = [7,6,5,4,3,2,1,0]
+ * swap_n<2>:   = [[6,7],[4,5],[2,3],[0,1]]
+ * swap_n<4>:   = [[5,4,7,6],[1,0,3,2]]
+ * swap_n<8>:   = [[3,2,1,0,7,6,5,4]]
+ * reverse_n<scale>: reverse elements within block of size <scale>
+ * reg i        = [7,6,5,4,3,2,1,0]
+ * rev_n<2>:    = [[6,7],[4,5],[2,3],[0,1]]
+ * rev_n<4>:    = [[4,5,6,7],[0,1,2,3]]
+ * rev_n<8>:    = [[0,1,2,3,4,5,6,7]]
+ * merge_n<scale>: merge blocks of <scale/2> elements from two regs
+ * reg b,a      = [a,a,a,a,a,a,a,a], [b,b,b,b,b,b,b,b]
+ * merge_n<2>   = [a,b,a,b,a,b,a,b]
+ * merge_n<4>   = [a,a,b,b,a,a,b,b]
+ * merge_n<8>   = [a,a,a,a,b,b,b,b]
+ */
+
 template <typename vtype, int numVecs, int scale, bool first = true>
 X86_SIMD_SORT_FINLINE void internal_merge_n_vec(typename vtype::reg_t *reg)
 {
@@ -155,10 +174,12 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
                 vtype::zmm_max(), ioMasks[j], arr + i * vtype::numlanes);
     }
 
-    // Run the initial sorting network
+    /* Run the initial sorting network to sort the columns of the [numVecs x
+     * num_lanes] matrix
+     */
     bitonic_sort_n_vec<vtype, numVecs>(vecs);
 
-    // Merge vectors together
+    // Merge the vectors using bitonic merging networks
     merge_n_vec<vtype, numVecs>(vecs);
 
     // Unmasked part of the store
