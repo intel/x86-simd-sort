@@ -100,14 +100,12 @@ template <typename T>
 T avx2_emu_reduce_max32(typename ymm_vector<T>::reg_t x)
 {
     using vtype = ymm_vector<T>;
-    typename vtype::reg_t inter1 = vtype::max(
-            x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    typename vtype::reg_t inter2 = vtype::permutevar(
-            inter1, _mm256_set_epi32(3, 2, 1, 0, 3, 2, 1, 0));
-    typename vtype::reg_t inter3 = vtype::max(
-            inter2, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(inter2));
-    T can1 = vtype::template extract<0>(inter3);
-    T can2 = vtype::template extract<2>(inter3);
+    using reg_t = typename vtype::reg_t;
+    
+    reg_t inter1 = vtype::max(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
+    reg_t inter2 = vtype::max(inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
+    T can1 = vtype::template extract<0>(inter2);
+    T can2 = vtype::template extract<4>(inter2);
     return std::max(can1, can2);
 }
 
@@ -115,14 +113,12 @@ template <typename T>
 T avx2_emu_reduce_min32(typename ymm_vector<T>::reg_t x)
 {
     using vtype = ymm_vector<T>;
-    typename vtype::reg_t inter1 = vtype::min(
-            x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    typename vtype::reg_t inter2 = vtype::permutevar(
-            inter1, _mm256_set_epi32(3, 2, 1, 0, 3, 2, 1, 0));
-    typename vtype::reg_t inter3 = vtype::min(
-            inter2, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(inter2));
-    T can1 = vtype::template extract<0>(inter3);
-    T can2 = vtype::template extract<2>(inter3);
+    using reg_t = typename vtype::reg_t;
+    
+    reg_t inter1 = vtype::min(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
+    reg_t inter2 = vtype::min(inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
+    T can1 = vtype::template extract<0>(inter2);
+    T can2 = vtype::template extract<4>(inter2);
     return std::min(can1, can2);
 }
 
@@ -184,7 +180,7 @@ int32_t avx2_double_compressstore32(void *left_addr,
     typename vtype::reg_t temp = vtype::permutevar(reg, perm);
 
     vtype::mask_storeu(leftStore, left, temp);
-    vtype::mask_storeu(rightStore - vtype::numlanes, ~left, temp);
+    vtype::mask_storeu(rightStore, ~left, temp);
 
     return _mm_popcnt_u32(shortMask);
 }

@@ -51,7 +51,6 @@ inline int64_t replace_nan_with_inf(float *arr, int64_t arrsize);
 template <typename T1, typename T2>
 void avx512_qsort_kv(T1 *keys, T2 *indexes, int64_t arrsize);
 
->>>>>>> d6479e7 (Core AVX2 code logic):src/xss-common-qsort.h
 template <typename T>
 bool is_a_nan(T elem)
 {
@@ -216,31 +215,30 @@ X86_SIMD_SORT_INLINE arrsize_t partition_vec_avx2(type_t *l_store,
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
 
     int32_t amount_ge_pivot = vtype::double_compressstore(
-            arr + left, arr + left + unpartitioned, ge_mask, curr_vec);
-
-    left += (vtype::numlanes - amount_ge_pivot);
-    unpartitioned -= vtype::numlanes;
+            l_store, r_store, ge_mask, curr_vec);
 
     smallest_vec = vtype::min(curr_vec, smallest_vec);
     biggest_vec = vtype::max(curr_vec, biggest_vec);
+
+    return amount_ge_pivot;
 }
 
 // Generic function dispatches to AVX2 or AVX512 code
 template <typename vtype, typename type_t, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE void partition_vec(type_t *arr,
-                                        arrsize_t &left,
-                                        arrsize_t &unpartitioned,
-                                        const reg_t curr_vec,
-                                        const reg_t pivot_vec,
-                                        reg_t &smallest_vec,
-                                        reg_t &biggest_vec)
+X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
+                                             type_t *r_store,
+                                             const reg_t curr_vec,
+                                             const reg_t pivot_vec,
+                                             reg_t &smallest_vec,
+                                             reg_t &biggest_vec)
 {
     if constexpr (sizeof(reg_t) == 64){
-        partition_vec_avx512<vtype>(arr, left, unpartitioned, curr_vec, pivot_vec, smallest_vec, biggest_vec);
+        return partition_vec_avx512<vtype>(l_store, r_store, curr_vec, pivot_vec, smallest_vec, biggest_vec);
     }else if constexpr (sizeof(reg_t) == 32){
-        partition_vec_avx2<vtype>(arr, left, unpartitioned, curr_vec, pivot_vec, smallest_vec, biggest_vec);
+        return partition_vec_avx2<vtype>(l_store, r_store, curr_vec, pivot_vec, smallest_vec, biggest_vec);
     }else{
         static_assert(sizeof(reg_t) == -1, "should not reach here");
+        return 0;
     }
 }
 
