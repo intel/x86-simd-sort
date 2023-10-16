@@ -41,6 +41,7 @@
 #include <cstring>
 #include <immintrin.h>
 #include <limits>
+#include <vector>
 
 #define X86_SIMD_SORT_INFINITY std::numeric_limits<double>::infinity()
 #define X86_SIMD_SORT_INFINITYF std::numeric_limits<float>::infinity()
