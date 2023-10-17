@@ -51,7 +51,7 @@ jobs:
     - name: Update x86-simd-sort
       working-directory: ${{ github.workspace }}/numpy
       run: |
-        cd numpy/core/src/npysort/x86-simd-sort
+        cd numpy/_core/src/npysort/x86-simd-sort
         git remote add temp ${{ github.workspace }}/x86-simd-sort
         git fetch temp
         git checkout temp/pr-branch
@@ -67,6 +67,6 @@ jobs:
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
         python -c "import numpy; numpy.show_config()" &&
-        python -m pytest $NUMPY_SITE/numpy/core/tests/test_multiarray.py
+        python -m pytest $NUMPY_SITE/numpy/_core/tests/test_multiarray.py
 
 
