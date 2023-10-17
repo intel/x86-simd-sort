@@ -41,6 +41,7 @@
 #include <cstring>
 #include <immintrin.h>
 #include <limits>
+#include <vector>
 
 #define X86_SIMD_SORT_INFINITY std::numeric_limits<double>::infinity()
 #define X86_SIMD_SORT_INFINITYF std::numeric_limits<float>::infinity()
@@ -249,7 +250,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
                                              reg_t &biggest_vec)
 {
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
-    arrsize_t amount_ge_pivot = _mm_popcnt_u64(ge_mask);
+    int amount_ge_pivot = _mm_popcnt_u32((int)ge_mask);
 
     vtype::mask_compressstoreu(l_store, vtype::knot_opmask(ge_mask), curr_vec);
     vtype::mask_compressstoreu(
@@ -450,8 +451,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
             X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + right + ii * vtype::numlanes);
-                _mm_prefetch(arr + right + ii * vtype::numlanes
-                                     - num_unroll * vtype::numlanes,
+                _mm_prefetch((char *)(arr + right + ii * vtype::numlanes
+                                      - num_unroll * vtype::numlanes),
                              _MM_HINT_T0);
             }
         }
@@ -459,8 +460,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
             X86_SIMD_SORT_UNROLL_LOOP(8)
             for (int ii = 0; ii < num_unroll; ++ii) {
                 curr_vec[ii] = vtype::loadu(arr + left + ii * vtype::numlanes);
-                _mm_prefetch(arr + left + ii * vtype::numlanes
-                                     + num_unroll * vtype::numlanes,
+                _mm_prefetch((char *)(arr + left + ii * vtype::numlanes
+                                      + num_unroll * vtype::numlanes),
                              _MM_HINT_T0);
             }
             left += num_unroll * vtype::numlanes;
