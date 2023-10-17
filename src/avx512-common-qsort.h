@@ -250,7 +250,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
                                              reg_t &biggest_vec)
 {
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
-    arrsize_t amount_ge_pivot = _mm_popcnt_u64(ge_mask);
+    int amount_ge_pivot = _mm_popcnt_u32((int)ge_mask);
 
     vtype::mask_compressstoreu(l_store, vtype::knot_opmask(ge_mask), curr_vec);
     vtype::mask_compressstoreu(
