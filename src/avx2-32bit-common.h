@@ -558,7 +558,7 @@ inline int64_t replace_nan_with_inf(float *arr, int64_t arrsize)
         __m256 in_ymm = ymm_vector<float>::maskz_loadu(loadmask, arr);
         __m256i nanmask = _mm256_castps_si256(
                 _mm256_cmp_ps(in_ymm, in_ymm, _CMP_NEQ_UQ));
-        nan_count += _popcnt32(avx2_mask_helper32(nanmask));
+        nan_count += _mm_popcnt_u32(avx2_mask_helper32(nanmask));
         ymm_vector<float>::mask_storeu(arr, nanmask, YMM_MAX_FLOAT);
         arr += 8;
         arrsize -= 8;

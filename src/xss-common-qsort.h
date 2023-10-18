@@ -661,6 +661,7 @@ void avx2_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
             indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
         }
     }
+    UNUSED(hasnan);
     if (indx_last_elem >= k) {
         qselect_<xss::avx2::ymm_vector<T>, T>(
                 arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
