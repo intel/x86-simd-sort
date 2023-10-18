@@ -12,7 +12,9 @@
 #include <stdio.h>
 #include <vector>
 
-using argtype = zmm_vector<arrsize_t>;
+using argtype = typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                          ymm_vector<arrsize_t>,
+                                          zmm_vector<arrsize_t>>::type;
 using argreg_t = typename argtype::reg_t;
 
 /*

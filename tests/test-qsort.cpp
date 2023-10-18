@@ -103,7 +103,7 @@ TYPED_TEST_P(simdsort, test_partial_qsort)
     for (auto type : this->arrtype) {
         for (auto size : this->arrsize) {
             // k should be at least 1
-            size_t k = std::max(0x1ul, rand() % size);
+            size_t k = std::max((size_t)1, rand() % size);
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
             std::sort(sortedarr.begin(),
