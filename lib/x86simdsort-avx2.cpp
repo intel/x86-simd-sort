@@ -1,5 +1,6 @@
 // AVX2 specific routines:
 #include "avx2-32bit-qsort.hpp"
+#include "avx2-64bit-qsort.hpp"
 #include "x86simdsort-internal.h"
 
 #define DEFINE_ALL_METHODS(type) \
@@ -24,5 +25,8 @@ namespace avx2 {
     DEFINE_ALL_METHODS(uint32_t)
     DEFINE_ALL_METHODS(int32_t)
     DEFINE_ALL_METHODS(float)
+    DEFINE_ALL_METHODS(uint64_t)
+    DEFINE_ALL_METHODS(int64_t)
+    DEFINE_ALL_METHODS(double)
 } // namespace avx2
 } // namespace xss

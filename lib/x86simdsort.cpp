@@ -150,15 +150,15 @@ DISPATCH(argselect, _Float16, ISA_LIST("none"))
 DISPATCH_ALL(qsort,
              (ISA_LIST("avx512_icl")),
              (ISA_LIST("avx512_skx", "avx2")),
-             (ISA_LIST("avx512_skx")))
+             (ISA_LIST("avx512_skx", "avx2")))
 DISPATCH_ALL(qselect,
              (ISA_LIST("avx512_icl")),
              (ISA_LIST("avx512_skx", "avx2")),
-             (ISA_LIST("avx512_skx")))
+             (ISA_LIST("avx512_skx", "avx2")))
 DISPATCH_ALL(partial_qsort,
              (ISA_LIST("avx512_icl")),
              (ISA_LIST("avx512_skx", "avx2")),
-             (ISA_LIST("avx512_skx")))
+             (ISA_LIST("avx512_skx", "avx2")))
 DISPATCH_ALL(argsort,
              (ISA_LIST("none")),
              (ISA_LIST("avx512_skx")),
