@@ -123,41 +123,23 @@ T avx2_emu_reduce_min32(typename ymm_vector<T>::reg_t x)
 }
 
 template <typename T>
-typename ymm_vector<T>::opmask_t
-avx2_emu_fpclassify64(typename ymm_vector<T>::reg_t x, int mask)
-{
-    using vtype = ymm_vector<T>;
-    T store[vtype::numlanes];
-    vtype::storeu(&store[0], x);
-    int64_t res[vtype::numlanes];
-
-    for (int i = 0; i < vtype::numlanes; i++) {
-        bool flagged = scalar_emu_fpclassify(store[i]);
-        res[i] = 0xFFFFFFFFFFFFFFFF;
-    }
-    return vtype::loadu(res);
-}
-
-template <typename T>
 void avx2_emu_mask_compressstoreu(void *base_addr,
                                   typename ymm_vector<T>::opmask_t k,
                                   typename ymm_vector<T>::reg_t reg)
 {
     using vtype = ymm_vector<T>;
-    T *storage = (T *)base_addr;
-    int32_t mask[vtype::numlanes];
-    T data[vtype::numlanes];
 
-    _mm256_storeu_si256((__m256i *)&mask[0], k);
-    vtype::storeu(&data[0], reg);
+    T *leftStore = (T *)base_addr;
 
-#pragma GCC unroll 8
-    for (int i = 0; i < vtype::numlanes; i++) {
-        if (mask[i]) {
-            *storage = data[i];
-            storage++;
-        }
-    }
+    int32_t shortMask = avx2_mask_helper32(k);
+    const __m256i &perm = _mm256_loadu_si256(
+            (const __m256i *)avx2_compressstore_lut32_perm[shortMask].data());
+    const __m256i &left = _mm256_loadu_si256(
+            (const __m256i *)avx2_compressstore_lut32_left[shortMask].data());
+
+    typename vtype::reg_t temp = vtype::permutevar(reg, perm);
+
+    vtype::mask_storeu(leftStore, left, temp);
 }
 
 template <typename T>
@@ -183,21 +165,6 @@ int32_t avx2_double_compressstore32(void *left_addr,
     vtype::mask_storeu(rightStore, ~left, temp);
 
     return _mm_popcnt_u32(shortMask);
-}
-
-template <typename T>
-int64_t avx2_emu_popcnt(__m256i reg)
-{
-    using vtype = ymm_vector<T>;
-
-    int32_t data[vtype::numlanes];
-    _mm256_storeu_si256((__m256i *)&data[0], reg);
-
-    int64_t pop = 0;
-    for (int i = 0; i < vtype::numlanes; i++) {
-        pop += _popcnt32(data[i]);
-    }
-    return pop;
 }
 
 template <typename T>
