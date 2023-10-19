@@ -12,9 +12,17 @@
 #include <stdio.h>
 #include <vector>
 
+/* Workaround for NumPy failed build on macOS x86_64: implicit instantiation of
+ * undefined template 'zmm_vector<unsigned long>'*/
+#ifdef __APPLE__
+using argtype = typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                          ymm_vector<uint32_t>,
+                                          zmm_vector<uint64_t>>::type;
+#else
 using argtype = typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
                                           ymm_vector<arrsize_t>,
                                           zmm_vector<arrsize_t>>::type;
+#endif
 using argreg_t = typename argtype::reg_t;
 
 /*
