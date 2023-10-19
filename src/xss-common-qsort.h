@@ -43,7 +43,7 @@ namespace avx2{
 template <typename type>
 struct ymm_vector;
 
-inline int64_t replace_nan_with_inf(float *arr, int64_t arrsize);
+inline arrsize_t replace_nan_with_inf(float *arr, int64_t arrsize);
 }
 }
 
@@ -612,13 +612,13 @@ X86_SIMD_SORT_INLINE void avx512_qsort(T *arr, arrsize_t arrsize)
 }
 
 template <typename T>
-void avx2_qsort(T *arr, int64_t arrsize)
+void avx2_qsort(T *arr, arrsize_t arrsize)
 {
     using vtype = xss::avx2::ymm_vector<T>;
     if (arrsize > 1) {
         /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
         if constexpr (std::is_floating_point_v<T>) {
-            int64_t nan_count
+            arrsize_t nan_count
                     = xss::avx2::replace_nan_with_inf(arr, arrsize);
             qsort_<vtype, T>(
                     arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
@@ -650,9 +650,9 @@ avx512_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
 }
 
 template <typename T>
-void avx2_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+void avx2_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
 {
-    int64_t indx_last_elem = arrsize - 1;
+    arrsize_t indx_last_elem = arrsize - 1;
     /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
     if constexpr (std::is_floating_point_v<T>) {
         if (UNLIKELY(hasnan)) {
@@ -677,7 +677,7 @@ X86_SIMD_SORT_INLINE void avx512_partial_qsort(T *arr,
 }
 
 template <typename T>
-inline void avx2_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
+inline void avx2_partial_qsort(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
 {
     avx2_qselect<T>(arr, k - 1, arrsize, hasnan);
     avx2_qsort<T>(arr, k - 1);

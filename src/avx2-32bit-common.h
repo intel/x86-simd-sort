@@ -549,9 +549,9 @@ struct ymm_vector<float> {
     }
 };
 
-inline int64_t replace_nan_with_inf(float *arr, int64_t arrsize)
+inline arrsize_t replace_nan_with_inf(float *arr, int64_t arrsize)
 {
-    int64_t nan_count = 0;
+    arrsize_t nan_count = 0;
     __mmask8 loadmask = 0xFF;
     while (arrsize > 0) {
         if (arrsize < 8) { loadmask = (0x01 << arrsize) - 0x01; }
@@ -567,34 +567,12 @@ inline int64_t replace_nan_with_inf(float *arr, int64_t arrsize)
 }
 
 X86_SIMD_SORT_INLINE void
-replace_inf_with_nan(float *arr, int64_t arrsize, int64_t nan_count)
+replace_inf_with_nan(float *arr, arrsize_t arrsize, arrsize_t nan_count)
 {
-    for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
+    for (arrsize_t ii = arrsize - 1; nan_count > 0; --ii) {
         arr[ii] = std::nan("1");
         nan_count -= 1;
     }
-}
-
-template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE type_t get_pivot_32bit(type_t *arr,
-                                            const int64_t left,
-                                            const int64_t right)
-{
-    // median of 8
-    int64_t size = (right - left) / 8;
-    using reg_t = typename vtype::reg_t;
-    __m256i rand_index = _mm256_set_epi32(left + size,
-                                          left + 2 * size,
-                                          left + 3 * size,
-                                          left + 4 * size,
-                                          left + 5 * size,
-                                          left + 6 * size,
-                                          left + 7 * size,
-                                          left + 8 * size);
-    reg_t rand_vec = vtype::template i64gather<sizeof(type_t)>(rand_index, arr);
-    // pivot will never be a nan, since there are no nan's!
-    reg_t sort = sort_ymm_32bit<vtype>(rand_vec);
-    return ((type_t *)&sort)[4];
 }
 
 struct avx2_32bit_swizzle_ops{
