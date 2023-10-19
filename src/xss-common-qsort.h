@@ -631,8 +631,6 @@ void avx2_qsort(T *arr, int64_t arrsize)
     }
 }
 
-void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize);
-
 template <typename T>
 X86_SIMD_SORT_INLINE void
 avx512_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
@@ -668,11 +666,6 @@ void avx2_qselect(T *arr, int64_t k, int64_t arrsize, bool hasnan = false)
     }
 }
 
-void avx512_qselect_fp16(uint16_t *arr,
-                         int64_t k,
-                         int64_t arrsize,
-                         bool hasnan = false);
-
 template <typename T>
 X86_SIMD_SORT_INLINE void avx512_partial_qsort(T *arr,
                                                arrsize_t k,
@@ -688,14 +681,6 @@ inline void avx2_partial_qsort(T *arr, int64_t k, int64_t arrsize, bool hasnan =
 {
     avx2_qselect<T>(arr, k - 1, arrsize, hasnan);
     avx2_qsort<T>(arr, k - 1);
-}
-inline void avx512_partial_qsort_fp16(uint16_t *arr,
-                                      int64_t k,
-                                      int64_t arrsize,
-                                      bool hasnan = false)
-{
-    avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
-    avx512_qsort_fp16(arr, k - 1);
 }
 
 #endif // AVX512_QSORT_COMMON
