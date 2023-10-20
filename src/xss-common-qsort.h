@@ -38,9 +38,6 @@
 #include "xss-pivot-selection.hpp"
 #include "xss-network-qsort.hpp"
 
-template <typename type>
-struct avx2_vector;
-
 template <typename T>
 bool is_a_nan(T elem)
 {

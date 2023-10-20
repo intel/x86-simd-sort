@@ -72,3 +72,7 @@ struct zmm_vector;
 
 template <typename type>
 struct ymm_vector;
+
+template <typename type>
+struct avx2_vector;
+
