@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -y install g++-9 libgtest-dev meson curl git cmake
+        sudo apt -y install g++-9 libgtest-dev meson curl git
 
     - name: Install Intel SDE
       run: |
@@ -47,7 +47,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -y install g++-10 libgtest-dev meson curl git cmake
+        sudo apt -y install g++-10 libgtest-dev meson curl git
 
     - name: Install Intel SDE
       run: |
@@ -77,7 +77,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -y install g++-11 libgtest-dev meson curl git cmake
+        sudo apt -y install g++-11 libgtest-dev meson curl git
 
     - name: Install Intel SDE
       run: |
@@ -106,13 +106,20 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -y install g++-13 libgtest-dev meson curl git cmake
+        sudo apt -y install g++-13 libgtest-dev meson curl git
 
     - name: Install Intel SDE
       run: |
         curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Build examples
+      env:
+        CXX: g++-13
+      run: |
+        cd examples
+        make all
 
     - name: Build
       env:
@@ -136,7 +143,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -y install g++-13 libgtest-dev meson curl git cmake
+        sudo apt -y install g++-13 libgtest-dev meson curl git
 
     - name: Install Intel SDE
       run: |

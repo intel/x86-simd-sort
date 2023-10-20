@@ -6,7 +6,8 @@
 
 #ifndef AVX512_64BIT_COMMON
 #define AVX512_64BIT_COMMON
-#include "avx512-common-qsort.h"
+
+#include "xss-common-includes.h"
 
 /*
  * Constants used in sorting 8 elements in a ZMM registers. Based on Bitonic

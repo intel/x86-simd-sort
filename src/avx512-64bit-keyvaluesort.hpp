@@ -8,8 +8,179 @@
 #ifndef AVX512_QSORT_64BIT_KV
 #define AVX512_QSORT_64BIT_KV
 
+#include "avx512-common-qsort.h"
 #include "avx512-64bit-common.h"
-#include "avx512-64bit-keyvalue-networks.hpp"
+#include "xss-network-keyvaluesort.hpp"
+
+/*
+ * Parition one ZMM register based on the pivot and returns the index of the
+ * last element that is less than equal to the pivot.
+ */
+template <typename vtype1,
+          typename vtype2,
+          typename type_t1 = typename vtype1::type_t,
+          typename type_t2 = typename vtype2::type_t,
+          typename reg_t1 = typename vtype1::reg_t,
+          typename reg_t2 = typename vtype2::reg_t>
+X86_SIMD_SORT_INLINE int32_t partition_vec(type_t1 *keys,
+                                           type_t2 *indexes,
+                                           arrsize_t left,
+                                           arrsize_t right,
+                                           const reg_t1 keys_vec,
+                                           const reg_t2 indexes_vec,
+                                           const reg_t1 pivot_vec,
+                                           reg_t1 *smallest_vec,
+                                           reg_t1 *biggest_vec)
+{
+    /* which elements are larger than the pivot */
+    typename vtype1::opmask_t gt_mask = vtype1::ge(keys_vec, pivot_vec);
+    int32_t amount_gt_pivot = _mm_popcnt_u32((int32_t)gt_mask);
+    vtype1::mask_compressstoreu(
+            keys + left, vtype1::knot_opmask(gt_mask), keys_vec);
+    vtype1::mask_compressstoreu(
+            keys + right - amount_gt_pivot, gt_mask, keys_vec);
+    vtype2::mask_compressstoreu(
+            indexes + left, vtype2::knot_opmask(gt_mask), indexes_vec);
+    vtype2::mask_compressstoreu(
+            indexes + right - amount_gt_pivot, gt_mask, indexes_vec);
+    *smallest_vec = vtype1::min(keys_vec, *smallest_vec);
+    *biggest_vec = vtype1::max(keys_vec, *biggest_vec);
+    return amount_gt_pivot;
+}
+/*
+ * Parition an array based on the pivot and returns the index of the
+ * last element that is less than equal to the pivot.
+ */
+template <typename vtype1,
+          typename vtype2,
+          typename type_t1 = typename vtype1::type_t,
+          typename type_t2 = typename vtype2::type_t,
+          typename reg_t1 = typename vtype1::reg_t,
+          typename reg_t2 = typename vtype2::reg_t>
+X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t1 *keys,
+                                                type_t2 *indexes,
+                                                arrsize_t left,
+                                                arrsize_t right,
+                                                type_t1 pivot,
+                                                type_t1 *smallest,
+                                                type_t1 *biggest)
+{
+    /* make array length divisible by vtype1::numlanes , shortening the array */
+    for (int32_t i = (right - left) % vtype1::numlanes; i > 0; --i) {
+        *smallest = std::min(*smallest, keys[left]);
+        *biggest = std::max(*biggest, keys[left]);
+        if (keys[left] > pivot) {
+            right--;
+            std::swap(keys[left], keys[right]);
+            std::swap(indexes[left], indexes[right]);
+        }
+        else {
+            ++left;
+        }
+    }
+
+    if (left == right)
+        return left; /* less than vtype1::numlanes elements in the array */
+
+    reg_t1 pivot_vec = vtype1::set1(pivot);
+    reg_t1 min_vec = vtype1::set1(*smallest);
+    reg_t1 max_vec = vtype1::set1(*biggest);
+
+    if (right - left == vtype1::numlanes) {
+        reg_t1 keys_vec = vtype1::loadu(keys + left);
+        int32_t amount_gt_pivot;
+
+        reg_t2 indexes_vec = vtype2::loadu(indexes + left);
+        amount_gt_pivot = partition_vec<vtype1, vtype2>(keys,
+                                                        indexes,
+                                                        left,
+                                                        left + vtype1::numlanes,
+                                                        keys_vec,
+                                                        indexes_vec,
+                                                        pivot_vec,
+                                                        &min_vec,
+                                                        &max_vec);
+
+        *smallest = vtype1::reducemin(min_vec);
+        *biggest = vtype1::reducemax(max_vec);
+        return left + (vtype1::numlanes - amount_gt_pivot);
+    }
+
+    // first and last vtype1::numlanes values are partitioned at the end
+    reg_t1 keys_vec_left = vtype1::loadu(keys + left);
+    reg_t1 keys_vec_right = vtype1::loadu(keys + (right - vtype1::numlanes));
+    reg_t2 indexes_vec_left;
+    reg_t2 indexes_vec_right;
+    indexes_vec_left = vtype2::loadu(indexes + left);
+    indexes_vec_right = vtype2::loadu(indexes + (right - vtype1::numlanes));
+
+    // store points of the vectors
+    arrsize_t r_store = right - vtype1::numlanes;
+    arrsize_t l_store = left;
+    // indices for loading the elements
+    left += vtype1::numlanes;
+    right -= vtype1::numlanes;
+    while (right - left != 0) {
+        reg_t1 keys_vec;
+        reg_t2 indexes_vec;
+        /*
+         * if fewer elements are stored on the right side of the array,
+         * then next elements are loaded from the right side,
+         * otherwise from the left side
+         */
+        if ((r_store + vtype1::numlanes) - right < left - l_store) {
+            right -= vtype1::numlanes;
+            keys_vec = vtype1::loadu(keys + right);
+            indexes_vec = vtype2::loadu(indexes + right);
+        }
+        else {
+            keys_vec = vtype1::loadu(keys + left);
+            indexes_vec = vtype2::loadu(indexes + left);
+            left += vtype1::numlanes;
+        }
+        // partition the current vector and save it on both sides of the array
+        int32_t amount_gt_pivot;
+
+        amount_gt_pivot
+                = partition_vec<vtype1, vtype2>(keys,
+                                                indexes,
+                                                l_store,
+                                                r_store + vtype1::numlanes,
+                                                keys_vec,
+                                                indexes_vec,
+                                                pivot_vec,
+                                                &min_vec,
+                                                &max_vec);
+        r_store -= amount_gt_pivot;
+        l_store += (vtype1::numlanes - amount_gt_pivot);
+    }
+
+    /* partition and save vec_left and vec_right */
+    int32_t amount_gt_pivot;
+    amount_gt_pivot = partition_vec<vtype1, vtype2>(keys,
+                                                    indexes,
+                                                    l_store,
+                                                    r_store + vtype1::numlanes,
+                                                    keys_vec_left,
+                                                    indexes_vec_left,
+                                                    pivot_vec,
+                                                    &min_vec,
+                                                    &max_vec);
+    l_store += (vtype1::numlanes - amount_gt_pivot);
+    amount_gt_pivot = partition_vec<vtype1, vtype2>(keys,
+                                                    indexes,
+                                                    l_store,
+                                                    l_store + vtype1::numlanes,
+                                                    keys_vec_right,
+                                                    indexes_vec_right,
+                                                    pivot_vec,
+                                                    &min_vec,
+                                                    &max_vec);
+    l_store += (vtype1::numlanes - amount_gt_pivot);
+    *smallest = vtype1::reducemin(min_vec);
+    *biggest = vtype1::reducemax(max_vec);
+    return l_store;
+}
 
 template <typename vtype1,
           typename vtype2,

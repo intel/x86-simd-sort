@@ -1,5 +1,43 @@
 #ifndef AVX512_KEYVALUE_NETWORKS
 #define AVX512_KEYVALUE_NETWORKS
+
+template <typename vtype1,
+          typename vtype2,
+          typename reg_t1 = typename vtype1::reg_t,
+          typename reg_t2 = typename vtype2::reg_t>
+X86_SIMD_SORT_INLINE void
+COEX(reg_t1 &key1, reg_t1 &key2, reg_t2 &index1, reg_t2 &index2)
+{
+    reg_t1 key_t1 = vtype1::min(key1, key2);
+    reg_t1 key_t2 = vtype1::max(key1, key2);
+
+    reg_t2 index_t1
+            = vtype2::mask_mov(index2, vtype1::eq(key_t1, key1), index1);
+    reg_t2 index_t2
+            = vtype2::mask_mov(index1, vtype1::eq(key_t1, key1), index2);
+
+    key1 = key_t1;
+    key2 = key_t2;
+    index1 = index_t1;
+    index2 = index_t2;
+}
+
+template <typename vtype1,
+          typename vtype2,
+          typename reg_t1 = typename vtype1::reg_t,
+          typename reg_t2 = typename vtype2::reg_t,
+          typename opmask_t = typename vtype1::opmask_t>
+X86_SIMD_SORT_INLINE reg_t1 cmp_merge(reg_t1 in1,
+                                      reg_t1 in2,
+                                      reg_t2 &indexes1,
+                                      reg_t2 indexes2,
+                                      opmask_t mask)
+{
+    reg_t1 tmp_keys = cmp_merge<vtype1>(in1, in2, mask);
+    indexes1 = vtype2::mask_mov(indexes2, vtype1::eq(tmp_keys, in1), indexes1);
+    return tmp_keys; // 0 -> min, 1 -> max
+}
+
 template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
