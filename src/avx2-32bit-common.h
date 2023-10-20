@@ -22,37 +22,6 @@
 #define NETWORK_32BIT_AVX2_3 5, 4, 7, 6, 1, 0, 3, 2
 #define NETWORK_32BIT_AVX2_4 3, 2, 1, 0, 7, 6, 5, 4
 
-namespace xss {
-namespace avx2 {
-
-// Assumes ymm is bitonic and performs a recursive half cleaner
-template <typename vtype, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE reg_t bitonic_merge_ymm_32bit(reg_t ymm)
-{
-
-    const typename vtype::opmask_t oxAA = _mm256_set_epi32(
-            0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0);
-    const typename vtype::opmask_t oxCC = _mm256_set_epi32(
-            0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0);
-    const typename vtype::opmask_t oxF0 = _mm256_set_epi32(
-            0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0);
-
-    // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
-    ymm = cmp_merge<vtype>(
-            ymm,
-            vtype::permutexvar(_mm256_set_epi32(NETWORK_32BIT_AVX2_4), ymm),
-            oxF0);
-    // 2) half_cleaner[4]
-    ymm = cmp_merge<vtype>(
-            ymm,
-            vtype::permutexvar(_mm256_set_epi32(NETWORK_32BIT_AVX2_3), ymm),
-            oxCC);
-    // 3) half_cleaner[1]
-    ymm = cmp_merge<vtype>(
-            ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
-    return ymm;
-}
-
 /*
  * Assumes ymm is random and performs a full sorting network defined in
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
@@ -85,7 +54,7 @@ X86_SIMD_SORT_INLINE reg_t sort_ymm_32bit(reg_t ymm)
 struct avx2_32bit_swizzle_ops;
 
 template <>
-struct ymm_vector<int32_t> {
+struct avx2_vector<int32_t> {
     using type_t = int32_t;
     using reg_t = __m256i;
     using ymmi_t = __m256i;
@@ -231,13 +200,9 @@ struct ymm_vector<int32_t> {
     {
         _mm256_storeu_si256((__m256i *)mem, x);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_ymm_32bit<ymm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
-        return sort_ymm_32bit<ymm_vector<type_t>>(x);
+        return sort_ymm_32bit<avx2_vector<type_t>>(x);
     }
     static reg_t cast_from(__m256i v){
         return v;
@@ -247,7 +212,7 @@ struct ymm_vector<int32_t> {
     }
 };
 template <>
-struct ymm_vector<uint32_t> {
+struct avx2_vector<uint32_t> {
     using type_t = uint32_t;
     using reg_t = __m256i;
     using ymmi_t = __m256i;
@@ -378,13 +343,9 @@ struct ymm_vector<uint32_t> {
     {
         _mm256_storeu_si256((__m256i *)mem, x);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_ymm_32bit<ymm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
-        return sort_ymm_32bit<ymm_vector<type_t>>(x);
+        return sort_ymm_32bit<avx2_vector<type_t>>(x);
     }
     static reg_t cast_from(__m256i v){
         return v;
@@ -394,7 +355,7 @@ struct ymm_vector<uint32_t> {
     }
 };
 template <>
-struct ymm_vector<float> {
+struct avx2_vector<float> {
     using type_t = float;
     using reg_t = __m256;
     using ymmi_t = __m256i;
@@ -439,6 +400,19 @@ struct ymm_vector<float> {
     static opmask_t eq(reg_t x, reg_t y)
     {
         return _mm256_castps_si256(_mm256_cmp_ps(x, y, _CMP_EQ_OQ));
+    }
+    static opmask_t get_partial_loadmask(int size)
+    {
+        return (0x0001 << size) - 0x0001;
+    }
+    template <int type>
+    static opmask_t fpclass(reg_t x)
+    {
+        if constexpr (type == (0x01 | 0x80)){
+            return _mm256_castps_si256(_mm256_cmp_ps(x, x, _CMP_UNORD_Q));
+        }else{
+            static_assert(type == (0x01 | 0x80), "should not reach here");
+        }
     }
     template <int scale>
     static reg_t
@@ -533,13 +507,9 @@ struct ymm_vector<float> {
     {
         _mm256_storeu_ps((float *)mem, x);
     }
-    static reg_t bitonic_merge(reg_t x)
-    {
-        return bitonic_merge_ymm_32bit<ymm_vector<type_t>>(x);
-    }
     static reg_t sort_vec(reg_t x)
     {
-        return sort_ymm_32bit<ymm_vector<type_t>>(x);
+        return sort_ymm_32bit<avx2_vector<type_t>>(x);
     }
     static reg_t cast_from(__m256i v){
         return _mm256_castsi256_ps(v);
@@ -548,32 +518,6 @@ struct ymm_vector<float> {
         return _mm256_castps_si256(v);
     }
 };
-
-inline arrsize_t replace_nan_with_inf(float *arr, int64_t arrsize)
-{
-    arrsize_t nan_count = 0;
-    __mmask8 loadmask = 0xFF;
-    while (arrsize > 0) {
-        if (arrsize < 8) { loadmask = (0x01 << arrsize) - 0x01; }
-        __m256 in_ymm = ymm_vector<float>::maskz_loadu(loadmask, arr);
-        __m256i nanmask = _mm256_castps_si256(
-                _mm256_cmp_ps(in_ymm, in_ymm, _CMP_NEQ_UQ));
-        nan_count += _mm_popcnt_u32(avx2_mask_helper32(nanmask));
-        ymm_vector<float>::mask_storeu(arr, nanmask, YMM_MAX_FLOAT);
-        arr += 8;
-        arrsize -= 8;
-    }
-    return nan_count;
-}
-
-X86_SIMD_SORT_INLINE void
-replace_inf_with_nan(float *arr, arrsize_t arrsize, arrsize_t nan_count)
-{
-    for (arrsize_t ii = arrsize - 1; nan_count > 0; --ii) {
-        arr[ii] = std::nan("1");
-        nan_count -= 1;
-    }
-}
 
 struct avx2_32bit_swizzle_ops{
     template <typename vtype, int scale>
@@ -635,7 +579,4 @@ struct avx2_32bit_swizzle_ops{
         return vtype::cast_from(v1);
     }
 };
-
-} // namespace avx2
-} // namespace xss
 #endif

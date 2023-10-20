@@ -38,18 +38,8 @@
 #include "xss-pivot-selection.hpp"
 #include "xss-network-qsort.hpp"
 
-namespace xss{
-namespace avx2{
 template <typename type>
-struct ymm_vector;
-
-inline arrsize_t replace_nan_with_inf(float *arr, int64_t arrsize);
-}
-}
-
-// key-value sort routines
-template <typename T1, typename T2>
-void avx512_qsort_kv(T1 *keys, T2 *indexes, int64_t arrsize);
+struct avx2_vector;
 
 template <typename T>
 bool is_a_nan(T elem)
@@ -614,12 +604,12 @@ X86_SIMD_SORT_INLINE void avx512_qsort(T *arr, arrsize_t arrsize)
 template <typename T>
 void avx2_qsort(T *arr, arrsize_t arrsize)
 {
-    using vtype = xss::avx2::ymm_vector<T>;
+    using vtype = avx2_vector<T>;
     if (arrsize > 1) {
         /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
         if constexpr (std::is_floating_point_v<T>) {
             arrsize_t nan_count
-                    = xss::avx2::replace_nan_with_inf(arr, arrsize);
+                    = replace_nan_with_inf<vtype>(arr, arrsize);
             qsort_<vtype, T>(
                     arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
             replace_inf_with_nan(arr, arrsize, nan_count);
@@ -661,7 +651,7 @@ void avx2_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
     }
     UNUSED(hasnan);
     if (indx_last_elem >= k) {
-        qselect_<xss::avx2::ymm_vector<T>, T>(
+        qselect_<avx2_vector<T>, T>(
                 arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
     }
 }

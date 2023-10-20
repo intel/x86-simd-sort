@@ -5,9 +5,6 @@
 #include <utility>
 #include "xss-common-qsort.h"
 
-namespace xss {
-namespace avx2 {
-
 constexpr auto avx2_mask_helper_lut32 = [] {
     std::array<std::array<int32_t, 8>, 256> lut {};
     for (int64_t i = 0; i <= 0xFF; i++) {
@@ -97,9 +94,9 @@ static __m256i operator~(const avx2_mask_helper32 x)
 
 // Emulators for intrinsics missing from AVX2 compared to AVX512
 template <typename T>
-T avx2_emu_reduce_max32(typename ymm_vector<T>::reg_t x)
+T avx2_emu_reduce_max32(typename avx2_vector<T>::reg_t x)
 {
-    using vtype = ymm_vector<T>;
+    using vtype = avx2_vector<T>;
     using reg_t = typename vtype::reg_t;
     
     reg_t inter1 = vtype::max(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
@@ -110,9 +107,9 @@ T avx2_emu_reduce_max32(typename ymm_vector<T>::reg_t x)
 }
 
 template <typename T>
-T avx2_emu_reduce_min32(typename ymm_vector<T>::reg_t x)
+T avx2_emu_reduce_min32(typename avx2_vector<T>::reg_t x)
 {
-    using vtype = ymm_vector<T>;
+    using vtype = avx2_vector<T>;
     using reg_t = typename vtype::reg_t;
     
     reg_t inter1 = vtype::min(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
@@ -124,10 +121,10 @@ T avx2_emu_reduce_min32(typename ymm_vector<T>::reg_t x)
 
 template <typename T>
 void avx2_emu_mask_compressstoreu(void *base_addr,
-                                  typename ymm_vector<T>::opmask_t k,
-                                  typename ymm_vector<T>::reg_t reg)
+                                  typename avx2_vector<T>::opmask_t k,
+                                  typename avx2_vector<T>::reg_t reg)
 {
-    using vtype = ymm_vector<T>;
+    using vtype = avx2_vector<T>;
 
     T *leftStore = (T *)base_addr;
 
@@ -145,10 +142,10 @@ void avx2_emu_mask_compressstoreu(void *base_addr,
 template <typename T>
 int32_t avx2_double_compressstore32(void *left_addr,
                                     void *right_addr,
-                                    typename ymm_vector<T>::opmask_t k,
-                                    typename ymm_vector<T>::reg_t reg)
+                                    typename avx2_vector<T>::opmask_t k,
+                                    typename avx2_vector<T>::reg_t reg)
 {
-    using vtype = ymm_vector<T>;
+    using vtype = avx2_vector<T>;
 
     T *leftStore = (T *)left_addr;
     T *rightStore = (T *)right_addr;
@@ -168,10 +165,10 @@ int32_t avx2_double_compressstore32(void *left_addr,
 }
 
 template <typename T>
-typename ymm_vector<T>::reg_t avx2_emu_max(typename ymm_vector<T>::reg_t x,
-                                           typename ymm_vector<T>::reg_t y)
+typename avx2_vector<T>::reg_t avx2_emu_max(typename avx2_vector<T>::reg_t x,
+                                           typename avx2_vector<T>::reg_t y)
 {
-    using vtype = ymm_vector<T>;
+    using vtype = avx2_vector<T>;
     typename vtype::opmask_t nlt = vtype::ge(x, y);
     return _mm256_castpd_si256(_mm256_blendv_pd(_mm256_castsi256_pd(y),
                                                 _mm256_castsi256_pd(x),
@@ -179,16 +176,14 @@ typename ymm_vector<T>::reg_t avx2_emu_max(typename ymm_vector<T>::reg_t x,
 }
 
 template <typename T>
-typename ymm_vector<T>::reg_t avx2_emu_min(typename ymm_vector<T>::reg_t x,
-                                           typename ymm_vector<T>::reg_t y)
+typename avx2_vector<T>::reg_t avx2_emu_min(typename avx2_vector<T>::reg_t x,
+                                           typename avx2_vector<T>::reg_t y)
 {
-    using vtype = ymm_vector<T>;
+    using vtype = avx2_vector<T>;
     typename vtype::opmask_t nlt = vtype::ge(x, y);
     return _mm256_castpd_si256(_mm256_blendv_pd(_mm256_castsi256_pd(x),
                                                 _mm256_castsi256_pd(y),
                                                 _mm256_castsi256_pd(nlt)));
 }
-} // namespace avx2
-} // namespace x86_simd_sort
 
 #endif
