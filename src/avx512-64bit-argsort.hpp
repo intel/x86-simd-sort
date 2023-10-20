@@ -7,7 +7,7 @@
 #ifndef AVX512_ARGSORT_64BIT
 #define AVX512_ARGSORT_64BIT
 
-#include "avx512-common-qsort.h"
+#include "xss-common-qsort.h"
 #include "avx512-64bit-common.h"
 #include "xss-network-keyvaluesort.hpp"
 #include <numeric>
