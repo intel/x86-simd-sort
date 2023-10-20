@@ -8,8 +8,9 @@
 #ifndef AVX512_QSORT_64BIT_KV
 #define AVX512_QSORT_64BIT_KV
 
+#include "avx512-common-qsort.h"
 #include "avx512-64bit-common.h"
-#include "avx512-64bit-keyvalue-networks.hpp"
+#include "xss-network-keyvaluesort.hpp"
 
 /*
  * Parition one ZMM register based on the pivot and returns the index of the
