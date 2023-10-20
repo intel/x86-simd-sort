@@ -162,51 +162,19 @@ X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
     reg_t max = vtype::max(in2, in1);
     return vtype::mask_mov(min, mask, max); // 0 -> min, 1 -> max
 }
-/*
- * Parition one ZMM register based on the pivot and returns the
- * number of elements that are greater than or equal to the pivot.
- */
+
 template <typename vtype, typename type_t, typename reg_t>
-X86_SIMD_SORT_INLINE arrsize_t partition_vec_avx512(type_t *l_store,
-                                             type_t *r_store,
-                                             const reg_t curr_vec,
-                                             const reg_t pivot_vec,
-                                             reg_t &smallest_vec,
-                                             reg_t &biggest_vec)
+int avx512_double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    typename vtype::opmask_t k,
+                                    reg_t reg)
 {
-    typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
-    int amount_ge_pivot = _mm_popcnt_u32((int)ge_mask);
+    int amount_ge_pivot = _mm_popcnt_u32((int)k);
 
-    vtype::mask_compressstoreu(l_store, vtype::knot_opmask(ge_mask), curr_vec);
+    vtype::mask_compressstoreu(left_addr, vtype::knot_opmask(k), reg);
     vtype::mask_compressstoreu(
-            r_store + vtype::numlanes - amount_ge_pivot, ge_mask, curr_vec);
-
-    smallest_vec = vtype::min(curr_vec, smallest_vec);
-    biggest_vec = vtype::max(curr_vec, biggest_vec);
-
-    return amount_ge_pivot;
-}
-/*
- * Parition one YMM register based on the pivot and returns the
- * number of elements that are greater than or equal to the pivot.
- */
-template <typename vtype, typename type_t, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE arrsize_t partition_vec_avx2(type_t *l_store,
-                                             type_t *r_store,
-                                             const reg_t curr_vec,
-                                             const reg_t pivot_vec,
-                                             reg_t &smallest_vec,
-                                             reg_t &biggest_vec)
-{
-    /* which elements are larger than or equal to the pivot */
-    typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
-
-    int32_t amount_ge_pivot = vtype::double_compressstore(
-            l_store, r_store, ge_mask, curr_vec);
-
-    smallest_vec = vtype::min(curr_vec, smallest_vec);
-    biggest_vec = vtype::max(curr_vec, biggest_vec);
-
+            right_addr + vtype::numlanes - amount_ge_pivot, k, reg);
+    
     return amount_ge_pivot;
 }
 
@@ -219,14 +187,14 @@ X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
                                              reg_t &smallest_vec,
                                              reg_t &biggest_vec)
 {
-    if constexpr (sizeof(reg_t) == 64){
-        return partition_vec_avx512<vtype>(l_store, r_store, curr_vec, pivot_vec, smallest_vec, biggest_vec);
-    }else if constexpr (sizeof(reg_t) == 32){
-        return partition_vec_avx2<vtype>(l_store, r_store, curr_vec, pivot_vec, smallest_vec, biggest_vec);
-    }else{
-        static_assert(sizeof(reg_t) == -1, "should not reach here");
-        return 0;
-    }
+    typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
+    
+    int amount_ge_pivot = vtype::double_compressstore(l_store, r_store, ge_mask, curr_vec);
+
+    smallest_vec = vtype::min(curr_vec, smallest_vec);
+    biggest_vec = vtype::max(curr_vec, biggest_vec);
+
+    return amount_ge_pivot;
 }
 
 /*

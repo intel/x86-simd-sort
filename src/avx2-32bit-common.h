@@ -129,14 +129,6 @@ struct avx2_vector<int32_t> {
     {
         return avx2_emu_mask_compressstoreu<type_t>(mem, mask, x);
     }
-    static int32_t double_compressstore(type_t *left_addr,
-                                        type_t *right_addr,
-                                        opmask_t k,
-                                        reg_t reg)
-    {
-        return avx2_double_compressstore32<type_t>(
-                left_addr, right_addr, k, reg);
-    }
     static reg_t maskz_loadu(opmask_t mask, void const *mem)
     {
         return _mm256_maskload_epi32((const int *)mem, mask);
@@ -210,6 +202,13 @@ struct avx2_vector<int32_t> {
     static __m256i cast_to(reg_t v){
         return v;
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx2_double_compressstore32<type_t>(left_addr, right_addr, k, reg);
+    }
 };
 template <>
 struct avx2_vector<uint32_t> {
@@ -276,14 +275,6 @@ struct avx2_vector<uint32_t> {
     static void mask_compressstoreu(void *mem, opmask_t mask, reg_t x)
     {
         return avx2_emu_mask_compressstoreu<type_t>(mem, mask, x);
-    }
-    static int32_t double_compressstore(type_t *left_addr,
-                                        type_t *right_addr,
-                                        opmask_t k,
-                                        reg_t reg)
-    {
-        return avx2_double_compressstore32<type_t>(
-                left_addr, right_addr, k, reg);
     }
     static reg_t mask_loadu(reg_t x, opmask_t mask, void const *mem)
     {
@@ -352,6 +343,13 @@ struct avx2_vector<uint32_t> {
     }
     static __m256i cast_to(reg_t v){
         return v;
+    }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx2_double_compressstore32<type_t>(left_addr, right_addr, k, reg);
     }
 };
 template <>
@@ -439,14 +437,6 @@ struct avx2_vector<float> {
     {
         return avx2_emu_mask_compressstoreu<type_t>(mem, mask, x);
     }
-    static int32_t double_compressstore(type_t *left_addr,
-                                        type_t *right_addr,
-                                        opmask_t k,
-                                        reg_t reg)
-    {
-        return avx2_double_compressstore32<type_t>(
-                left_addr, right_addr, k, reg);
-    }
     static reg_t mask_loadu(reg_t x, opmask_t mask, void const *mem)
     {
         reg_t dst = _mm256_maskload_ps((type_t *)mem, mask);
@@ -516,6 +506,13 @@ struct avx2_vector<float> {
     }
     static __m256i cast_to(reg_t v){
         return _mm256_castps_si256(v);
+    }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx2_double_compressstore32<type_t>(left_addr, right_addr, k, reg);
     }
 };
 

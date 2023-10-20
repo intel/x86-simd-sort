@@ -140,7 +140,7 @@ void avx2_emu_mask_compressstoreu(void *base_addr,
 }
 
 template <typename T>
-int32_t avx2_double_compressstore32(void *left_addr,
+int avx2_double_compressstore32(void *left_addr,
                                     void *right_addr,
                                     typename avx2_vector<T>::opmask_t k,
                                     typename avx2_vector<T>::reg_t reg)

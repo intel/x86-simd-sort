@@ -660,6 +660,13 @@ struct zmm_vector<int64_t> {
     {
         return v;
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(left_addr, right_addr, k, reg);
+    }
 };
 template <>
 struct zmm_vector<uint64_t> {
@@ -817,6 +824,13 @@ struct zmm_vector<uint64_t> {
     static __m512i cast_to(reg_t v)
     {
         return v;
+    }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(left_addr, right_addr, k, reg);
     }
 };
 template <>
@@ -981,6 +995,13 @@ struct zmm_vector<double> {
     static __m512i cast_to(reg_t v)
     {
         return _mm512_castpd_si512(v);
+    }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(left_addr, right_addr, k, reg);
     }
 };
 

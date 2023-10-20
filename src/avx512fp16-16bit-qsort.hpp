@@ -145,6 +145,13 @@ struct zmm_vector<_Float16> {
     {
         return _mm512_castph_si512(v);
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(left_addr, right_addr, k, reg);
+    }
 };
 
 template <>
