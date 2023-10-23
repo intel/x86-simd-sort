@@ -70,8 +70,10 @@ T avx2_emu_reduce_max32(typename avx2_vector<T>::reg_t x)
     using vtype = avx2_vector<T>;
     using reg_t = typename vtype::reg_t;
 
-    reg_t inter1 = vtype::max(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    reg_t inter2 = vtype::max(inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
+    reg_t inter1 = vtype::max(
+            x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
+    reg_t inter2 = vtype::max(
+            inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
     T can1 = vtype::template extract<0>(inter2);
     T can2 = vtype::template extract<4>(inter2);
     return std::max(can1, can2);
@@ -83,8 +85,10 @@ T avx2_emu_reduce_min32(typename avx2_vector<T>::reg_t x)
     using vtype = avx2_vector<T>;
     using reg_t = typename vtype::reg_t;
 
-    reg_t inter1 = vtype::min(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    reg_t inter2 = vtype::min(inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
+    reg_t inter1 = vtype::min(
+            x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
+    reg_t inter2 = vtype::min(
+            inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
     T can1 = vtype::template extract<0>(inter2);
     T can2 = vtype::template extract<4>(inter2);
     return std::min(can1, can2);
@@ -112,9 +116,9 @@ void avx2_emu_mask_compressstoreu(void *base_addr,
 
 template <typename T>
 int avx2_double_compressstore32(void *left_addr,
-                                    void *right_addr,
-                                    typename avx2_vector<T>::opmask_t k,
-                                    typename avx2_vector<T>::reg_t reg)
+                                void *right_addr,
+                                typename avx2_vector<T>::opmask_t k,
+                                typename avx2_vector<T>::reg_t reg)
 {
     using vtype = avx2_vector<T>;
 
@@ -137,7 +141,7 @@ int avx2_double_compressstore32(void *left_addr,
 
 template <typename T>
 typename avx2_vector<T>::reg_t avx2_emu_max(typename avx2_vector<T>::reg_t x,
-                                           typename avx2_vector<T>::reg_t y)
+                                            typename avx2_vector<T>::reg_t y)
 {
     using vtype = avx2_vector<T>;
     typename vtype::opmask_t nlt = vtype::ge(x, y);
@@ -148,7 +152,7 @@ typename avx2_vector<T>::reg_t avx2_emu_max(typename avx2_vector<T>::reg_t x,
 
 template <typename T>
 typename avx2_vector<T>::reg_t avx2_emu_min(typename avx2_vector<T>::reg_t x,
-                                           typename avx2_vector<T>::reg_t y)
+                                            typename avx2_vector<T>::reg_t y)
 {
     using vtype = avx2_vector<T>;
     typename vtype::opmask_t nlt = vtype::ge(x, y);

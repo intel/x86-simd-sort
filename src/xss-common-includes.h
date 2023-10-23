@@ -75,4 +75,3 @@ struct ymm_vector;
 
 template <typename type>
 struct avx2_vector;
-

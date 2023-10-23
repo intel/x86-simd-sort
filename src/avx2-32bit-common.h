@@ -40,12 +40,16 @@ X86_SIMD_SORT_INLINE reg_t sort_ymm_32bit(reg_t ymm)
     ymm = cmp_merge<vtype>(
             ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
     ymm = cmp_merge<vtype>(
-            ymm, vtype::permutexvar(vtype::seti(NETWORK_32BIT_AVX2_1), ymm), oxCC);
+            ymm,
+            vtype::permutexvar(vtype::seti(NETWORK_32BIT_AVX2_1), ymm),
+            oxCC);
     ymm = cmp_merge<vtype>(
             ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
     ymm = cmp_merge<vtype>(ymm, vtype::permutexvar(rev_index, ymm), oxF0);
     ymm = cmp_merge<vtype>(
-            ymm, vtype::permutexvar(vtype::seti(NETWORK_32BIT_AVX2_3), ymm), oxCC);
+            ymm,
+            vtype::permutexvar(vtype::seti(NETWORK_32BIT_AVX2_3), ymm),
+            oxCC);
     ymm = cmp_merge<vtype>(
             ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
     return ymm;
@@ -200,10 +204,12 @@ struct avx2_vector<int32_t> {
     {
         return sort_ymm_32bit<avx2_vector<type_t>>(x);
     }
-    static reg_t cast_from(__m256i v){
+    static reg_t cast_from(__m256i v)
+    {
         return v;
     }
-    static __m256i cast_to(reg_t v){
+    static __m256i cast_to(reg_t v)
+    {
         return v;
     }
     static int double_compressstore(type_t *left_addr,
@@ -211,7 +217,8 @@ struct avx2_vector<int32_t> {
                                     opmask_t k,
                                     reg_t reg)
     {
-        return avx2_double_compressstore32<type_t>(left_addr, right_addr, k, reg);
+        return avx2_double_compressstore32<type_t>(
+                left_addr, right_addr, k, reg);
     }
 };
 template <>
@@ -346,10 +353,12 @@ struct avx2_vector<uint32_t> {
     {
         return sort_ymm_32bit<avx2_vector<type_t>>(x);
     }
-    static reg_t cast_from(__m256i v){
+    static reg_t cast_from(__m256i v)
+    {
         return v;
     }
-    static __m256i cast_to(reg_t v){
+    static __m256i cast_to(reg_t v)
+    {
         return v;
     }
     static int double_compressstore(type_t *left_addr,
@@ -357,7 +366,8 @@ struct avx2_vector<uint32_t> {
                                     opmask_t k,
                                     reg_t reg)
     {
-        return avx2_double_compressstore32<type_t>(left_addr, right_addr, k, reg);
+        return avx2_double_compressstore32<type_t>(
+                left_addr, right_addr, k, reg);
     }
 };
 template <>
@@ -419,9 +429,10 @@ struct avx2_vector<float> {
     template <int type>
     static opmask_t fpclass(reg_t x)
     {
-        if constexpr (type == (0x01 | 0x80)){
+        if constexpr (type == (0x01 | 0x80)) {
             return _mm256_castps_si256(_mm256_cmp_ps(x, x, _CMP_UNORD_Q));
-        }else{
+        }
+        else {
             static_assert(type == (0x01 | 0x80), "should not reach here");
         }
     }
@@ -514,10 +525,12 @@ struct avx2_vector<float> {
     {
         return sort_ymm_32bit<avx2_vector<type_t>>(x);
     }
-    static reg_t cast_from(__m256i v){
+    static reg_t cast_from(__m256i v)
+    {
         return _mm256_castsi256_ps(v);
     }
-    static __m256i cast_to(reg_t v){
+    static __m256i cast_to(reg_t v)
+    {
         return _mm256_castps_si256(v);
     }
     static int double_compressstore(type_t *left_addr,
@@ -525,26 +538,31 @@ struct avx2_vector<float> {
                                     opmask_t k,
                                     reg_t reg)
     {
-        return avx2_double_compressstore32<type_t>(left_addr, right_addr, k, reg);
+        return avx2_double_compressstore32<type_t>(
+                left_addr, right_addr, k, reg);
     }
 };
 
-struct avx2_32bit_swizzle_ops{
+struct avx2_32bit_swizzle_ops {
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg){
+    X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg)
+    {
         __m256i v = vtype::cast_to(reg);
 
-        if constexpr (scale == 2){
+        if constexpr (scale == 2) {
             __m256 vf = _mm256_castsi256_ps(v);
             vf = _mm256_permute_ps(vf, 0b10110001);
             v = _mm256_castps_si256(vf);
-        }else if constexpr (scale == 4){
+        }
+        else if constexpr (scale == 4) {
             __m256 vf = _mm256_castsi256_ps(v);
             vf = _mm256_permute_ps(vf, 0b01001110);
             v = _mm256_castps_si256(vf);
-        }else if constexpr (scale == 8){
+        }
+        else if constexpr (scale == 8) {
             v = _mm256_permute2x128_si256(v, v, 0b00000001);
-        }else{
+        }
+        else {
             static_assert(scale == -1, "should not be reached");
         }
 
@@ -552,19 +570,22 @@ struct avx2_32bit_swizzle_ops{
     }
 
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t reverse_n(typename vtype::reg_t reg){
+    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    reverse_n(typename vtype::reg_t reg)
+    {
         __m256i v = vtype::cast_to(reg);
 
-        if constexpr (scale == 2){
-            return swap_n<vtype, 2>(reg);
-        }else if constexpr (scale == 4){
+        if constexpr (scale == 2) { return swap_n<vtype, 2>(reg); }
+        else if constexpr (scale == 4) {
             constexpr uint64_t mask = 0b00011011;
             __m256 vf = _mm256_castsi256_ps(v);
             vf = _mm256_permute_ps(vf, mask);
             v = _mm256_castps_si256(vf);
-        }else if constexpr (scale == 8){
+        }
+        else if constexpr (scale == 8) {
             return vtype::reverse(reg);
-        }else{
+        }
+        else {
             static_assert(scale == -1, "should not be reached");
         }
 
@@ -572,17 +593,22 @@ struct avx2_32bit_swizzle_ops{
     }
 
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t merge_n(typename vtype::reg_t reg, typename vtype::reg_t other){
+    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    merge_n(typename vtype::reg_t reg, typename vtype::reg_t other)
+    {
         __m256i v1 = vtype::cast_to(reg);
         __m256i v2 = vtype::cast_to(other);
 
-        if constexpr (scale == 2){
+        if constexpr (scale == 2) {
             v1 = _mm256_blend_epi32(v1, v2, 0b01010101);
-        }else if constexpr (scale == 4){
+        }
+        else if constexpr (scale == 4) {
             v1 = _mm256_blend_epi32(v1, v2, 0b00110011);
-        }else if constexpr (scale == 8){
+        }
+        else if constexpr (scale == 8) {
             v1 = _mm256_blend_epi32(v1, v2, 0b00001111);
-        }else{
+        }
+        else {
             static_assert(scale == -1, "should not be reached");
         }
 

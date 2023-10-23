@@ -165,9 +165,9 @@ X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
 
 template <typename vtype, typename type_t, typename reg_t>
 int avx512_double_compressstore(type_t *left_addr,
-                                    type_t *right_addr,
-                                    typename vtype::opmask_t k,
-                                    reg_t reg)
+                                type_t *right_addr,
+                                typename vtype::opmask_t k,
+                                reg_t reg)
 {
     int amount_ge_pivot = _mm_popcnt_u32((int)k);
 
@@ -179,7 +179,9 @@ int avx512_double_compressstore(type_t *left_addr,
 }
 
 // Generic function dispatches to AVX2 or AVX512 code
-template <typename vtype, typename type_t, typename reg_t = typename vtype::reg_t>
+template <typename vtype,
+          typename type_t,
+          typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
                                              type_t *r_store,
                                              const reg_t curr_vec,
@@ -189,7 +191,8 @@ X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
 {
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
 
-    int amount_ge_pivot = vtype::double_compressstore(l_store, r_store, ge_mask, curr_vec);
+    int amount_ge_pivot
+            = vtype::double_compressstore(l_store, r_store, ge_mask, curr_vec);
 
     smallest_vec = vtype::min(curr_vec, smallest_vec);
     biggest_vec = vtype::max(curr_vec, biggest_vec);
@@ -473,12 +476,12 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
     return l_store;
 }
 
-
 template <typename vtype, int maxN>
 void sort_n(typename vtype::type_t *arr, int N);
 
 template <typename vtype, typename type_t>
-static void qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
+static void
+qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -573,15 +576,12 @@ void avx2_qsort(T *arr, arrsize_t arrsize)
     if (arrsize > 1) {
         /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
         if constexpr (std::is_floating_point_v<T>) {
-            arrsize_t nan_count
-                    = replace_nan_with_inf<vtype>(arr, arrsize);
-            qsort_<vtype, T>(
-                    arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+            arrsize_t nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
+            qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
             replace_inf_with_nan(arr, arrsize, nan_count);
         }
         else {
-            qsort_<vtype, T>(
-                    arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+            qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         }
     }
 }
@@ -632,7 +632,8 @@ X86_SIMD_SORT_INLINE void avx512_partial_qsort(T *arr,
 }
 
 template <typename T>
-inline void avx2_partial_qsort(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+inline void
+avx2_partial_qsort(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
 {
     avx2_qselect<T>(arr, k - 1, arrsize, hasnan);
     avx2_qsort<T>(arr, k - 1);

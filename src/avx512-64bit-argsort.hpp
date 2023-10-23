@@ -65,7 +65,6 @@ std_argsort(T *arr, arrsize_t *arg, arrsize_t left, arrsize_t right)
               });
 }
 
-
 /* Workaround for NumPy failed build on macOS x86_64: implicit instantiation of
  * undefined template 'zmm_vector<unsigned long>'*/
 #ifdef __APPLE__

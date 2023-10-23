@@ -190,7 +190,8 @@ struct zmm_vector<float16> {
                                     opmask_t k,
                                     reg_t reg)
     {
-        return avx512_double_compressstore<zmm_vector<float16>>(left_addr, right_addr, k, reg);
+        return avx512_double_compressstore<zmm_vector<float16>>(
+                left_addr, right_addr, k, reg);
     }
 };
 
@@ -325,7 +326,8 @@ struct zmm_vector<int16_t> {
                                     opmask_t k,
                                     reg_t reg)
     {
-        return avx512_double_compressstore<zmm_vector<type_t>>(left_addr, right_addr, k, reg);
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
     }
 };
 template <>
@@ -457,7 +459,8 @@ struct zmm_vector<uint16_t> {
                                     opmask_t k,
                                     reg_t reg)
     {
-        return avx512_double_compressstore<zmm_vector<type_t>>(left_addr, right_addr, k, reg);
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
     }
 };
 
