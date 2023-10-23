@@ -201,4 +201,13 @@ void avx512_qselect(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
                 arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
     }
 }
+template <>
+void avx512_partial_qsort(_Float16 *arr,
+                          arrsize_t k,
+                          arrsize_t arrsize,
+                          bool hasnan)
+{
+    avx512_qselect(arr, k - 1, arrsize, hasnan);
+    avx512_qsort(arr, k - 1);
+}
 #endif // AVX512FP16_QSORT_16BIT
