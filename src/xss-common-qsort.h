@@ -8,8 +8,8 @@
  *          Tang Xi <xi.tang@intel.com>
  * ****************************************************************/
 
-#ifndef AVX512_QSORT_COMMON
-#define AVX512_QSORT_COMMON
+#ifndef XSS_COMMON_QSORT
+#define XSS_COMMON_QSORT
 
 /*
  * Quicksort using AVX-512. The ideas and code are based on these two research
@@ -549,49 +549,28 @@ X86_SIMD_SORT_INLINE void qselect_(type_t *arr,
         qselect_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
-// Regular quicksort routines:
-template <typename T>
-X86_SIMD_SORT_INLINE void avx512_qsort(T *arr, arrsize_t arrsize)
+// Quicksort routines:
+template <typename vtype, typename T>
+X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize)
 {
     if (arrsize > 1) {
-        /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
-        if constexpr (std::is_floating_point_v<T>) {
-            arrsize_t nan_count
-                    = replace_nan_with_inf<zmm_vector<T>>(arr, arrsize);
-            qsort_<zmm_vector<T>, T>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-            replace_inf_with_nan(arr, arrsize, nan_count);
-        }
-        else {
-            qsort_<zmm_vector<T>, T>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-        }
-    }
-}
-
-template <typename T>
-void avx2_qsort(T *arr, arrsize_t arrsize)
-{
-    using vtype = avx2_vector<T>;
-    if (arrsize > 1) {
-        /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
         if constexpr (std::is_floating_point_v<T>) {
             arrsize_t nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
-            qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+            qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
             replace_inf_with_nan(arr, arrsize, nan_count);
         }
         else {
-            qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
+            qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         }
     }
 }
 
-template <typename T>
+// Quick select methods
+template <typename vtype, typename T>
 X86_SIMD_SORT_INLINE void
-avx512_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+xss_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
     arrsize_t indx_last_elem = arrsize - 1;
-    /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
     if constexpr (std::is_floating_point_v<T>) {
         if (UNLIKELY(hasnan)) {
             indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
@@ -599,44 +578,40 @@ avx512_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
     }
     UNUSED(hasnan);
     if (indx_last_elem >= k) {
-        qselect_<zmm_vector<T>, T>(
+        qselect_<vtype, T>(
                 arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
     }
 }
 
-template <typename T>
-void avx2_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+// Partial sort methods:
+template <typename vtype, typename T>
+X86_SIMD_SORT_INLINE void
+xss_partial_qsort(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
-    arrsize_t indx_last_elem = arrsize - 1;
-    /* std::is_floating_point_v<_Float16> == False, unless c++-23*/
-    if constexpr (std::is_floating_point_v<T>) {
-        if (UNLIKELY(hasnan)) {
-            indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
-        }
+    xss_qselect<vtype, T>(arr, k - 1, arrsize, hasnan);
+    xss_qsort<vtype, T>(arr, k - 1);
+}
+
+#define DEFINE_METHODS(ISA, VTYPE) \
+    template <typename T> \
+    X86_SIMD_SORT_INLINE void ISA##_qsort(T *arr, arrsize_t size) \
+    { \
+        xss_qsort<VTYPE, T>(arr, size); \
+    } \
+    template <typename T> \
+    X86_SIMD_SORT_INLINE void ISA##_qselect( \
+            T *arr, arrsize_t k, arrsize_t size, bool hasnan = false) \
+    { \
+        xss_qselect<VTYPE, T>(arr, k, size, hasnan); \
+    } \
+    template <typename T> \
+    X86_SIMD_SORT_INLINE void ISA##_partial_qsort( \
+            T *arr, arrsize_t k, arrsize_t size, bool hasnan = false) \
+    { \
+        xss_partial_qsort<VTYPE, T>(arr, k, size, hasnan); \
     }
-    UNUSED(hasnan);
-    if (indx_last_elem >= k) {
-        qselect_<avx2_vector<T>, T>(
-                arr, k, 0, indx_last_elem, 2 * (int64_t)log2(indx_last_elem));
-    }
-}
 
-template <typename T>
-X86_SIMD_SORT_INLINE void avx512_partial_qsort(T *arr,
-                                               arrsize_t k,
-                                               arrsize_t arrsize,
-                                               bool hasnan = false)
-{
-    avx512_qselect<T>(arr, k - 1, arrsize, hasnan);
-    avx512_qsort<T>(arr, k - 1);
-}
+DEFINE_METHODS(avx512, zmm_vector<T>)
+DEFINE_METHODS(avx2, avx2_vector<T>)
 
-template <typename T>
-inline void
-avx2_partial_qsort(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
-{
-    avx2_qselect<T>(arr, k - 1, arrsize, hasnan);
-    avx2_qsort<T>(arr, k - 1);
-}
-
-#endif // AVX512_QSORT_COMMON
+#endif // XSS_COMMON_QSORT
