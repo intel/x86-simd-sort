@@ -15,7 +15,7 @@
  * sorting network (see
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg)
  */
- 
+
 // ymm                  7, 6, 5, 4, 3, 2, 1, 0
 #define NETWORK_32BIT_AVX2_1 4, 5, 6, 7, 0, 1, 2, 3
 #define NETWORK_32BIT_AVX2_2 0, 1, 2, 3, 4, 5, 6, 7
@@ -58,11 +58,11 @@ struct avx2_vector<int32_t> {
     using type_t = int32_t;
     using reg_t = __m256i;
     using ymmi_t = __m256i;
-    using opmask_t = avx2_mask_helper32;
+    using opmask_t = __m256i;
     static const uint8_t numlanes = 8;
     static constexpr int network_sort_threshold = 256;
     static constexpr int partition_unroll_factor = 4;
-    
+
     using swizzle_ops = avx2_32bit_swizzle_ops;
 
     static type_t type_max()
@@ -77,7 +77,11 @@ struct avx2_vector<int32_t> {
     {
         return _mm256_set1_epi32(type_max());
     } // TODO: this should broadcast bits as is?
-
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        auto mask = ((0x1ull << num_to_read) - 0x1ull);
+        return convert_int_to_avx2_mask(mask);
+    }
     static ymmi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
@@ -215,11 +219,11 @@ struct avx2_vector<uint32_t> {
     using type_t = uint32_t;
     using reg_t = __m256i;
     using ymmi_t = __m256i;
-    using opmask_t = avx2_mask_helper32;
+    using opmask_t = __m256i;
     static const uint8_t numlanes = 8;
     static constexpr int network_sort_threshold = 256;
     static constexpr int partition_unroll_factor = 4;
-    
+
     using swizzle_ops = avx2_32bit_swizzle_ops;
 
     static type_t type_max()
@@ -234,7 +238,11 @@ struct avx2_vector<uint32_t> {
     {
         return _mm256_set1_epi32(type_max());
     }
-
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        auto mask = ((0x1ull << num_to_read) - 0x1ull);
+        return convert_int_to_avx2_mask(mask);
+    }
     static ymmi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
@@ -357,11 +365,11 @@ struct avx2_vector<float> {
     using type_t = float;
     using reg_t = __m256;
     using ymmi_t = __m256i;
-    using opmask_t = avx2_mask_helper32;
+    using opmask_t = __m256i;
     static const uint8_t numlanes = 8;
     static constexpr int network_sort_threshold = 256;
     static constexpr int partition_unroll_factor = 4;
-    
+
     using swizzle_ops = avx2_32bit_swizzle_ops;
 
     static type_t type_max()
@@ -399,9 +407,14 @@ struct avx2_vector<float> {
     {
         return _mm256_castps_si256(_mm256_cmp_ps(x, y, _CMP_EQ_OQ));
     }
-    static opmask_t get_partial_loadmask(int size)
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
-        return (0x0001 << size) - 0x0001;
+        auto mask = ((0x1ull << num_to_read) - 0x1ull);
+        return convert_int_to_avx2_mask(mask);
+    }
+    static int32_t convert_mask_to_int(opmask_t mask)
+    {
+        return convert_avx2_mask_to_int(mask);
     }
     template <int type>
     static opmask_t fpclass(reg_t x)

@@ -65,6 +65,10 @@ struct zmm_vector<int32_t> {
     {
         return _mm512_cmp_epi32_mask(x, y, _MM_CMPINT_NLT);
     }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
+    }
     template <int scale>
     static halfreg_t i64gather(__m512i index, void const *base)
     {
@@ -209,6 +213,10 @@ struct zmm_vector<uint32_t> {
     {
         return _mm512_cmp_epu32_mask(x, y, _MM_CMPINT_NLT);
     }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
+    }
     static reg_t loadu(void const *mem)
     {
         return _mm512_loadu_si512(mem);
@@ -333,9 +341,13 @@ struct zmm_vector<float> {
     {
         return _mm512_cmp_ps_mask(x, y, _CMP_GE_OQ);
     }
-    static opmask_t get_partial_loadmask(int size)
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
-        return (0x0001 << size) - 0x0001;
+        return ((0x1ull << num_to_read) - 0x1ull);
+    }
+    static int32_t convert_mask_to_int(opmask_t mask)
+    {
+        return mask;
     }
     template <int type>
     static opmask_t fpclass(reg_t x)

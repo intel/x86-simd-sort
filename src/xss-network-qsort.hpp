@@ -157,10 +157,10 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
     typename vtype::opmask_t ioMasks[numVecs - numVecs / 2];
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
-        int64_t num_to_read
-                = std::min((int64_t)std::max(0, N - i * vtype::numlanes),
-                           (int64_t)vtype::numlanes);
-        ioMasks[j] = ((0x1ull << num_to_read) - 0x1ull);
+        uint64_t num_to_read
+                = std::min((uint64_t)std::max(0, N - i * vtype::numlanes),
+                           (uint64_t)vtype::numlanes);
+        ioMasks[j] = vtype::get_partial_loadmask(num_to_read);
     }
 
     // Unmasked part of the load

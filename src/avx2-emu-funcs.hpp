@@ -46,50 +46,21 @@ constexpr auto avx2_compressstore_lut32_gen = [] {
     }
     return lutPair;
 }();
+
 constexpr auto avx2_compressstore_lut32_perm = avx2_compressstore_lut32_gen[0];
 constexpr auto avx2_compressstore_lut32_left = avx2_compressstore_lut32_gen[1];
 
-struct avx2_mask_helper32 {
-    __m256i mask;
-
-    avx2_mask_helper32() = default;
-    avx2_mask_helper32(int m)
-    {
-        mask = converter(m);
-    }
-    avx2_mask_helper32(__m256i m)
-    {
-        mask = m;
-    }
-    operator __m256i()
-    {
-        return mask;
-    }
-    operator int32_t()
-    {
-        return converter(mask);
-    }
-    __m256i operator=(int m)
-    {
-        mask = converter(m);
-        return mask;
-    }
-
-private:
-    __m256i converter(int m)
-    {
-        return _mm256_loadu_si256(
-                (const __m256i *)avx2_mask_helper_lut32[m].data());
-    }
-
-    int32_t converter(__m256i m)
-    {
-        return _mm256_movemask_ps(_mm256_castsi256_ps(m));
-    }
-};
-static __m256i operator~(const avx2_mask_helper32 x)
+X86_SIMD_SORT_INLINE
+__m256i convert_int_to_avx2_mask(int32_t m)
 {
-    return ~x.mask;
+    return _mm256_loadu_si256(
+            (const __m256i *)avx2_mask_helper_lut32[m].data());
+}
+
+X86_SIMD_SORT_INLINE
+int32_t convert_avx2_mask_to_int(__m256i m)
+{
+    return _mm256_movemask_ps(_mm256_castsi256_ps(m));
 }
 
 // Emulators for intrinsics missing from AVX2 compared to AVX512
@@ -98,7 +69,7 @@ T avx2_emu_reduce_max32(typename avx2_vector<T>::reg_t x)
 {
     using vtype = avx2_vector<T>;
     using reg_t = typename vtype::reg_t;
-    
+
     reg_t inter1 = vtype::max(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
     reg_t inter2 = vtype::max(inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
     T can1 = vtype::template extract<0>(inter2);
@@ -111,7 +82,7 @@ T avx2_emu_reduce_min32(typename avx2_vector<T>::reg_t x)
 {
     using vtype = avx2_vector<T>;
     using reg_t = typename vtype::reg_t;
-    
+
     reg_t inter1 = vtype::min(x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
     reg_t inter2 = vtype::min(inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
     T can1 = vtype::template extract<0>(inter2);
@@ -128,7 +99,7 @@ void avx2_emu_mask_compressstoreu(void *base_addr,
 
     T *leftStore = (T *)base_addr;
 
-    int32_t shortMask = avx2_mask_helper32(k);
+    int32_t shortMask = convert_avx2_mask_to_int(k);
     const __m256i &perm = _mm256_loadu_si256(
             (const __m256i *)avx2_compressstore_lut32_perm[shortMask].data());
     const __m256i &left = _mm256_loadu_si256(
@@ -150,7 +121,7 @@ int avx2_double_compressstore32(void *left_addr,
     T *leftStore = (T *)left_addr;
     T *rightStore = (T *)right_addr;
 
-    int32_t shortMask = avx2_mask_helper32(k);
+    int32_t shortMask = convert_avx2_mask_to_int(k);
     const __m256i &perm = _mm256_loadu_si256(
             (const __m256i *)avx2_compressstore_lut32_perm[shortMask].data());
     const __m256i &left = _mm256_loadu_si256(

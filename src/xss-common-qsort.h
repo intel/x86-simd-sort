@@ -65,7 +65,7 @@ X86_SIMD_SORT_INLINE arrsize_t replace_nan_with_inf(T *arr, arrsize_t size)
             in = vtype::loadu(arr + ii);
         }
         opmask_t nanmask = vtype::template fpclass<0x01 | 0x80>(in);
-        nan_count += _mm_popcnt_u32((int32_t)nanmask);
+        nan_count += _mm_popcnt_u32(vtype::convert_mask_to_int(nanmask));
         vtype::mask_storeu(arr + ii, nanmask, vtype::zmm_max());
     }
     return nan_count;
@@ -174,7 +174,7 @@ int avx512_double_compressstore(type_t *left_addr,
     vtype::mask_compressstoreu(left_addr, vtype::knot_opmask(k), reg);
     vtype::mask_compressstoreu(
             right_addr + vtype::numlanes - amount_ge_pivot, k, reg);
-    
+
     return amount_ge_pivot;
 }
 
@@ -188,7 +188,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
                                              reg_t &biggest_vec)
 {
     typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
-    
+
     int amount_ge_pivot = vtype::double_compressstore(l_store, r_store, ge_mask, curr_vec);
 
     smallest_vec = vtype::min(curr_vec, smallest_vec);
