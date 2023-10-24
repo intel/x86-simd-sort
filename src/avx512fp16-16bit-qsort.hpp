@@ -210,6 +210,6 @@ void avx512_partial_qsort(_Float16 *arr,
                           bool hasnan)
 {
     avx512_qselect(arr, k - 1, arrsize, hasnan);
-    avx512_qsort(arr, k - 1);
+    avx512_qsort(arr, k - 1, hasnan);
 }
 #endif // AVX512FP16_QSORT_16BIT
