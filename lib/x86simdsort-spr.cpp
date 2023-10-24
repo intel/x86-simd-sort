@@ -5,9 +5,9 @@
 namespace xss {
 namespace avx512 {
     template <>
-    void qsort(_Float16 *arr, size_t size)
+    void qsort(_Float16 *arr, size_t size, bool hasnan)
     {
-        avx512_qsort(arr, size);
+        avx512_qsort(arr, size, hasnan);
     }
     template <>
     void qselect(_Float16 *arr, size_t k, size_t arrsize, bool hasnan)

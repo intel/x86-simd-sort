@@ -55,11 +55,11 @@ dispatch_requested(std::string_view cpurequested,
 #define CAT(a, b) CAT_(a, b)
 
 #define DECLARE_INTERNAL_qsort(TYPE) \
-    static void (*internal_qsort##TYPE)(TYPE *, size_t) = NULL; \
+    static void (*internal_qsort##TYPE)(TYPE *, size_t, bool) = NULL; \
     template <> \
-    void qsort(TYPE *arr, size_t arrsize) \
+    void qsort(TYPE *arr, size_t arrsize, bool hasnan) \
     { \
-        (*internal_qsort##TYPE)(arr, arrsize); \
+        (*internal_qsort##TYPE)(arr, arrsize, hasnan); \
     }
 
 #define DECLARE_INTERNAL_qselect(TYPE) \
@@ -81,22 +81,23 @@ dispatch_requested(std::string_view cpurequested,
     }
 
 #define DECLARE_INTERNAL_argsort(TYPE) \
-    static std::vector<size_t> (*internal_argsort##TYPE)(TYPE *, size_t) \
+    static std::vector<size_t> (*internal_argsort##TYPE)(TYPE *, size_t, bool) \
             = NULL; \
     template <> \
-    std::vector<size_t> argsort(TYPE *arr, size_t arrsize) \
+    std::vector<size_t> argsort(TYPE *arr, size_t arrsize, bool hasnan) \
     { \
-        return (*internal_argsort##TYPE)(arr, arrsize); \
+        return (*internal_argsort##TYPE)(arr, arrsize, hasnan); \
     }
 
 #define DECLARE_INTERNAL_argselect(TYPE) \
     static std::vector<size_t> (*internal_argselect##TYPE)( \
-            TYPE *, size_t, size_t) \
+            TYPE *, size_t, size_t, bool) \
             = NULL; \
     template <> \
-    std::vector<size_t> argselect(TYPE *arr, size_t k, size_t arrsize) \
+    std::vector<size_t> argselect( \
+            TYPE *arr, size_t k, size_t arrsize, bool hasnan) \
     { \
-        return (*internal_argselect##TYPE)(arr, k, arrsize); \
+        return (*internal_argselect##TYPE)(arr, k, arrsize, hasnan); \
     }
 
 /* runtime dispatch mechanism */

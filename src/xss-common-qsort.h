@@ -72,7 +72,7 @@ X86_SIMD_SORT_INLINE arrsize_t replace_nan_with_inf(T *arr, arrsize_t size)
 }
 
 template <typename vtype, typename type_t>
-X86_SIMD_SORT_INLINE bool has_nan(type_t *arr, arrsize_t size)
+X86_SIMD_SORT_INLINE bool array_has_nan(type_t *arr, arrsize_t size)
 {
     using opmask_t = typename vtype::opmask_t;
     using reg_t = typename vtype::reg_t;
@@ -551,15 +551,19 @@ X86_SIMD_SORT_INLINE void qselect_(type_t *arr,
 
 // Quicksort routines:
 template <typename vtype, typename T>
-X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize)
+X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
 {
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
-            arrsize_t nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
+            arrsize_t nan_count = 0;
+            if (UNLIKELY(hasnan)) {
+                nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
+            }
             qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
             replace_inf_with_nan(arr, arrsize, nan_count);
         }
         else {
+            UNUSED(hasnan);
             qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         }
     }
@@ -589,14 +593,15 @@ X86_SIMD_SORT_INLINE void
 xss_partial_qsort(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
     xss_qselect<vtype, T>(arr, k - 1, arrsize, hasnan);
-    xss_qsort<vtype, T>(arr, k - 1);
+    xss_qsort<vtype, T>(arr, k - 1, hasnan);
 }
 
 #define DEFINE_METHODS(ISA, VTYPE) \
     template <typename T> \
-    X86_SIMD_SORT_INLINE void ISA##_qsort(T *arr, arrsize_t size) \
+    X86_SIMD_SORT_INLINE void ISA##_qsort( \
+            T *arr, arrsize_t size, bool hasnan = false) \
     { \
-        xss_qsort<VTYPE, T>(arr, size); \
+        xss_qsort<VTYPE, T>(arr, size, hasnan); \
     } \
     template <typename T> \
     X86_SIMD_SORT_INLINE void ISA##_qselect( \

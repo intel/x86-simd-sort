@@ -4,9 +4,9 @@
 
 #define DEFINE_ALL_METHODS(type) \
     template <> \
-    void qsort(type *arr, size_t arrsize) \
+    void qsort(type *arr, size_t arrsize, bool hasnan) \
     { \
-        avx2_qsort(arr, arrsize); \
+        avx2_qsort(arr, arrsize, hasnan); \
     } \
     template <> \
     void qselect(type *arr, size_t k, size_t arrsize, bool hasnan) \
@@ -24,5 +24,5 @@ namespace avx2 {
     DEFINE_ALL_METHODS(uint32_t)
     DEFINE_ALL_METHODS(int32_t)
     DEFINE_ALL_METHODS(float)
-} // namespace avx512
+} // namespace avx2
 } // namespace xss

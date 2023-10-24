@@ -519,12 +519,14 @@ bool is_a_nan<uint16_t>(uint16_t elem)
 }
 
 X86_SIMD_SORT_INLINE
-void avx512_qsort_fp16(uint16_t *arr, arrsize_t arrsize)
+void avx512_qsort_fp16(uint16_t *arr, arrsize_t arrsize, bool hasnan = false)
 {
     if (arrsize > 1) {
-        arrsize_t nan_count
-                = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(arr,
-                                                                      arrsize);
+        arrsize_t nan_count = 0;
+        if (UNLIKELY(hasnan)) {
+            nan_count = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(
+                    arr, arrsize);
+        }
         qsort_<zmm_vector<float16>, uint16_t>(
                 arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);
@@ -535,7 +537,7 @@ X86_SIMD_SORT_INLINE
 void avx512_qselect_fp16(uint16_t *arr,
                          arrsize_t k,
                          arrsize_t arrsize,
-                         bool hasnan = true)
+                         bool hasnan = false)
 {
     arrsize_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {

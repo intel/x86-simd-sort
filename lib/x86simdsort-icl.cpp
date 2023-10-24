@@ -5,9 +5,9 @@
 namespace xss {
 namespace avx512 {
     template <>
-    void qsort(uint16_t *arr, size_t size)
+    void qsort(uint16_t *arr, size_t size, bool hasnan)
     {
-        avx512_qsort(arr, size);
+        avx512_qsort(arr, size, hasnan);
     }
     template <>
     void qselect(uint16_t *arr, size_t k, size_t arrsize, bool hasnan)
@@ -20,9 +20,9 @@ namespace avx512 {
         avx512_partial_qsort(arr, k, arrsize, hasnan);
     }
     template <>
-    void qsort(int16_t *arr, size_t size)
+    void qsort(int16_t *arr, size_t size, bool hasnan)
     {
-        avx512_qsort(arr, size);
+        avx512_qsort(arr, size, hasnan);
     }
     template <>
     void qselect(int16_t *arr, size_t k, size_t arrsize, bool hasnan)
