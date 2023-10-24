@@ -177,12 +177,14 @@ void replace_inf_with_nan(_Float16 *arr, arrsize_t size, arrsize_t nan_count)
 }
 /* Specialized template function for _Float16 qsort_*/
 template <>
-void avx512_qsort(_Float16 *arr, arrsize_t arrsize)
+void avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan)
 {
     if (arrsize > 1) {
-        arrsize_t nan_count
-                = replace_nan_with_inf<zmm_vector<_Float16>, _Float16>(arr,
-                                                                       arrsize);
+        arrsize_t nan_count = 0;
+        if (UNLIKELY(hasnan)) {
+            nan_count = replace_nan_with_inf<zmm_vector<_Float16>, _Float16>(
+                    arr, arrsize);
+        }
         qsort_<zmm_vector<_Float16>, _Float16>(
                 arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);

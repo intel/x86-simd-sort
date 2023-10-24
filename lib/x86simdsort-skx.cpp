@@ -6,9 +6,9 @@
 
 #define DEFINE_ALL_METHODS(type) \
     template <> \
-    void qsort(type *arr, size_t arrsize) \
+    void qsort(type *arr, size_t arrsize, bool hasnan) \
     { \
-        avx512_qsort(arr, arrsize); \
+        avx512_qsort(arr, arrsize, hasnan); \
     } \
     template <> \
     void qselect(type *arr, size_t k, size_t arrsize, bool hasnan) \
@@ -21,14 +21,15 @@
         avx512_partial_qsort(arr, k, arrsize, hasnan); \
     } \
     template <> \
-    std::vector<size_t> argsort(type *arr, size_t arrsize) \
+    std::vector<size_t> argsort(type *arr, size_t arrsize, bool hasnan) \
     { \
-        return avx512_argsort(arr, arrsize); \
+        return avx512_argsort(arr, arrsize, hasnan); \
     } \
     template <> \
-    std::vector<size_t> argselect(type *arr, size_t k, size_t arrsize) \
+    std::vector<size_t> argselect( \
+            type *arr, size_t k, size_t arrsize, bool hasnan) \
     { \
-        return avx512_argselect(arr, k, arrsize); \
+        return avx512_argselect(arr, k, arrsize, hasnan); \
     }
 
 namespace xss {

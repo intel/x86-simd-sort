@@ -638,18 +638,19 @@ X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
 /* argsort methods for 32-bit and 64-bit dtypes */
 template <typename T>
 X86_SIMD_SORT_INLINE void
-avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize)
+avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
 {
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               ymm_vector<T>,
                                               zmm_vector<T>>::type;
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
-            if (has_nan<vectype>(arr, arrsize)) {
+            if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argsort_withnan(arr, arg, 0, arrsize);
                 return;
             }
         }
+        UNUSED(hasnan);
         argsort_64bit_<vectype>(
                 arr, arg, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
@@ -657,18 +658,19 @@ avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize)
 
 template <typename T>
 X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx512_argsort(T *arr,
-                                                           arrsize_t arrsize)
+                                                           arrsize_t arrsize,
+                                                           bool hasnan = false)
 {
     std::vector<arrsize_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
-    avx512_argsort<T>(arr, indices.data(), arrsize);
+    avx512_argsort<T>(arr, indices.data(), arrsize, hasnan);
     return indices;
 }
 
 /* argselect methods for 32-bit and 64-bit dtypes */
 template <typename T>
 X86_SIMD_SORT_INLINE void
-avx512_argselect(T *arr, arrsize_t *arg, arrsize_t k, arrsize_t arrsize)
+avx512_argselect(T *arr, arrsize_t *arg, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
 {
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               ymm_vector<T>,
@@ -676,11 +678,12 @@ avx512_argselect(T *arr, arrsize_t *arg, arrsize_t k, arrsize_t arrsize)
 
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
-            if (has_nan<vectype>(arr, arrsize)) {
+            if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argselect_withnan(arr, arg, k, 0, arrsize);
                 return;
             }
         }
+        UNUSED(hasnan);
         argselect_64bit_<vectype>(
                 arr, arg, k, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
@@ -688,11 +691,11 @@ avx512_argselect(T *arr, arrsize_t *arg, arrsize_t k, arrsize_t arrsize)
 
 template <typename T>
 X86_SIMD_SORT_INLINE std::vector<arrsize_t>
-avx512_argselect(T *arr, arrsize_t k, arrsize_t arrsize)
+avx512_argselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
 {
     std::vector<arrsize_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
-    avx512_argselect<T>(arr, indices.data(), k, arrsize);
+    avx512_argselect<T>(arr, indices.data(), k, arrsize, hasnan);
     return indices;
 }
 

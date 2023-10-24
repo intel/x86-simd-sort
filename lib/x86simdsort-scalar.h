@@ -5,9 +5,14 @@
 namespace xss {
 namespace scalar {
     template <typename T>
-    void qsort(T *arr, size_t arrsize)
+    void qsort(T *arr, size_t arrsize, bool hasnan)
     {
-        std::sort(arr, arr + arrsize, compare<T, std::less<T>>());
+        if (hasnan) {
+            std::sort(arr, arr + arrsize, compare<T, std::less<T>>());
+        }
+        else {
+            std::sort(arr, arr + arrsize);
+        }
     }
     template <typename T>
     void qselect(T *arr, size_t k, size_t arrsize, bool hasnan)
@@ -32,16 +37,18 @@ namespace scalar {
         }
     }
     template <typename T>
-    std::vector<size_t> argsort(T *arr, size_t arrsize)
+    std::vector<size_t> argsort(T *arr, size_t arrsize, bool hasnan)
     {
+        UNUSED(hasnan);
         std::vector<size_t> arg(arrsize);
         std::iota(arg.begin(), arg.end(), 0);
         std::sort(arg.begin(), arg.end(), compare_arg<T, std::less<T>>(arr));
         return arg;
     }
     template <typename T>
-    std::vector<size_t> argselect(T *arr, size_t k, size_t arrsize)
+    std::vector<size_t> argselect(T *arr, size_t k, size_t arrsize, bool hasnan)
     {
+        UNUSED(hasnan);
         std::vector<size_t> arg(arrsize);
         std::iota(arg.begin(), arg.end(), 0);
         std::nth_element(arg.begin(),
