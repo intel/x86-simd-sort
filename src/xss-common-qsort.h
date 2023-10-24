@@ -563,6 +563,7 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
             replace_inf_with_nan(arr, arrsize, nan_count);
         }
         else {
+            UNUSED(hasnan);
             qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         }
     }
