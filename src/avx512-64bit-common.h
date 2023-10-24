@@ -81,9 +81,9 @@ struct ymm_vector<float> {
     {
         return _mm256_cmp_ps_mask(x, y, _CMP_EQ_OQ);
     }
-    static opmask_t get_partial_loadmask(int size)
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
-        return (0x01 << size) - 0x01;
+        return ((0x1ull << num_to_read) - 0x1ull);
     }
     template <int type>
     static opmask_t fpclass(reg_t x)
@@ -244,6 +244,10 @@ struct ymm_vector<uint32_t> {
     {
         return _mm256_cmp_epu32_mask(x, y, _MM_CMPINT_NLT);
     }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
+    }
     static opmask_t eq(reg_t x, reg_t y)
     {
         return _mm256_cmp_epu32_mask(x, y, _MM_CMPINT_EQ);
@@ -395,6 +399,10 @@ struct ymm_vector<int32_t> {
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm256_cmp_epi32_mask(x, y, _MM_CMPINT_NLT);
+    }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
     }
     static opmask_t eq(reg_t x, reg_t y)
     {
@@ -557,6 +565,10 @@ struct zmm_vector<int64_t> {
     {
         return _mm512_cmp_epi64_mask(x, y, _MM_CMPINT_NLT);
     }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
+    }
     static opmask_t eq(reg_t x, reg_t y)
     {
         return _mm512_cmp_epi64_mask(x, y, _MM_CMPINT_EQ);
@@ -660,6 +672,14 @@ struct zmm_vector<int64_t> {
     {
         return v;
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
+    }
 };
 template <>
 struct zmm_vector<uint64_t> {
@@ -737,6 +757,10 @@ struct zmm_vector<uint64_t> {
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_epu64_mask(x, y, _MM_CMPINT_NLT);
+    }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
     }
     static opmask_t eq(reg_t x, reg_t y)
     {
@@ -818,6 +842,14 @@ struct zmm_vector<uint64_t> {
     {
         return v;
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
+    }
 };
 template <>
 struct zmm_vector<double> {
@@ -880,9 +912,13 @@ struct zmm_vector<double> {
     {
         return _mm512_cmp_pd_mask(x, y, _CMP_EQ_OQ);
     }
-    static opmask_t get_partial_loadmask(int size)
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
-        return (0x01 << size) - 0x01;
+        return ((0x1ull << num_to_read) - 0x1ull);
+    }
+    static int32_t convert_mask_to_int(opmask_t mask)
+    {
+        return mask;
     }
     template <int type>
     static opmask_t fpclass(reg_t x)
@@ -981,6 +1017,14 @@ struct zmm_vector<double> {
     static __m512i cast_to(reg_t v)
     {
         return _mm512_castpd_si512(v);
+    }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
     }
 };
 

@@ -54,9 +54,13 @@ struct zmm_vector<_Float16> {
     {
         return _mm512_cmp_ph_mask(x, y, _CMP_GE_OQ);
     }
-    static opmask_t get_partial_loadmask(int size)
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
-        return (0x00000001 << size) - 0x00000001;
+        return ((0x1ull << num_to_read) - 0x1ull);
+    }
+    static int32_t convert_mask_to_int(opmask_t mask)
+    {
+        return mask;
     }
     template <int type>
     static opmask_t fpclass(reg_t x)
@@ -145,6 +149,14 @@ struct zmm_vector<_Float16> {
     {
         return _mm512_castph_si512(v);
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
+    }
 };
 
 template <>
@@ -188,5 +200,14 @@ void avx512_qselect(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
         qselect_<zmm_vector<_Float16>, _Float16>(
                 arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
     }
+}
+template <>
+void avx512_partial_qsort(_Float16 *arr,
+                          arrsize_t k,
+                          arrsize_t arrsize,
+                          bool hasnan)
+{
+    avx512_qselect(arr, k - 1, arrsize, hasnan);
+    avx512_qsort(arr, k - 1);
 }
 #endif // AVX512FP16_QSORT_16BIT

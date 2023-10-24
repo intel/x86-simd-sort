@@ -8,7 +8,7 @@
 #ifndef AVX512_QSORT_32BIT
 #define AVX512_QSORT_32BIT
 
-#include "avx512-common-qsort.h"
+#include "xss-common-qsort.h"
 
 /*
  * Constants used in sorting 16 elements in a ZMM registers. Based on Bitonic
@@ -64,6 +64,10 @@ struct zmm_vector<int32_t> {
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_epi32_mask(x, y, _MM_CMPINT_NLT);
+    }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
     }
     template <int scale>
     static halfreg_t i64gather(__m512i index, void const *base)
@@ -154,6 +158,14 @@ struct zmm_vector<int32_t> {
     {
         return v;
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
+    }
 };
 template <>
 struct zmm_vector<uint32_t> {
@@ -201,6 +213,10 @@ struct zmm_vector<uint32_t> {
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_epu32_mask(x, y, _MM_CMPINT_NLT);
+    }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
     }
     static reg_t loadu(void const *mem)
     {
@@ -281,6 +297,14 @@ struct zmm_vector<uint32_t> {
     {
         return v;
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
+    }
 };
 template <>
 struct zmm_vector<float> {
@@ -319,9 +343,13 @@ struct zmm_vector<float> {
     {
         return _mm512_cmp_ps_mask(x, y, _CMP_GE_OQ);
     }
-    static opmask_t get_partial_loadmask(int size)
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
-        return (0x0001 << size) - 0x0001;
+        return ((0x1ull << num_to_read) - 0x1ull);
+    }
+    static int32_t convert_mask_to_int(opmask_t mask)
+    {
+        return mask;
     }
     template <int type>
     static opmask_t fpclass(reg_t x)
@@ -421,6 +449,14 @@ struct zmm_vector<float> {
     static __m512i cast_to(reg_t v)
     {
         return _mm512_castps_si512(v);
+    }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
     }
 };
 

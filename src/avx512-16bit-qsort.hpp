@@ -80,6 +80,14 @@ struct zmm_vector<float16> {
                           exp_eq, mant_x, mant_y, _MM_CMPINT_NLT);
         return _kxor_mask32(mask_ge, neg);
     }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
+    }
+    static int32_t convert_mask_to_int(opmask_t mask)
+    {
+        return mask;
+    }
     static reg_t loadu(void const *mem)
     {
         return _mm512_loadu_si512(mem);
@@ -177,6 +185,14 @@ struct zmm_vector<float16> {
     {
         return v;
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<float16>>(
+                left_addr, right_addr, k, reg);
+    }
 };
 
 template <>
@@ -219,6 +235,10 @@ struct zmm_vector<int16_t> {
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_epi16_mask(x, y, _MM_CMPINT_NLT);
+    }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
     }
     static reg_t loadu(void const *mem)
     {
@@ -301,6 +321,14 @@ struct zmm_vector<int16_t> {
     {
         return v;
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
+    }
 };
 template <>
 struct zmm_vector<uint16_t> {
@@ -342,6 +370,10 @@ struct zmm_vector<uint16_t> {
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_epu16_mask(x, y, _MM_CMPINT_NLT);
+    }
+    static opmask_t get_partial_loadmask(uint64_t num_to_read)
+    {
+        return ((0x1ull << num_to_read) - 0x1ull);
     }
     static reg_t loadu(void const *mem)
     {
@@ -421,6 +453,14 @@ struct zmm_vector<uint16_t> {
     static __m512i cast_to(reg_t v)
     {
         return v;
+    }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<zmm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
     }
 };
 

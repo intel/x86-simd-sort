@@ -1,3 +1,5 @@
+#ifndef XSS_COMMON_INCLUDES
+#define XSS_COMMON_INCLUDES
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -72,3 +74,8 @@ struct zmm_vector;
 
 template <typename type>
 struct ymm_vector;
+
+template <typename type>
+struct avx2_vector;
+
+#endif // XSS_COMMON_INCLUDES

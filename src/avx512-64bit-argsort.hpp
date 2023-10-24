@@ -7,7 +7,7 @@
 #ifndef AVX512_ARGSORT_64BIT
 #define AVX512_ARGSORT_64BIT
 
-#include "avx512-common-qsort.h"
+#include "xss-common-qsort.h"
 #include "avx512-64bit-common.h"
 #include "xss-network-keyvaluesort.hpp"
 #include <numeric>
@@ -64,7 +64,6 @@ std_argsort(T *arr, arrsize_t *arg, arrsize_t left, arrsize_t right)
                   return arr[left] < arr[right];
               });
 }
-
 
 /* Workaround for NumPy failed build on macOS x86_64: implicit instantiation of
  * undefined template 'zmm_vector<unsigned long>'*/
