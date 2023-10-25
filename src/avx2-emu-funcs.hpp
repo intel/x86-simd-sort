@@ -178,8 +178,8 @@ T avx2_emu_reduce_min64(typename avx2_vector<T>::reg_t x)
 
 template <typename T>
 void avx2_emu_mask_compressstoreu32(void *base_addr,
-                                  typename avx2_vector<T>::opmask_t k,
-                                  typename avx2_vector<T>::reg_t reg)
+                                    typename avx2_vector<T>::opmask_t k,
+                                    typename avx2_vector<T>::reg_t reg)
 {
     using vtype = avx2_vector<T>;
 
@@ -198,8 +198,8 @@ void avx2_emu_mask_compressstoreu32(void *base_addr,
 
 template <typename T>
 void avx2_emu_mask_compressstoreu64(void *base_addr,
-                                  typename avx2_vector<T>::opmask_t k,
-                                  typename avx2_vector<T>::reg_t reg)
+                                    typename avx2_vector<T>::opmask_t k,
+                                    typename avx2_vector<T>::reg_t reg)
 {
     using vtype = avx2_vector<T>;
 
@@ -211,7 +211,8 @@ void avx2_emu_mask_compressstoreu64(void *base_addr,
     const __m256i &left = _mm256_loadu_si256(
             (const __m256i *)avx2_compressstore_lut64_left[shortMask].data());
 
-    typename vtype::reg_t temp = vtype::cast_from(_mm256_permutevar8x32_epi32(vtype::cast_to(reg), perm));
+    typename vtype::reg_t temp = vtype::cast_from(
+            _mm256_permutevar8x32_epi32(vtype::cast_to(reg), perm));
 
     vtype::mask_storeu(leftStore, left, temp);
 }
@@ -258,7 +259,8 @@ int32_t avx2_double_compressstore64(void *left_addr,
     const __m256i &left = _mm256_loadu_si256(
             (const __m256i *)avx2_compressstore_lut64_left[shortMask].data());
 
-    typename vtype::reg_t temp = vtype::cast_from(_mm256_permutevar8x32_epi32(vtype::cast_to(reg), perm));
+    typename vtype::reg_t temp = vtype::cast_from(
+            _mm256_permutevar8x32_epi32(vtype::cast_to(reg), perm));
 
     vtype::mask_storeu(leftStore, left, temp);
     vtype::mask_storeu(rightStore, ~left, temp);

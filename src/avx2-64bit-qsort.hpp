@@ -57,7 +57,7 @@ struct avx2_vector<int64_t> {
     static const uint8_t numlanes = 4;
     static constexpr int network_sort_threshold = 64;
     static constexpr int partition_unroll_factor = 4;
-    
+
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
     static type_t type_max()
@@ -85,14 +85,6 @@ struct avx2_vector<int64_t> {
     {
         return _mm256_xor_si256(x, y);
     }
-    static opmask_t knot_opmask(opmask_t x)
-    {
-        return ~x;
-    }
-    static opmask_t le(reg_t x, reg_t y)
-    {
-        return ~_mm256_cmpgt_epi64(x, y);
-    }
     static opmask_t ge(reg_t x, reg_t y)
     {
         opmask_t equal = eq(x, y);
@@ -113,8 +105,7 @@ struct avx2_vector<int64_t> {
     template <int scale>
     static reg_t i64gather(__m256i index, void const *base)
     {
-        return _mm256_i64gather_epi64(
-                (long long int const *)base, index, scale);
+        return _mm256_i64gather_epi64((int64_t const *)base, index, scale);
     }
     static reg_t loadu(void const *mem)
     {
@@ -205,10 +196,12 @@ struct avx2_vector<int64_t> {
     {
         return sort_ymm_64bit<avx2_vector<type_t>>(x);
     }
-    static reg_t cast_from(__m256i v){
+    static reg_t cast_from(__m256i v)
+    {
         return v;
     }
-    static __m256i cast_to(reg_t v){
+    static __m256i cast_to(reg_t v)
+    {
         return v;
     }
 };
@@ -221,7 +214,7 @@ struct avx2_vector<uint64_t> {
     static const uint8_t numlanes = 4;
     static constexpr int network_sort_threshold = 64;
     static constexpr int partition_unroll_factor = 4;
-    
+
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
     static type_t type_max()
@@ -256,10 +249,6 @@ struct avx2_vector<uint64_t> {
     {
         return _mm256_i64gather_epi64(
                 (long long int const *)base, index, scale);
-    }
-    static opmask_t knot_opmask(opmask_t x)
-    {
-        return ~x;
     }
     static opmask_t ge(reg_t x, reg_t y)
     {
@@ -362,10 +351,12 @@ struct avx2_vector<uint64_t> {
     {
         return sort_ymm_64bit<avx2_vector<type_t>>(x);
     }
-    static reg_t cast_from(__m256i v){
+    static reg_t cast_from(__m256i v)
+    {
         return v;
     }
-    static __m256i cast_to(reg_t v){
+    static __m256i cast_to(reg_t v)
+    {
         return v;
     }
 };
@@ -378,7 +369,7 @@ struct avx2_vector<double> {
     static const uint8_t numlanes = 4;
     static constexpr int network_sort_threshold = 64;
     static constexpr int partition_unroll_factor = 4;
-    
+
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
     static type_t type_max()
@@ -420,10 +411,6 @@ struct avx2_vector<double> {
     static reg_t maskz_loadu(opmask_t mask, void const *mem)
     {
         return _mm256_maskload_pd((const double *)mem, mask);
-    }
-    static opmask_t knot_opmask(opmask_t x)
-    {
-        return ~x;
     }
     static opmask_t ge(reg_t x, reg_t y)
     {
@@ -531,24 +518,29 @@ struct avx2_vector<double> {
     {
         return sort_ymm_64bit<avx2_vector<type_t>>(x);
     }
-    static reg_t cast_from(__m256i v){
+    static reg_t cast_from(__m256i v)
+    {
         return _mm256_castsi256_pd(v);
     }
-    static __m256i cast_to(reg_t v){
+    static __m256i cast_to(reg_t v)
+    {
         return _mm256_castpd_si256(v);
     }
 };
 
-struct avx2_64bit_swizzle_ops{
+struct avx2_64bit_swizzle_ops {
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg){
+    X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg)
+    {
         __m256i v = vtype::cast_to(reg);
 
-        if constexpr (scale == 2){
+        if constexpr (scale == 2) {
             v = _mm256_permute4x64_epi64(v, 0b10110001);
-        }else if constexpr (scale == 4){
+        }
+        else if constexpr (scale == 4) {
             v = _mm256_permute4x64_epi64(v, 0b01001110);
-        }else{
+        }
+        else {
             static_assert(scale == -1, "should not be reached");
         }
 
@@ -556,14 +548,16 @@ struct avx2_64bit_swizzle_ops{
     }
 
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t reverse_n(typename vtype::reg_t reg){
+    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    reverse_n(typename vtype::reg_t reg)
+    {
         __m256i v = vtype::cast_to(reg);
 
-        if constexpr (scale == 2){
-            return swap_n<vtype, 2>(reg);
-        }else if constexpr (scale == 4){
+        if constexpr (scale == 2) { return swap_n<vtype, 2>(reg); }
+        else if constexpr (scale == 4) {
             return vtype::reverse(reg);
-        }else{
+        }
+        else {
             static_assert(scale == -1, "should not be reached");
         }
 
@@ -571,15 +565,17 @@ struct avx2_64bit_swizzle_ops{
     }
 
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t merge_n(typename vtype::reg_t reg, typename vtype::reg_t other){
+    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    merge_n(typename vtype::reg_t reg, typename vtype::reg_t other)
+    {
         __m256d v1 = _mm256_castsi256_pd(vtype::cast_to(reg));
         __m256d v2 = _mm256_castsi256_pd(vtype::cast_to(other));
 
-        if constexpr (scale == 2){
-            v1 = _mm256_blend_pd(v1, v2, 0b0101);
-        }else if constexpr (scale == 4){
+        if constexpr (scale == 2) { v1 = _mm256_blend_pd(v1, v2, 0b0101); }
+        else if constexpr (scale == 4) {
             v1 = _mm256_blend_pd(v1, v2, 0b0011);
-        }else{
+        }
+        else {
             static_assert(scale == -1, "should not be reached");
         }
 
