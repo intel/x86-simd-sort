@@ -39,3 +39,5 @@ if cancompilefp16
     cpp_args : ['-march=sapphirerapids', flags_hide_symbols],
     )
 endif
+
+install_headers('x86simdsort.h')
