@@ -30,7 +30,7 @@ jobs:
         CXX: g++-9
       run: |
         make clean
-        meson setup --warnlevel 2 --werror --buildtype release builddir
+        meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir
         cd builddir
         ninja
 
@@ -60,7 +60,7 @@ jobs:
         CXX: g++-10
       run: |
         make clean
-        meson setup --warnlevel 2 --werror --buildtype release builddir
+        meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir
         cd builddir
         ninja
 
@@ -90,7 +90,7 @@ jobs:
         CXX: g++-11
       run: |
         make clean
-        meson setup --warnlevel 2 --werror --buildtype release builddir
+        meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir
         cd builddir
         ninja
     - name: Run test suite on TGL
@@ -126,7 +126,7 @@ jobs:
         CXX: g++-13
       run: |
         make clean
-        meson setup --warnlevel 2 --werror --buildtype release builddir
+        meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir
         cd builddir
         ninja
 
@@ -157,7 +157,7 @@ jobs:
         CXXFLAGS: -DXSS_MINIMAL_NETWORK_SORT
       run: |
         make clean
-        meson setup --warnlevel 2 --werror --buildtype release builddir
+        meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir
         cd builddir
         ninja
 
