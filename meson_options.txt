@@ -1,0 +1,4 @@
+option('build_tests', type : 'boolean', value : false,
+  description : 'Build test suite (default: "false").')
+option('build_benchmarks', type : 'boolean', value : false,
+  description : 'Build benchmarking suite (default: "false").')

@@ -1,5 +1,5 @@
 project('x86-simd-sort', 'cpp',
-        version : '2.0.0',
+        version : '4.0.0',
         license : 'BSD 3-clause',
         default_options : ['cpp_std=c++17'])
 cpp = meson.get_compiler('cpp')
@@ -8,8 +8,6 @@ lib = include_directories('lib')
 bench = include_directories('benchmarks')
 utils = include_directories('utils')
 tests = include_directories('tests')
-gtest_dep = dependency('gtest_main', required : false, static: false)
-gbench_dep = dependency('benchmark', required : false, static: false)
 
 fp16code = '''#include<immintrin.h>
 int main() {
@@ -27,9 +25,19 @@ libsimdsort = shared_library('x86simdsort',
                              include_directories : [utils, lib],
                              link_with : [libtargets],
                              cpp_args : [flags_hide_symbols],
+                             install : true,
                             )
 
-if gtest_dep.found()
+pkg_mod = import('pkgconfig')
+pkg_mod.generate(libraries : libsimdsort,
+                 version : '4.0',
+                 name : 'libx86simdsort',
+                 filebase : 'x86simdsort',
+                 description : 'High performance SIMD based sorting routines.')
+
+# Build test suite if option build_tests set to true
+if get_option('build_tests')
+  gtest_dep = dependency('gtest_main', required : true, static: false)
   subdir('tests')
   testexe = executable('testexe',
                      include_directories : [lib, utils],
@@ -37,9 +45,12 @@ if gtest_dep.found()
                      link_whole : [libtests],
                      link_with : libsimdsort,
                     )
+  test('x86 simd sort tests', testexe)
 endif
 
-if gbench_dep.found()
+# Build benchmarking suite if option build_benchmarks is set to true
+if get_option('build_benchmarks')
+  gbench_dep = dependency('benchmark', required : true, static: false)
   subdir('benchmarks')
   benchexe = executable('benchexe',
                       include_directories : [src, lib, utils, bench],
@@ -52,8 +63,8 @@ endif
 
 summary({
   'Can compile AVX-512 FP16 ISA': cancompilefp16,
-  'Built test content': gtest_dep.found(),
-  'Built benchmarks': gbench_dep.found(),
+  'Build test content': get_option('build_tests'),
+  'Build benchmarks': get_option('build_benchmarks'),
   },
   section: 'Configuration',
   bool_yn: true
