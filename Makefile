@@ -1,10 +1,10 @@
 meson:
-	meson setup --warnlevel 2 --werror --buildtype release builddir
+	meson setup -Dbuild_tests=true -Dbuild_benchmarks=true --warnlevel 2 --werror --buildtype release builddir
 	cd builddir && ninja
 
 mesondebug:
-	meson setup --warnlevel 2 --werror --buildtype debug debug
+	meson setup -Dbuild_tests=true -Dbuild_benchmarks=true --warnlevel 2 --werror --buildtype debug debug
 	cd debug && ninja
 
 clean:
-	$(RM) -rf $(TESTOBJS) $(BENCHOBJS) $(UTILOBJS) testexe benchexe builddir
+	$(RM) -rf $(TESTOBJS) $(BENCHOBJS) $(UTILOBJS) testexe benchexe builddir debug

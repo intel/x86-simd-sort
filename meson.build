@@ -8,8 +8,6 @@ lib = include_directories('lib')
 bench = include_directories('benchmarks')
 utils = include_directories('utils')
 tests = include_directories('tests')
-gtest_dep = dependency('gtest_main', required : false, static: false)
-gbench_dep = dependency('benchmark', required : false, static: false)
 
 fp16code = '''#include<immintrin.h>
 int main() {
@@ -29,7 +27,9 @@ libsimdsort = shared_library('x86simdsort',
                              cpp_args : [flags_hide_symbols],
                             )
 
-if gtest_dep.found()
+# Build test suite if option build_tests set to true
+if get_option('build_tests')
+  gtest_dep = dependency('gtest_main', required : true, static: false)
   subdir('tests')
   testexe = executable('testexe',
                      include_directories : [lib, utils],
@@ -39,7 +39,9 @@ if gtest_dep.found()
                     )
 endif
 
-if gbench_dep.found()
+# Build benchmarking suite if option build_benchmarks is set to true
+if get_option('build_benchmarks')
+  gbench_dep = dependency('benchmark', required : true, static: false)
   subdir('benchmarks')
   benchexe = executable('benchexe',
                       include_directories : [src, lib, utils, bench],
@@ -52,8 +54,8 @@ endif
 
 summary({
   'Can compile AVX-512 FP16 ISA': cancompilefp16,
-  'Built test content': gtest_dep.found(),
-  'Built benchmarks': gbench_dep.found(),
+  'Build test content': get_option('build_tests'),
+  'Build benchmarks': get_option('build_benchmarks'),
   },
   section: 'Configuration',
   bool_yn: true
