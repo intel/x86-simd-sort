@@ -135,7 +135,7 @@ struct avx2_vector<int32_t> {
     }
     static void mask_compressstoreu(void *mem, opmask_t mask, reg_t x)
     {
-        return avx2_emu_mask_compressstoreu<type_t>(mem, mask, x);
+        return avx2_emu_mask_compressstoreu32<type_t>(mem, mask, x);
     }
     static reg_t maskz_loadu(opmask_t mask, void const *mem)
     {
@@ -289,7 +289,7 @@ struct avx2_vector<uint32_t> {
     }
     static void mask_compressstoreu(void *mem, opmask_t mask, reg_t x)
     {
-        return avx2_emu_mask_compressstoreu<type_t>(mem, mask, x);
+        return avx2_emu_mask_compressstoreu32<type_t>(mem, mask, x);
     }
     static reg_t mask_loadu(reg_t x, opmask_t mask, void const *mem)
     {
@@ -459,7 +459,7 @@ struct avx2_vector<float> {
     }
     static void mask_compressstoreu(void *mem, opmask_t mask, reg_t x)
     {
-        return avx2_emu_mask_compressstoreu<type_t>(mem, mask, x);
+        return avx2_emu_mask_compressstoreu32<type_t>(mem, mask, x);
     }
     static reg_t mask_loadu(reg_t x, opmask_t mask, void const *mem)
     {
