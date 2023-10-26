@@ -161,5 +161,9 @@ jobs:
         cd builddir
         ninja
 
+    - name: List exported symbols
+      run: |
+        nm --demangle --dynamic --defined-only --extern-only builddir/libx86simdsort.so
+
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe

@@ -17,15 +17,15 @@ int main() {
 }
 '''
 cancompilefp16 = cpp.compiles(fp16code, args:'-march=sapphirerapids')
-flags_hide_symbols = ['-fvisibility=hidden', '-fvisibility-inlines-hidden']
 
 subdir('lib')
 libsimdsort = shared_library('x86simdsort',
                              'lib/x86simdsort.cpp',
                              include_directories : [utils, lib],
                              link_with : [libtargets],
-                             cpp_args : [flags_hide_symbols],
+                             gnu_symbol_visibility : 'inlineshidden',
                              install : true,
+                             soversion : 0,
                             )
 
 pkg_mod = import('pkgconfig')
