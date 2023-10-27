@@ -163,7 +163,7 @@ jobs:
 
     - name: List exported symbols
       run: |
-        nm --demangle --dynamic --defined-only --extern-only builddir/libx86simdsort.so
+        nm --demangle --dynamic --defined-only --extern-only builddir/libx86simdsortcpp.so
 
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe

@@ -1,173 +1,85 @@
 # x86-simd-sort
 
-C++ header file library for SIMD based 16-bit, 32-bit and 64-bit data type
-sorting algorithms on x86 processors. Source header files are available in src
-directory.  We currently only have AVX-512 based implementation of quicksort,
-argsort, quickselect, paritalsort and key-value sort. This repository also
-includes a test suite which can be built and run to test the sorting algorithms
-for correctness. It also has benchmarking code to compare its performance
-relative to std::sort. The following API's are currently supported:
-
-#### Quicksort
+C++ template library for high performance SIMD based sorting routines for
+16-bit, 32-bit and 64-bit data types. The sorting routines are accelerated
+using AVX-512/AVX2 when available. The library auto picks the best version
+depending on the processor it is run on. If you are looking for the AVX-512 or
+AVX2 specific implementations, please see
+[README](https://github.com/intel/x86-simd-sort/src/README.md) file under
+`src/` directory. The following routines are currently supported:
 
 ```cpp
-void avx512_qsort<T>(T* arr, int64_t arrsize)
+x86simdsort::qsort(T* arr, size_t size, bool hasnan);
+x86simdsort::qselect(T* arr, size_t k, size_t size, bool hasnan);
+x86simdsort::partial_qsort(T* arr, size_t k, size_t size, bool hasnan);
+std::vector<size_t> arg = x86simdsort::argsort(T* arr, size_t size, bool hasnan);
+std::vector<size_t> arg = x86simdsort::argselect(T* arr, size_t k, size_t size, bool hasnan);
 ```
-Supported datatypes: `uint16_t`, `int16_t`, `_Float16`, `uint32_t`, `int32_t`,
-`float`, `uint64_t`, `int64_t` and `double`.
 
-For floating-point types, if `arr` contains NaNs, they are moved to the end and
-replaced with a quiet NaN. That is, the original, bit-exact NaNs in the input
-are not preserved.
+### Build/Install
 
-#### Argsort
+[meson](https://github.com/mesonbuild/meson) is the used build system. Command
+to build and install the library:
 
-```cpp
-std::vector<int64_t> arg = avx512_argsort<T>(T* arr, int64_t arrsize)
-void avx512_argsort<T>(T* arr, int64_t *arg, int64_t arrsize)
 ```
-Supported datatypes: `uint32_t`, `int32_t`, `float`, `uint64_t`, `int64_t` and
-`double`.
-
-The algorithm resorts to scalar `std::sort` if the array contains NaNs.
-
-#### Quickselect
-
-```cpp
-void avx512_qselect<T>(T* arr, int64_t arrsize)
-void avx512_qselect<T>(T* arr, int64_t arrsize, bool hasnan)
+meson setup --buildtype release builddir && cd builddir
+meson compile
+sudo meson install
 ```
-Supported datatypes: `uint16_t`, `int16_t`, `_Float16`, `uint32_t`, `int32_t`,
-`float`, `uint64_t`, `int64_t` and `double`.
 
-For floating-point types, if `bool hasnan` is set, NaNs are moved to the end of
-the array, preserving the bit-exact NaNs in the input. If NaNs are present but
-`hasnan` is `false`, the behavior is undefined.
+Once installed, you can use `pkg-config --cflags --libs x86simdsortcpp` to
+populate the right cflags and ldflags to compile and link your C++ program.
+This repository also contains a test suite and benchmarking suite which are
+written using [googletest](https://github.com/google/googletest) and [google
+benchmark](https://github.com/google/benchmark) frameworks respectively. You
+can configure meson to build them both by using `-Dbuild_tests=true` and
+`-Dbuild_benchmarks=true`.
 
-#### Partialsort
-
-```cpp
-void avx512_partial_qsort<T>(T* arr, int64_t arrsize)
-void avx512_partial_qsort<T>(T* arr, int64_t arrsize, bool hasnan)
-```
-Supported datatypes: `uint16_t`, `int16_t`, `_Float16`, `uint32_t`, `int32_t`,
-`float`, `uint64_t`, `int64_t` and `double`.
-
-For floating-point types, if `bool hasnan` is set, NaNs are moved to the end of
-the array, preserving the bit-exact NaNs in the input. If NaNs are present but
-`hasnan` is `false`, the behavior is undefined.
-
-#### Key-value sort
-```cpp
-void avx512_qsort_kv<T>(T* key, uint64_t* value , int64_t arrsize)
-```
-Supported datatypes: `uint64_t, int64_t and double`
-
-## Algorithm details
-
-The ideas and code are based on these two research papers [1] and [2]. On a
-high level, the idea is to vectorize quicksort partitioning using AVX-512
-compressstore instructions. If the array size is < 128, then use Bitonic
-sorting network implemented on 512-bit registers.  The precise network
-definitions depend on the size of the dtype and are defined in separate files:
-`avx512-16bit-qsort.hpp`, `avx512-32bit-qsort.hpp` and
-`avx512-64bit-qsort.hpp`. Article [4] is a good resource for bitonic sorting
-network. The core implementations of the vectorized qsort functions
-`avx512_qsort<T>(T*, int64_t)` are modified versions of avx2 quicksort
-presented in the paper [2] and source code associated with that paper [3].
-
-## Example to include and build this in a C++ code
-
-### Sample code `main.cpp`
+### Example usage
 
 ```cpp
-#include "src/avx512-32bit-qsort.hpp"
+#include "x86simdsort.h"
 
 int main() {
-    const int ARRSIZE = 1000;
-    std::vector<float> arr;
-
-    /* Initialize elements is reverse order */
-    for (int ii = 0; ii < ARRSIZE; ++ii) {
-        arr.push_back(ARRSIZE - ii);
-    }
-
-    /* call avx512 quicksort */
-    avx512_qsort(arr.data(), ARRSIZE);
+    std::vector<float> arr{1000};
+    x86simdsort::qsort(arr, 1000, true);
     return 0;
 }
-
 ```
 
-### Build using gcc
 
-```
-g++ main.cpp -mavx512f -mavx512dq -O3
-```
+### Details
 
-This is a header file only library and we do not provide any compile time and
-run time checks which is recommended while including this your source code. A
-slightly modified version of this source code has been contributed to
-[NumPy](https://github.com/numpy/numpy) (see this [pull
-request](https://github.com/numpy/numpy/pull/22315) for details). This NumPy
-pull request is a good reference for how to include and build this library with
-your source code.
+- `x86simdsort::qsort` is equivalent to `qsort` in
+  [C](https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm)
+  or `std::sort` in [C++](https://en.cppreference.com/w/cpp/algorithm/sort).
+- `x86simdsort::qselect` is equivalent to `std::nth_element` in
+  [C++](https://en.cppreference.com/w/cpp/algorithm/nth_element) or
+  `np.partition` in
+  [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.partition.html).
+- `x86simdsort::partial_qsort` is equivalent to `std::partial_sort` in
+  [C++](https://en.cppreference.com/w/cpp/algorithm/partial_sort).
+- `x86simdsort::argsort` is equivalent to `np.argsort` in
+  [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.argsort.html).
+- `x86simdsort::argselect` is equivalent to `np.argpartition` in
+  [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.argpartition.html).
 
-## Build requirements
+Supported datatypes: `uint16_t, int16_t, _Float16, uint32_t, int32_t, float,
+uint64_t, int64_t, double`. Note that `_Float16` will require building this
+library with g++ >= 12.x. All the functions have an optional argument `bool
+hasnan` set to `false` by default (these are relevant to floating point data
+types only).  If your array has NAN's, the the behaviour of the sorting routine
+is undefined. If `hasnan` is set to true, NAN's are always sorted to the end of
+the array. In addition to that, qsort will replace all your NAN's with
+`std::numeric_limits<T>::quiet_NaN`. The original bit-exact NaNs in
+the input are not preserved. Also note that the arg methods (argsort and
+argselect) will not use the SIMD based algorithms if they detect NAN's in the
+array. You can read details of all the implementations
+[here](https://github.com/intel/x86-simd-sort/src/README.md).
 
-None, its header files only. However you will need `make` or `meson` to build
-the unit tests and benchmarking suite. You will need a relatively modern
-compiler to build.
+### Downstream projects using x86-simd-sort
 
-```
-gcc >= 8.x
-```
-
-### Build using Meson
-
-meson is the recommended build system to build the test and benchmark suite.
-
-```
-meson setup builddir && cd builddir && ninja
-```
-
-It build two executables:
-
-- `testexe`: runs a bunch of tests written in ./tests directory.
-- `benchexe`: measures performance of these algorithms for various data types.
-
-
-### Build using Make
-
-Makefile uses `-march=sapphirerapids` as a global compile flag and hence it
-will require g++-12. `make` command builds two executables:
-- `testexe`: runs a bunch of tests written in ./tests directory.
-- `benchexe`: measures performance of these algorithms for various data types
-  and compares them to std::sort.
-
-You can use `make test` and `make bench` to build just the `testexe` and
-`benchexe` respectively.
-
-## Requirements and dependencies
-
-The sorting routines relies only on the C++ Standard Library and requires a
-relatively modern compiler to build (gcc 8.x and above). Since they use the
-AVX-512 instruction set, they can only run on processors that have AVX-512.
-Specifically, the 32-bit and 64-bit require AVX-512F and AVX-512DQ instruction
-set. The 16-bit sorting requires the AVX-512F, AVX-512BW and AVX-512 VMBI2
-instruction set. The test suite is written using the Google test framework. The
-benchmark is written using the google benchmark framework.
-
-## References
-
-* [1] Fast and Robust Vectorized In-Place Sorting of Primitive Types
-    https://drops.dagstuhl.de/opus/volltexte/2021/13775/
-
-* [2] A Novel Hybrid Quicksort Algorithm Vectorized using AVX-512 on Intel
-Skylake https://arxiv.org/pdf/1704.08579.pdf
-
-* [3] https://github.com/simd-sorting/fast-and-robust: SPDX-License-Identifier: MIT
-
-* [4] http://mitp-content-server.mit.edu:18180/books/content/sectbyfn?collid=books_pres_0&fn=Chapter%2027.pdf&id=8030
-
-* [5] https://bertdobbelaere.github.io/sorting_networks.html
+- NumPy uses this as a [submodule](https://github.com/numpy/numpy/pull/22315) to accelerate `np.sort, np.argsort, np.partition and np.argpartition`.
+- A slightly modifed version this library has been integrated into [openJDK](https://github.com/openjdk/jdk/pull/14227).
+- [GRAPE](https://github.com/alibaba/libgrape-lite.git): C++ library for parallel graph processing.
+- AVX-512 version of the key-value sort has been submitted to [Oceanbase](https://github.com/oceanbase/oceanbase/pull/1325).
