@@ -55,7 +55,11 @@ struct avx2_vector<int64_t> {
     using ymmi_t = __m256i;
     using opmask_t = __m256i;
     static const uint8_t numlanes = 4;
+#ifdef XSS_MINIMAL_NETWORK_SORT
+    static constexpr int network_sort_threshold = numlanes;
+#else
     static constexpr int network_sort_threshold = 64;
+#endif
     static constexpr int partition_unroll_factor = 4;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
@@ -212,7 +216,11 @@ struct avx2_vector<uint64_t> {
     using ymmi_t = __m256i;
     using opmask_t = __m256i;
     static const uint8_t numlanes = 4;
+#ifdef XSS_MINIMAL_NETWORK_SORT
+    static constexpr int network_sort_threshold = numlanes;
+#else
     static constexpr int network_sort_threshold = 64;
+#endif
     static constexpr int partition_unroll_factor = 4;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
@@ -367,7 +375,11 @@ struct avx2_vector<double> {
     using ymmi_t = __m256i;
     using opmask_t = __m256i;
     static const uint8_t numlanes = 4;
+#ifdef XSS_MINIMAL_NETWORK_SORT
+    static constexpr int network_sort_threshold = numlanes;
+#else
     static constexpr int network_sort_threshold = 64;
+#endif
     static constexpr int partition_unroll_factor = 4;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;

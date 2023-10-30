@@ -19,7 +19,7 @@ int main() {
 cancompilefp16 = cpp.compiles(fp16code, args:'-march=sapphirerapids')
 
 subdir('lib')
-libsimdsort = shared_library('x86simdsort',
+libsimdsort = shared_library('x86simdsortcpp',
                              'lib/x86simdsort.cpp',
                              include_directories : [utils, lib],
                              link_with : [libtargets],
@@ -31,9 +31,9 @@ libsimdsort = shared_library('x86simdsort',
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libraries : libsimdsort,
                  version : '4.0',
-                 name : 'libx86simdsort',
-                 filebase : 'x86simdsort',
-                 description : 'High performance SIMD based sorting routines.')
+                 name : 'libx86simdsortcpp',
+                 filebase : 'x86simdsortcpp',
+                 description : 'C++ template library for high performance SIMD based sorting routines.')
 
 # Build test suite if option build_tests set to true
 if get_option('build_tests')
