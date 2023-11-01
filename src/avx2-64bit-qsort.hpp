@@ -60,7 +60,7 @@ struct avx2_vector<int64_t> {
 #else
     static constexpr int network_sort_threshold = 64;
 #endif
-    static constexpr int partition_unroll_factor = 4;
+    static constexpr int partition_unroll_factor = 8;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
@@ -224,7 +224,7 @@ struct avx2_vector<uint64_t> {
 #else
     static constexpr int network_sort_threshold = 64;
 #endif
-    static constexpr int partition_unroll_factor = 4;
+    static constexpr int partition_unroll_factor = 8;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
@@ -387,7 +387,7 @@ struct avx2_vector<double> {
 #else
     static constexpr int network_sort_threshold = 64;
 #endif
-    static constexpr int partition_unroll_factor = 4;
+    static constexpr int partition_unroll_factor = 8;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
