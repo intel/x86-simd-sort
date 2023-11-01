@@ -60,7 +60,7 @@ struct avx2_vector<int64_t> {
 #else
     static constexpr int network_sort_threshold = 64;
 #endif
-    static constexpr int partition_unroll_factor = 4;
+    static constexpr int partition_unroll_factor = 8;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
@@ -89,12 +89,15 @@ struct avx2_vector<int64_t> {
     {
         return _mm256_xor_si256(x, y);
     }
+    static opmask_t gt(reg_t x, reg_t y)
+    {
+        return _mm256_cmpgt_epi64(x, y);
+    }
     static opmask_t ge(reg_t x, reg_t y)
     {
         opmask_t equal = eq(x, y);
         opmask_t greater = _mm256_cmpgt_epi64(x, y);
-        return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(equal),
-                                                _mm256_castsi256_pd(greater)));
+        return _mm256_or_si256(equal, greater);
     }
     static opmask_t eq(reg_t x, reg_t y)
     {
@@ -221,7 +224,7 @@ struct avx2_vector<uint64_t> {
 #else
     static constexpr int network_sort_threshold = 64;
 #endif
-    static constexpr int partition_unroll_factor = 4;
+    static constexpr int partition_unroll_factor = 8;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
@@ -258,17 +261,21 @@ struct avx2_vector<uint64_t> {
         return _mm256_i64gather_epi64(
                 (long long int const *)base, index, scale);
     }
+    static opmask_t gt(reg_t x, reg_t y)
+    {
+        const __m256i offset = _mm256_set1_epi64x(0x8000000000000000);
+        x = _mm256_xor_si256(x, offset);
+        y = _mm256_xor_si256(y, offset);
+        return _mm256_cmpgt_epi64(x, y);
+    }
     static opmask_t ge(reg_t x, reg_t y)
     {
         opmask_t equal = eq(x, y);
-
         const __m256i offset = _mm256_set1_epi64x(0x8000000000000000);
-        x = _mm256_add_epi64(x, offset);
-        y = _mm256_add_epi64(y, offset);
-
+        x = _mm256_xor_si256(x, offset);
+        y = _mm256_xor_si256(y, offset);
         opmask_t greater = _mm256_cmpgt_epi64(x, y);
-        return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(equal),
-                                                _mm256_castsi256_pd(greater)));
+        return _mm256_or_si256(equal, greater);
     }
     static opmask_t eq(reg_t x, reg_t y)
     {
@@ -380,7 +387,7 @@ struct avx2_vector<double> {
 #else
     static constexpr int network_sort_threshold = 64;
 #endif
-    static constexpr int partition_unroll_factor = 4;
+    static constexpr int partition_unroll_factor = 8;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
 

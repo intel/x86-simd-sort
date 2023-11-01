@@ -273,7 +273,7 @@ typename avx2_vector<T>::reg_t avx2_emu_max(typename avx2_vector<T>::reg_t x,
                                             typename avx2_vector<T>::reg_t y)
 {
     using vtype = avx2_vector<T>;
-    typename vtype::opmask_t nlt = vtype::ge(x, y);
+    typename vtype::opmask_t nlt = vtype::gt(x, y);
     return _mm256_castpd_si256(_mm256_blendv_pd(_mm256_castsi256_pd(y),
                                                 _mm256_castsi256_pd(x),
                                                 _mm256_castsi256_pd(nlt)));
@@ -284,7 +284,7 @@ typename avx2_vector<T>::reg_t avx2_emu_min(typename avx2_vector<T>::reg_t x,
                                             typename avx2_vector<T>::reg_t y)
 {
     using vtype = avx2_vector<T>;
-    typename vtype::opmask_t nlt = vtype::ge(x, y);
+    typename vtype::opmask_t nlt = vtype::gt(x, y);
     return _mm256_castpd_si256(_mm256_blendv_pd(_mm256_castsi256_pd(x),
                                                 _mm256_castsi256_pd(y),
                                                 _mm256_castsi256_pd(nlt)));
