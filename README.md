@@ -5,7 +5,7 @@ C++ template library for high performance SIMD based sorting routines for
 using AVX-512/AVX2 when available. The library auto picks the best version
 depending on the processor it is run on. If you are looking for the AVX-512 or
 AVX2 specific implementations, please see
-[README](https://github.com/intel/x86-simd-sort/src/README.md) file under
+[README](https://github.com/intel/x86-simd-sort/blob/main/src/README.md) file under
 `src/` directory. The following routines are currently supported:
 
 ```cpp
