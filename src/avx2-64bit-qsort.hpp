@@ -264,16 +264,16 @@ struct avx2_vector<uint64_t> {
     static opmask_t gt(reg_t x, reg_t y)
     {
         const __m256i offset = _mm256_set1_epi64x(0x8000000000000000);
-        x = _mm256_add_epi64(x, offset);
-        y = _mm256_add_epi64(y, offset);
+        x = _mm256_xor_si256(x, offset);
+        y = _mm256_xor_si256(y, offset);
         return _mm256_cmpgt_epi64(x, y);
     }
     static opmask_t ge(reg_t x, reg_t y)
     {
         opmask_t equal = eq(x, y);
         const __m256i offset = _mm256_set1_epi64x(0x8000000000000000);
-        x = _mm256_add_epi64(x, offset);
-        y = _mm256_add_epi64(y, offset);
+        x = _mm256_xor_si256(x, offset);
+        y = _mm256_xor_si256(y, offset);
 
         opmask_t greater = _mm256_cmpgt_epi64(x, y);
         return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(equal),
