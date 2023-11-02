@@ -134,7 +134,7 @@ T avx2_emu_reduce_max32(typename avx2_vector<T>::reg_t x)
             x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
     reg_t inter2 = vtype::max(
             inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
-    T arr[8];
+    T arr[vtype::numlanes];
     vtype::storeu(arr, inter2);
     return std::max(arr[0], arr[7]);
 }
@@ -149,7 +149,7 @@ T avx2_emu_reduce_min32(typename avx2_vector<T>::reg_t x)
             x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
     reg_t inter2 = vtype::min(
             inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
-    T arr[8];
+    T arr[vtype::numlanes];
     vtype::storeu(arr, inter2);
     return std::min(arr[0], arr[7]);
 }
@@ -160,7 +160,7 @@ T avx2_emu_reduce_max64(typename avx2_vector<T>::reg_t x)
     using vtype = avx2_vector<T>;
     typename vtype::reg_t inter1 = vtype::max(
             x, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    T arr[4];
+    T arr[vtype::numlanes];
     vtype::storeu(arr, inter1);
     return std::max(arr[0], arr[3]);
 }
@@ -171,7 +171,7 @@ T avx2_emu_reduce_min64(typename avx2_vector<T>::reg_t x)
     using vtype = avx2_vector<T>;
     typename vtype::reg_t inter1 = vtype::min(
             x, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    T arr[4];
+    T arr[vtype::numlanes];
     vtype::storeu(arr, inter1);
     return std::min(arr[0], arr[3]);
 }
