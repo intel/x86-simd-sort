@@ -170,11 +170,6 @@ struct avx2_vector<int32_t> {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
         return permutexvar(rev_index, ymm);
     }
-    template <int index>
-    static type_t extract(reg_t v)
-    {
-        return _mm256_extract_epi32(v, index);
-    }
     static type_t reducemax(reg_t v)
     {
         return avx2_emu_reduce_max32<type_t>(v);
@@ -318,11 +313,6 @@ struct avx2_vector<uint32_t> {
     {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
         return permutexvar(rev_index, ymm);
-    }
-    template <int index>
-    static type_t extract(reg_t v)
-    {
-        return _mm256_extract_epi32(v, index);
     }
     static type_t reducemax(reg_t v)
     {
@@ -486,14 +476,6 @@ struct avx2_vector<float> {
     {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
         return permutexvar(rev_index, ymm);
-    }
-    template <int index>
-    static type_t extract(reg_t v)
-    {
-        int32_t x = _mm256_extract_epi32(_mm256_castps_si256(v), index);
-        float y;
-        std::memcpy(&y, &x, sizeof(y));
-        return y;
     }
     static type_t reducemax(reg_t v)
     {

@@ -134,9 +134,9 @@ T avx2_emu_reduce_max32(typename avx2_vector<T>::reg_t x)
             x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
     reg_t inter2 = vtype::max(
             inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
-    T can1 = vtype::template extract<0>(inter2);
-    T can2 = vtype::template extract<4>(inter2);
-    return std::max(can1, can2);
+    T arr[8];
+    vtype::storeu(arr, inter2);
+    return std::max(arr[0], arr[7]);
 }
 
 template <typename T>
@@ -149,9 +149,9 @@ T avx2_emu_reduce_min32(typename avx2_vector<T>::reg_t x)
             x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
     reg_t inter2 = vtype::min(
             inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
-    T can1 = vtype::template extract<0>(inter2);
-    T can2 = vtype::template extract<4>(inter2);
-    return std::min(can1, can2);
+    T arr[8];
+    vtype::storeu(arr, inter2);
+    return std::min(arr[0], arr[7]);
 }
 
 template <typename T>
@@ -160,9 +160,9 @@ T avx2_emu_reduce_max64(typename avx2_vector<T>::reg_t x)
     using vtype = avx2_vector<T>;
     typename vtype::reg_t inter1 = vtype::max(
             x, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    T can1 = vtype::template extract<0>(inter1);
-    T can2 = vtype::template extract<2>(inter1);
-    return std::max<T>(can1, can2);
+    T arr[4];
+    vtype::storeu(arr, inter1);
+    return std::max(arr[0], arr[3]);
 }
 
 template <typename T>
@@ -171,9 +171,9 @@ T avx2_emu_reduce_min64(typename avx2_vector<T>::reg_t x)
     using vtype = avx2_vector<T>;
     typename vtype::reg_t inter1 = vtype::min(
             x, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    T can1 = vtype::template extract<0>(inter1);
-    T can2 = vtype::template extract<2>(inter1);
-    return std::min<T>(can1, can2);
+    T arr[4];
+    vtype::storeu(arr, inter1);
+    return std::min(arr[0], arr[3]);
 }
 
 template <typename T>
