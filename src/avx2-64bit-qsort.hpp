@@ -172,11 +172,6 @@ struct avx2_vector<int64_t> {
         const int32_t rev_index = SHUFFLE_MASK(0, 1, 2, 3);
         return permutexvar<rev_index>(ymm);
     }
-    template <int index>
-    static type_t extract(reg_t v)
-    {
-        return _mm256_extract_epi64(v, index);
-    }
     static type_t reducemax(reg_t v)
     {
         return avx2_emu_reduce_max64<type_t>(v);
@@ -334,11 +329,6 @@ struct avx2_vector<uint64_t> {
     {
         const int32_t rev_index = SHUFFLE_MASK(0, 1, 2, 3);
         return permutexvar<rev_index>(ymm);
-    }
-    template <int index>
-    static type_t extract(reg_t v)
-    {
-        return _mm256_extract_epi64(v, index);
     }
     static type_t reducemax(reg_t v)
     {
@@ -503,14 +493,6 @@ struct avx2_vector<double> {
     {
         const int32_t rev_index = SHUFFLE_MASK(0, 1, 2, 3);
         return permutexvar<rev_index>(ymm);
-    }
-    template <int index>
-    static type_t extract(reg_t v)
-    {
-        int64_t x = _mm256_extract_epi64(_mm256_castpd_si256(v), index);
-        double y;
-        std::memcpy(&y, &x, sizeof(y));
-        return y;
     }
     static type_t reducemax(reg_t v)
     {

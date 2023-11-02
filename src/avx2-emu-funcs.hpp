@@ -134,9 +134,9 @@ T avx2_emu_reduce_max32(typename avx2_vector<T>::reg_t x)
             x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
     reg_t inter2 = vtype::max(
             inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
-    T can1 = vtype::template extract<0>(inter2);
-    T can2 = vtype::template extract<4>(inter2);
-    return std::max(can1, can2);
+    T arr[vtype::numlanes];
+    vtype::storeu(arr, inter2);
+    return std::max(arr[0], arr[7]);
 }
 
 template <typename T>
@@ -149,9 +149,9 @@ T avx2_emu_reduce_min32(typename avx2_vector<T>::reg_t x)
             x, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(x));
     reg_t inter2 = vtype::min(
             inter1, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(inter1));
-    T can1 = vtype::template extract<0>(inter2);
-    T can2 = vtype::template extract<4>(inter2);
-    return std::min(can1, can2);
+    T arr[vtype::numlanes];
+    vtype::storeu(arr, inter2);
+    return std::min(arr[0], arr[7]);
 }
 
 template <typename T>
@@ -160,9 +160,9 @@ T avx2_emu_reduce_max64(typename avx2_vector<T>::reg_t x)
     using vtype = avx2_vector<T>;
     typename vtype::reg_t inter1 = vtype::max(
             x, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    T can1 = vtype::template extract<0>(inter1);
-    T can2 = vtype::template extract<2>(inter1);
-    return std::max<T>(can1, can2);
+    T arr[vtype::numlanes];
+    vtype::storeu(arr, inter1);
+    return std::max(arr[0], arr[3]);
 }
 
 template <typename T>
@@ -171,9 +171,9 @@ T avx2_emu_reduce_min64(typename avx2_vector<T>::reg_t x)
     using vtype = avx2_vector<T>;
     typename vtype::reg_t inter1 = vtype::min(
             x, vtype::template permutexvar<SHUFFLE_MASK(2, 3, 0, 1)>(x));
-    T can1 = vtype::template extract<0>(inter1);
-    T can2 = vtype::template extract<2>(inter1);
-    return std::min<T>(can1, can2);
+    T arr[vtype::numlanes];
+    vtype::storeu(arr, inter1);
+    return std::min(arr[0], arr[3]);
 }
 
 template <typename T>
@@ -224,6 +224,7 @@ int avx2_double_compressstore32(void *left_addr,
                                 typename avx2_vector<T>::reg_t reg)
 {
     using vtype = avx2_vector<T>;
+    const __m256i oxff = _mm256_set1_epi32(0xFFFFFFFF);
 
     T *leftStore = (T *)left_addr;
     T *rightStore = (T *)right_addr;
@@ -237,7 +238,7 @@ int avx2_double_compressstore32(void *left_addr,
     typename vtype::reg_t temp = vtype::permutevar(reg, perm);
 
     vtype::mask_storeu(leftStore, left, temp);
-    vtype::mask_storeu(rightStore, ~left, temp);
+    vtype::mask_storeu(rightStore, _mm256_xor_si256(oxff, left), temp);
 
     return _mm_popcnt_u32(shortMask);
 }
@@ -249,6 +250,7 @@ int32_t avx2_double_compressstore64(void *left_addr,
                                     typename avx2_vector<T>::reg_t reg)
 {
     using vtype = avx2_vector<T>;
+    const __m256i oxff = _mm256_set1_epi32(0xFFFFFFFF);
 
     T *leftStore = (T *)left_addr;
     T *rightStore = (T *)right_addr;
@@ -263,7 +265,7 @@ int32_t avx2_double_compressstore64(void *left_addr,
             _mm256_permutevar8x32_epi32(vtype::cast_to(reg), perm));
 
     vtype::mask_storeu(leftStore, left, temp);
-    vtype::mask_storeu(rightStore, ~left, temp);
+    vtype::mask_storeu(rightStore, _mm256_xor_si256(oxff, left), temp);
 
     return _mm_popcnt_u32(shortMask);
 }

@@ -99,14 +99,6 @@ struct avx2_vector<int32_t> {
     {
         return _mm256_xor_si256(x, y);
     }
-    static opmask_t knot_opmask(opmask_t x)
-    {
-        return ~x;
-    }
-    static opmask_t le(reg_t x, reg_t y)
-    {
-        return ~_mm256_cmpgt_epi32(x, y);
-    }
     static opmask_t ge(reg_t x, reg_t y)
     {
         opmask_t equal = eq(x, y);
@@ -177,11 +169,6 @@ struct avx2_vector<int32_t> {
     {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
         return permutexvar(rev_index, ymm);
-    }
-    template <int index>
-    static type_t extract(reg_t v)
-    {
-        return _mm256_extract_epi32(v, index);
     }
     static type_t reducemax(reg_t v)
     {
@@ -274,10 +261,6 @@ struct avx2_vector<uint32_t> {
     {
         return _mm256_i32gather_epi32((int const *)base, index, scale);
     }
-    static opmask_t knot_opmask(opmask_t x)
-    {
-        return ~x;
-    }
     static opmask_t ge(reg_t x, reg_t y)
     {
         reg_t maxi = max(x, y);
@@ -330,11 +313,6 @@ struct avx2_vector<uint32_t> {
     {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
         return permutexvar(rev_index, ymm);
-    }
-    template <int index>
-    static type_t extract(reg_t v)
-    {
-        return _mm256_extract_epi32(v, index);
     }
     static type_t reducemax(reg_t v)
     {
@@ -417,10 +395,6 @@ struct avx2_vector<float> {
     {
         return _mm256_maskload_ps((const float *)mem, mask);
     }
-    static opmask_t knot_opmask(opmask_t x)
-    {
-        return ~x;
-    }
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm256_castps_si256(_mm256_cmp_ps(x, y, _CMP_GE_OQ));
@@ -502,14 +476,6 @@ struct avx2_vector<float> {
     {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
         return permutexvar(rev_index, ymm);
-    }
-    template <int index>
-    static type_t extract(reg_t v)
-    {
-        int32_t x = _mm256_extract_epi32(_mm256_castps_si256(v), index);
-        float y;
-        std::memcpy(&y, &x, sizeof(y));
-        return y;
     }
     static type_t reducemax(reg_t v)
     {
