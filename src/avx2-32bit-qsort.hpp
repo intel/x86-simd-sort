@@ -99,14 +99,6 @@ struct avx2_vector<int32_t> {
     {
         return _mm256_xor_si256(x, y);
     }
-    static opmask_t knot_opmask(opmask_t x)
-    {
-        return ~x;
-    }
-    static opmask_t le(reg_t x, reg_t y)
-    {
-        return ~_mm256_cmpgt_epi32(x, y);
-    }
     static opmask_t ge(reg_t x, reg_t y)
     {
         opmask_t equal = eq(x, y);
@@ -274,10 +266,6 @@ struct avx2_vector<uint32_t> {
     {
         return _mm256_i32gather_epi32((int const *)base, index, scale);
     }
-    static opmask_t knot_opmask(opmask_t x)
-    {
-        return ~x;
-    }
     static opmask_t ge(reg_t x, reg_t y)
     {
         reg_t maxi = max(x, y);
@@ -416,10 +404,6 @@ struct avx2_vector<float> {
     static reg_t maskz_loadu(opmask_t mask, void const *mem)
     {
         return _mm256_maskload_ps((const float *)mem, mask);
-    }
-    static opmask_t knot_opmask(opmask_t x)
-    {
-        return ~x;
     }
     static opmask_t ge(reg_t x, reg_t y)
     {
