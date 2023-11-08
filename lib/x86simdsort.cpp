@@ -189,12 +189,12 @@ DISPATCH_ALL(partial_qsort,
              (ISA_LIST("avx512_skx", "avx2")))
 DISPATCH_ALL(argsort,
              (ISA_LIST("none")),
-             (ISA_LIST("avx512_skx")),
-             (ISA_LIST("avx512_skx")))
+             (ISA_LIST("avx512_skx", "avx2")),
+             (ISA_LIST("avx512_skx", "avx2")))
 DISPATCH_ALL(argselect,
              (ISA_LIST("none")),
-             (ISA_LIST("avx512_skx")),
-             (ISA_LIST("avx512_skx")))
+             (ISA_LIST("avx512_skx", "avx2")),
+             (ISA_LIST("avx512_skx", "avx2")))
 
 #define DISPATCH_KEYVALUE_SORT_FORTYPE(type) \
     DISPATCH_KEYVALUE_SORT(type, uint64_t, (ISA_LIST("avx512_skx")))\
