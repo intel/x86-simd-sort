@@ -8,9 +8,13 @@
 #define AVX512_ARGSORT_64BIT
 
 #include "xss-common-qsort.h"
-#include "avx512-64bit-common.h"
+//#include "avx512-64bit-common.h"
+//#include "avx2-32bit-half.hpp"
 #include "xss-network-keyvaluesort.hpp"
 #include <numeric>
+
+template <typename T>
+struct avx2_half_vector;
 
 template <typename T>
 X86_SIMD_SORT_INLINE void std_argselect_withnan(
@@ -69,12 +73,8 @@ std_argsort(T *arr, arrsize_t *arg, arrsize_t left, arrsize_t right)
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
-template <typename vtype,
-          typename argtype,
-          typename type_t = typename vtype::type_t,
-          typename reg_t = typename vtype::reg_t,
-          typename argreg_t = typename argtype::reg_t>
-X86_SIMD_SORT_INLINE int32_t partition_vec(type_t *arg,
+template <typename vtype, typename argtype, typename type_t, typename reg_t, typename argreg_t>
+X86_SIMD_SORT_INLINE int32_t partition_vec_avx512(type_t *arg,
                                            arrsize_t left,
                                            arrsize_t right,
                                            const argreg_t arg_vec,
@@ -94,6 +94,55 @@ X86_SIMD_SORT_INLINE int32_t partition_vec(type_t *arg,
     *biggest_vec = vtype::max(curr_vec, *biggest_vec);
     return amount_gt_pivot;
 }
+
+/*
+ * Parition one AVX2 register based on the pivot and returns the index of the
+ * last element that is less than equal to the pivot.
+ */
+template <typename vtype, typename argtype, typename type_t, typename reg_t, typename argreg_t>
+X86_SIMD_SORT_INLINE int32_t partition_vec_avx2(type_t *arg,
+                                           arrsize_t left,
+                                           arrsize_t right,
+                                           const argreg_t arg_vec,
+                                           const reg_t curr_vec,
+                                           const reg_t pivot_vec,
+                                           reg_t *smallest_vec,
+                                           reg_t *biggest_vec)
+{
+    /* which elements are larger than the pivot */
+    typename vtype::opmask_t ge_mask_vtype = vtype::ge(curr_vec, pivot_vec);
+    typename argtype::opmask_t ge_mask = extend_mask<vtype, argtype>(ge_mask_vtype);
+    
+    auto l_store = arg + left;
+    auto r_store = arg + right - vtype::numlanes;
+
+    int amount_ge_pivot = argtype::double_compressstore(l_store, r_store, ge_mask, arg_vec);
+
+    *smallest_vec = vtype::min(curr_vec, *smallest_vec);
+    *biggest_vec = vtype::max(curr_vec, *biggest_vec);
+
+    return amount_ge_pivot;
+}
+
+template <typename vtype, typename argtype, typename type_t, typename reg_t, typename argreg_t>
+X86_SIMD_SORT_INLINE int32_t partition_vec(type_t *arg,
+                                           arrsize_t left,
+                                           arrsize_t right,
+                                           const argreg_t arg_vec,
+                                           const reg_t curr_vec,
+                                           const reg_t pivot_vec,
+                                           reg_t *smallest_vec,
+                                           reg_t *biggest_vec)
+{
+    if constexpr (sizeof (argreg_t) == 64){
+        return partition_vec_avx512<vtype, argtype, type_t>(arg, left, right, arg_vec, curr_vec, pivot_vec, smallest_vec, biggest_vec);
+    }else if constexpr (sizeof (argreg_t) == 32){
+        return partition_vec_avx2<vtype, argtype, type_t>(arg, left, right, arg_vec, curr_vec, pivot_vec, smallest_vec, biggest_vec);
+    }else{
+        static_assert(sizeof(argreg_t) == 0, "Should not get here");
+    }
+}
+
 /*
  * Parition an array based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
@@ -250,6 +299,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
         return left; /* less than vtype::numlanes elements in the array */
 
     using reg_t = typename vtype::reg_t;
+    using argreg_t = typename argtype::reg_t;
     reg_t pivot_vec = vtype::set1(pivot);
     reg_t min_vec = vtype::set1(*smallest);
     reg_t max_vec = vtype::set1(*biggest);
@@ -356,24 +406,42 @@ X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
                                             const arrsize_t left,
                                             const arrsize_t right)
 {
-    if (right - left >= vtype::numlanes) {
-        // median of 8
-        arrsize_t size = (right - left) / 8;
-        using reg_t = typename vtype::reg_t;
-        reg_t rand_vec = vtype::set(arr[arg[left + size]],
-                                    arr[arg[left + 2 * size]],
-                                    arr[arg[left + 3 * size]],
-                                    arr[arg[left + 4 * size]],
-                                    arr[arg[left + 5 * size]],
-                                    arr[arg[left + 6 * size]],
-                                    arr[arg[left + 7 * size]],
-                                    arr[arg[left + 8 * size]]);
-        // pivot will never be a nan, since there are no nan's!
-        reg_t sort = sort_zmm_64bit<vtype>(rand_vec);
-        return ((type_t *)&sort)[4];
-    }
-    else {
-        return arr[arg[right]];
+    if constexpr (vtype::numlanes == 8){
+        if (right - left >= vtype::numlanes) {
+            // median of 8
+            arrsize_t size = (right - left) / 8;
+            using reg_t = typename vtype::reg_t;
+            reg_t rand_vec = vtype::set(arr[arg[left + size]],
+                                        arr[arg[left + 2 * size]],
+                                        arr[arg[left + 3 * size]],
+                                        arr[arg[left + 4 * size]],
+                                        arr[arg[left + 5 * size]],
+                                        arr[arg[left + 6 * size]],
+                                        arr[arg[left + 7 * size]],
+                                        arr[arg[left + 8 * size]]);
+            // pivot will never be a nan, since there are no nan's!
+            reg_t sort = sort_zmm_64bit<vtype>(rand_vec);
+            return ((type_t *)&sort)[4];
+        }
+        else {
+            return arr[arg[right]];
+        }
+    }else if constexpr (vtype::numlanes == 4){
+        if (right - left >= vtype::numlanes) {
+            // median of 4
+            arrsize_t size = (right - left) / 4;
+            using reg_t = typename vtype::reg_t;
+            reg_t rand_vec = vtype::set(arr[arg[left + size]],
+                                        arr[arg[left + 2 * size]],
+                                        arr[arg[left + 3 * size]],
+                                        arr[arg[left + 4 * size]]);
+            // pivot will never be a nan, since there are no nan's!
+            reg_t sort = vtype::sort_vec(rand_vec);
+            return ((type_t *)&sort)[2];
+        }
+        else {
+            return arr[arg[right]];
+        }
     }
 }
 
@@ -384,6 +452,9 @@ X86_SIMD_SORT_INLINE void argsort_64bit_(type_t *arr,
                                          arrsize_t right,
                                          arrsize_t max_iters)
 {
+    using argtype = typename std::conditional<vtype::numlanes == 4,
+                                          avx2_vector<arrsize_t>,
+                                          zmm_vector<arrsize_t>>::type;
     /*
      * Resort to std::sort if quicksort isnt making any progress
      */
@@ -420,6 +491,9 @@ X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
                                            arrsize_t right,
                                            arrsize_t max_iters)
 {
+    using argtype = typename std::conditional<vtype::numlanes == 4,
+                                          avx2_vector<arrsize_t>,
+                                          zmm_vector<arrsize_t>>::type;
     /*
      * Resort to std::sort if quicksort isnt making any progress
      */
@@ -495,6 +569,37 @@ avx512_argsort(T *arr, arrsize_t arrsize, bool hasnan = false)
     return indices;
 }
 
+/* argsort methods for 32-bit and 64-bit dtypes */
+template <typename T>
+X86_SIMD_SORT_INLINE void
+avx2_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
+{
+    using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
+                                              avx2_half_vector<T>,
+                                              avx2_vector<T>>::type;
+    if (arrsize > 1) {
+        if constexpr (std::is_floating_point_v<T>) {
+            if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
+                std_argsort_withnan(arr, arg, 0, arrsize);
+                return;
+            }
+        }
+        UNUSED(hasnan);
+        argsort_64bit_<vectype>(
+                arr, arg, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+    }
+}
+
+template <typename T>
+X86_SIMD_SORT_INLINE std::vector<arrsize_t>
+avx2_argsort(T *arr, arrsize_t arrsize, bool hasnan = false)
+{
+    std::vector<arrsize_t> indices(arrsize);
+    std::iota(indices.begin(), indices.end(), 0);
+    avx2_argsort<T>(arr, indices.data(), arrsize, hasnan);
+    return indices;
+}
+
 /* argselect methods for 32-bit and 64-bit dtypes */
 template <typename T>
 X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
@@ -542,6 +647,41 @@ avx512_argselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
     std::vector<arrsize_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
     avx512_argselect<T>(arr, indices.data(), k, arrsize, hasnan);
+    return indices;
+}
+
+/* argselect methods for 32-bit and 64-bit dtypes */
+template <typename T>
+X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
+                                           arrsize_t *arg,
+                                           arrsize_t k,
+                                           arrsize_t arrsize,
+                                           bool hasnan = false)
+{
+    using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
+                                              avx2_half_vector<T>,
+                                              avx2_vector<T>>::type;
+
+    if (arrsize > 1) {
+        if constexpr (std::is_floating_point_v<T>) {
+            if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
+                std_argselect_withnan(arr, arg, k, 0, arrsize);
+                return;
+            }
+        }
+        UNUSED(hasnan);
+        argselect_64bit_<vectype>(
+                arr, arg, k, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+    }
+}
+
+template <typename T>
+X86_SIMD_SORT_INLINE std::vector<arrsize_t>
+avx2_argselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+{
+    std::vector<arrsize_t> indices(arrsize);
+    std::iota(indices.begin(), indices.end(), 0);
+    avx2_argselect<T>(arr, indices.data(), k, arrsize, hasnan);
     return indices;
 }
 

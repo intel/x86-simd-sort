@@ -86,6 +86,10 @@ struct ymm_vector<float> {
     {
         return ((0x1ull << num_to_read) - 0x1ull);
     }
+    static int32_t convert_mask_to_int(opmask_t mask)
+    {
+        return mask;
+    }
     template <int type>
     static opmask_t fpclass(reg_t x)
     {

@@ -82,4 +82,7 @@ struct ymm_vector;
 template <typename type>
 struct avx2_vector;
 
+template <typename type>
+struct avx2_half_vector;
+
 #endif // XSS_COMMON_INCLUDES
