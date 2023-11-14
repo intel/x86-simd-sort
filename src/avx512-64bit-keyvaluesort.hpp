@@ -245,7 +245,7 @@ X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
      */
     if (right + 1 - left <= 128) {
 
-        sort_128_64bit<vtype1, vtype2>(
+        kvsort_n<vtype1, vtype2, 128>(
                 keys + left, indexes + left, (int32_t)(right + 1 - left));
         return;
     }
