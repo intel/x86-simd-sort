@@ -396,8 +396,8 @@ X86_SIMD_SORT_INLINE void argsort_64bit_(type_t *arr,
     /*
      * Base case: use bitonic networks to sort arrays <= 64
      */
-    if (right + 1 - left <= 64) {
-        argsort_n<vtype, 64>(arr, arg + left, (int32_t)(right + 1 - left));
+    if (right + 1 - left <= 256) {
+        argsort_n<vtype, 256>(arr, arg + left, (int32_t)(right + 1 - left));
         return;
     }
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
@@ -429,8 +429,8 @@ X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
     /*
      * Base case: use bitonic networks to sort arrays <= 64
      */
-    if (right + 1 - left <= 64) {
-        argsort_n<vtype, 64>(arr, arg + left, (int32_t)(right + 1 - left));
+    if (right + 1 - left <= 256) {
+        argsort_n<vtype, 256>(arr, arg + left, (int32_t)(right + 1 - left));
         return;
     }
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
