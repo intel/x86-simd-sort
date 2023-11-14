@@ -1,5 +1,6 @@
 // SKX specific routines:
 #include "avx512-32bit-qsort.hpp"
+#include "avx512-64bit-keyvaluesort.hpp"
 #include "avx512-64bit-argsort.hpp"
 #include "avx512-64bit-qsort.hpp"
 #include "x86simdsort-internal.h"
@@ -32,6 +33,14 @@
         return avx512_argselect(arr, k, arrsize, hasnan); \
     }
 
+#define DEFINE_KEYVALUE_METHODS(type1, type2) \
+    template <> \
+    void keyvalue_qsort(type1 *key, type2* val, size_t arrsize, bool hasnan) \
+    { \
+        avx512_qsort_kv(key, val, arrsize, hasnan); \
+    } \
+
+
 namespace xss {
 namespace avx512 {
     DEFINE_ALL_METHODS(uint32_t)
@@ -40,5 +49,14 @@ namespace avx512 {
     DEFINE_ALL_METHODS(uint64_t)
     DEFINE_ALL_METHODS(int64_t)
     DEFINE_ALL_METHODS(double)
+    DEFINE_KEYVALUE_METHODS(double, uint64_t)
+    DEFINE_KEYVALUE_METHODS(double, int64_t)
+    DEFINE_KEYVALUE_METHODS(double, double)
+    DEFINE_KEYVALUE_METHODS(uint64_t, uint64_t)
+    DEFINE_KEYVALUE_METHODS(uint64_t, int64_t)
+    DEFINE_KEYVALUE_METHODS(uint64_t, double)
+    DEFINE_KEYVALUE_METHODS(int64_t, uint64_t)
+    DEFINE_KEYVALUE_METHODS(int64_t, int64_t)
+    DEFINE_KEYVALUE_METHODS(int64_t, double)
 } // namespace avx512
 } // namespace xss

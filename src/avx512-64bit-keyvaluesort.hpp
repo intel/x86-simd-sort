@@ -542,8 +542,8 @@ heapify(type1_t *keys, type2_t *indexes, arrsize_t idx, arrsize_t size)
     arrsize_t i = idx;
     while (true) {
         arrsize_t j = 2 * i + 1;
-        if (j >= size || j < 0) { break; }
-        int k = j + 1;
+        if (j >= size) { break; }
+        arrsize_t k = j + 1;
         if (k < size && keys[j] < keys[k]) { j = k; }
         if (keys[j] < keys[i]) { break; }
         std::swap(keys[i], keys[j]);
@@ -558,8 +558,9 @@ template <typename vtype1,
 X86_SIMD_SORT_INLINE void
 heap_sort(type1_t *keys, type2_t *indexes, arrsize_t size)
 {
-    for (arrsize_t i = size / 2 - 1; i >= 0; i--) {
+    for (arrsize_t i = size / 2 - 1; ; i--) {
         heapify<vtype1, vtype2>(keys, indexes, i, size);
+        if (i == 0) { break; }
     }
     for (arrsize_t i = size - 1; i > 0; i--) {
         std::swap(keys[0], keys[i]);
@@ -614,8 +615,9 @@ X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
 
 template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
-avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize)
+avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
 {
+    UNUSED(hasnan);
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T1>) {
             arrsize_t nan_count

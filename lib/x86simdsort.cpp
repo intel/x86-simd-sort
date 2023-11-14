@@ -51,6 +51,8 @@ dispatch_requested(std::string_view cpurequested,
     return false;
 }
 
+namespace x86simdsort {
+
 #define CAT_(a, b) a##b
 #define CAT(a, b) CAT_(a, b)
 
@@ -120,6 +122,33 @@ dispatch_requested(std::string_view cpurequested,
                 return; \
             } \
         } \
+    } \
+
+#define DISPATCH_KEYVALUE_SORT(TYPE1, TYPE2, ISA) \
+    static void (CAT(CAT(*internal_kv_qsort_, TYPE1), TYPE2))(TYPE1*, TYPE2*, size_t, bool) = NULL; \
+    template <> \
+    void keyvalue_qsort(TYPE1 *key, TYPE2* val, size_t arrsize, bool hasnan) \
+    { \
+        (CAT(CAT(*internal_kv_qsort_, TYPE1), TYPE2))(key, val, arrsize, hasnan); \
+    } \
+    static __attribute__((constructor)) void \
+    CAT(CAT(resolve_keyvalue_qsort_, TYPE1), TYPE2)(void) \
+    { \
+        CAT(CAT(internal_kv_qsort_, TYPE1), TYPE2) = &xss::scalar::keyvalue_qsort<TYPE1, TYPE2>; \
+        __builtin_cpu_init(); \
+        std::string_view preferred_cpu = find_preferred_cpu(ISA); \
+        if constexpr (dispatch_requested("avx512", ISA)) { \
+            if (preferred_cpu.find("avx512") != std::string_view::npos) { \
+                CAT(CAT(internal_kv_qsort_, TYPE1), TYPE2) = &xss::avx512::keyvalue_qsort<TYPE1, TYPE2>; \
+                return; \
+            } \
+        } \
+        if constexpr (dispatch_requested("avx2", ISA)) { \
+            if (preferred_cpu.find("avx2") != std::string_view::npos) { \
+                CAT(CAT(internal_kv_qsort_, TYPE1), TYPE2) = &xss::avx2::keyvalue_qsort<TYPE1, TYPE2>; \
+                return; \
+            } \
+        } \
     }
 
 #define ISA_LIST(...) \
@@ -128,7 +157,6 @@ dispatch_requested(std::string_view cpurequested,
         __VA_ARGS__ \
     }
 
-namespace x86simdsort {
 #ifdef __FLT16_MAX__
 DISPATCH(qsort, _Float16, ISA_LIST("avx512_spr"))
 DISPATCH(qselect, _Float16, ISA_LIST("avx512_spr"))
@@ -167,5 +195,15 @@ DISPATCH_ALL(argselect,
              (ISA_LIST("none")),
              (ISA_LIST("avx512_skx")),
              (ISA_LIST("avx512_skx")))
+
+DISPATCH_KEYVALUE_SORT(uint64_t, int64_t, (ISA_LIST("avx512_skx")))
+DISPATCH_KEYVALUE_SORT(uint64_t, uint64_t, (ISA_LIST("avx512_skx")))
+DISPATCH_KEYVALUE_SORT(uint64_t, double, (ISA_LIST("avx512_skx")))
+DISPATCH_KEYVALUE_SORT(int64_t, int64_t, (ISA_LIST("avx512_skx")))
+DISPATCH_KEYVALUE_SORT(int64_t, uint64_t, (ISA_LIST("avx512_skx")))
+DISPATCH_KEYVALUE_SORT(int64_t, double, (ISA_LIST("avx512_skx")))
+DISPATCH_KEYVALUE_SORT(double, int64_t, (ISA_LIST("avx512_skx")))
+DISPATCH_KEYVALUE_SORT(double, double, (ISA_LIST("avx512_skx")))
+DISPATCH_KEYVALUE_SORT(double, uint64_t, (ISA_LIST("avx512_skx")))
 
 } // namespace x86simdsort
