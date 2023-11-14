@@ -34,8 +34,6 @@ struct ymm_vector<float> {
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
-    using swizzle_ops = avx2_32bit_swizzle_ops;
-
     static type_t type_max()
     {
         return X86_SIMD_SORT_INFINITYF;
@@ -219,8 +217,6 @@ struct ymm_vector<uint32_t> {
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
 
-    using swizzle_ops = avx2_32bit_swizzle_ops;
-
     static type_t type_max()
     {
         return X86_SIMD_SORT_MAX_UINT32;
@@ -393,8 +389,6 @@ struct ymm_vector<int32_t> {
     using regi_t = __m256i;
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
-
-    using swizzle_ops = avx2_32bit_swizzle_ops;
 
     static type_t type_max()
     {
