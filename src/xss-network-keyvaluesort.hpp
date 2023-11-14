@@ -4,9 +4,16 @@
 #include "avx512-64bit-qsort.hpp"
 #include "avx2-64bit-qsort.hpp"
 
-template <int num_lanes> struct index_64bit_vector_type;
-template <> struct index_64bit_vector_type<8> { using type = zmm_vector<uint64_t>;};
-template <> struct index_64bit_vector_type<4> { using type = avx2_vector<uint64_t>;};
+template <int num_lanes>
+struct index_64bit_vector_type;
+template <>
+struct index_64bit_vector_type<8> {
+    using type = zmm_vector<uint64_t>;
+};
+template <>
+struct index_64bit_vector_type<4> {
+    using type = avx2_vector<uint64_t>;
+};
 
 template <typename vtype1,
           typename vtype2,
@@ -126,11 +133,15 @@ X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_64bit(reg_t key_zmm,
 }
 
 template <typename keyType, typename valueType>
-X86_SIMD_SORT_INLINE void bitonic_merge_dispatch(typename keyType::reg_t &key, typename valueType::reg_t &value){
+X86_SIMD_SORT_INLINE void
+bitonic_merge_dispatch(typename keyType::reg_t &key,
+                       typename valueType::reg_t &value)
+{
     constexpr int numlanes = keyType::numlanes;
-    if constexpr (numlanes == 8){
-        key = bitonic_merge_zmm_64bit<keyType, valueType>(key, value);   
-    }else{
+    if constexpr (numlanes == 8) {
+        key = bitonic_merge_zmm_64bit<keyType, valueType>(key, value);
+    }
+    else {
         static_assert(numlanes == -1, "should not reach here");
         UNUSED(key);
         UNUSED(value);
@@ -138,23 +149,23 @@ X86_SIMD_SORT_INLINE void bitonic_merge_dispatch(typename keyType::reg_t &key, t
 }
 
 template <typename keyType, typename valueType>
-X86_SIMD_SORT_INLINE void sort_vec_dispatch(typename keyType::reg_t &key, typename valueType::reg_t &value){
+X86_SIMD_SORT_INLINE void sort_vec_dispatch(typename keyType::reg_t &key,
+                                            typename valueType::reg_t &value)
+{
     constexpr int numlanes = keyType::numlanes;
-    if constexpr (numlanes == 8){
-        key = sort_zmm_64bit<keyType, valueType>(key, value);  
-    }else{
+    if constexpr (numlanes == 8) {
+        key = sort_zmm_64bit<keyType, valueType>(key, value);
+    }
+    else {
         static_assert(numlanes == -1, "should not reach here");
         UNUSED(key);
         UNUSED(value);
     }
 }
 
-
-
-template <typename keyType,
-          typename valueType,
-          int numVecs>
-X86_SIMD_SORT_INLINE void bitonic_clean_n_vec(typename keyType::reg_t *keys, typename valueType::reg_t *values)
+template <typename keyType, typename valueType, int numVecs>
+X86_SIMD_SORT_INLINE void bitonic_clean_n_vec(typename keyType::reg_t *keys,
+                                              typename valueType::reg_t *values)
 {
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int num = numVecs / 2; num >= 2; num /= 2) {
@@ -164,18 +175,19 @@ X86_SIMD_SORT_INLINE void bitonic_clean_n_vec(typename keyType::reg_t *keys, typ
             for (int i = 0; i < num / 2; i++) {
                 arrsize_t index1 = i + j;
                 arrsize_t index2 = i + j + num / 2;
-                COEX<keyType, valueType>(keys[index1], keys[index2], values[index1], values[index2]);
+                COEX<keyType, valueType>(keys[index1],
+                                         keys[index2],
+                                         values[index1],
+                                         values[index2]);
             }
         }
     }
 }
 
-
-template <typename keyType,
-          typename valueType,
-          int numVecs>
-X86_SIMD_SORT_INLINE void bitonic_merge_n_vec(typename keyType::reg_t *keys, typename valueType::reg_t *values)
-{   
+template <typename keyType, typename valueType, int numVecs>
+X86_SIMD_SORT_INLINE void bitonic_merge_n_vec(typename keyType::reg_t *keys,
+                                              typename valueType::reg_t *values)
+{
     // Do the reverse part
     if constexpr (numVecs == 2) {
         keys[1] = keyType::reverse(keys[1]);
@@ -189,12 +201,17 @@ X86_SIMD_SORT_INLINE void bitonic_merge_n_vec(typename keyType::reg_t *keys, typ
         X86_SIMD_SORT_UNROLL_LOOP(64)
         for (int i = 0; i < numVecs / 2; i++) {
             keys[numVecs - i - 1] = keyType::reverse(keys[numVecs - i - 1]);
-            values[numVecs - i - 1] = valueType::reverse(values[numVecs - i - 1]);
-            
-            COEX<keyType, valueType>(keys[i], keys[numVecs - i - 1], values[i], values[numVecs - i - 1]);
-            
+            values[numVecs - i - 1]
+                    = valueType::reverse(values[numVecs - i - 1]);
+
+            COEX<keyType, valueType>(keys[i],
+                                     keys[numVecs - i - 1],
+                                     values[i],
+                                     values[numVecs - i - 1]);
+
             keys[numVecs - i - 1] = keyType::reverse(keys[numVecs - i - 1]);
-            values[numVecs - i - 1] = valueType::reverse(values[numVecs - i - 1]);
+            values[numVecs - i - 1]
+                    = valueType::reverse(values[numVecs - i - 1]);
         }
     }
 
@@ -208,11 +225,10 @@ X86_SIMD_SORT_INLINE void bitonic_merge_n_vec(typename keyType::reg_t *keys, typ
     }
 }
 
-template <typename keyType,
-          typename valueType,
-          int numVecs,
-          int numPer = 2>
-X86_SIMD_SORT_INLINE void bitonic_fullmerge_n_vec(typename keyType::reg_t *keys, typename valueType::reg_t *values)
+template <typename keyType, typename valueType, int numVecs, int numPer = 2>
+X86_SIMD_SORT_INLINE void
+bitonic_fullmerge_n_vec(typename keyType::reg_t *keys,
+                        typename valueType::reg_t *values)
 {
     if constexpr (numPer > numVecs) {
         UNUSED(keys);
@@ -222,18 +238,22 @@ X86_SIMD_SORT_INLINE void bitonic_fullmerge_n_vec(typename keyType::reg_t *keys,
     else {
         X86_SIMD_SORT_UNROLL_LOOP(64)
         for (int i = 0; i < numVecs / numPer; i++) {
-            bitonic_merge_n_vec<keyType, valueType, numPer>(keys + i * numPer, values + i * numPer);
+            bitonic_merge_n_vec<keyType, valueType, numPer>(
+                    keys + i * numPer, values + i * numPer);
         }
-        bitonic_fullmerge_n_vec<keyType, valueType, numVecs, numPer * 2>(keys, values);
+        bitonic_fullmerge_n_vec<keyType, valueType, numVecs, numPer * 2>(
+                keys, values);
     }
 }
 
 template <typename keyType, typename indexType, int numVecs>
-X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys, typename indexType::type_t *indices, int N)
+X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
+                                        typename indexType::type_t *indices,
+                                        int N)
 {
     using kreg_t = typename keyType::reg_t;
     using ireg_t = typename indexType::reg_t;
-    
+
     static_assert(numVecs > 0, "numVecs should be > 0");
     if constexpr (numVecs > 1) {
         if (N * 2 <= numVecs * keyType::numlanes) {
@@ -259,17 +279,21 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys, typename
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = 0; i < numVecs / 2; i++) {
         indexVecs[i] = indexType::loadu(indices + i * indexType::numlanes);
-        keyVecs[i] = keyType::i64gather(keys, indices + i * indexType::numlanes);
+        keyVecs[i]
+                = keyType::i64gather(keys, indices + i * indexType::numlanes);
     }
     // Masked part of the load
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
-        indexVecs[i] = indexType::mask_loadu(
-                indexType::zmm_max(), ioMasks[j], indices + i * indexType::numlanes);
-                
-        keyVecs[i] = keyType::template mask_i64gather<sizeof(typename keyType::type_t)>(keyType::zmm_max(), ioMasks[j], indexVecs[i], keys);
+        indexVecs[i] = indexType::mask_loadu(indexType::zmm_max(),
+                                             ioMasks[j],
+                                             indices + i * indexType::numlanes);
+
+        keyVecs[i] = keyType::template mask_i64gather<sizeof(
+                typename keyType::type_t)>(
+                keyType::zmm_max(), ioMasks[j], indexVecs[i], keys);
     }
-    
+
     // Sort each loaded vector
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = 0; i < numVecs; i++) {
@@ -287,16 +311,19 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys, typename
     // Masked part of the store
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
-        indexType::mask_storeu(indices + i * indexType::numlanes, ioMasks[j], indexVecs[i]);
+        indexType::mask_storeu(
+                indices + i * indexType::numlanes, ioMasks[j], indexVecs[i]);
     }
 }
 
 template <typename keyType, typename valueType, int numVecs>
-X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys, typename valueType::type_t *values, int N)
+X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys,
+                                       typename valueType::type_t *values,
+                                       int N)
 {
     using kreg_t = typename keyType::reg_t;
     using vreg_t = typename valueType::reg_t;
-    
+
     static_assert(numVecs > 0, "numVecs should be > 0");
     if constexpr (numVecs > 1) {
         if (N * 2 <= numVecs * keyType::numlanes) {
@@ -329,8 +356,9 @@ X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys, typename 
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         keyVecs[i] = keyType::mask_loadu(
                 keyType::zmm_max(), ioMasks[j], keys + i * keyType::numlanes);
-        valueVecs[i] = valueType::mask_loadu(
-                valueType::zmm_max(), ioMasks[j], values + i * valueType::numlanes);
+        valueVecs[i] = valueType::mask_loadu(valueType::zmm_max(),
+                                             ioMasks[j],
+                                             values + i * valueType::numlanes);
     }
 
     // Sort each loaded vector
@@ -351,17 +379,21 @@ X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys, typename 
     // Masked part of the store
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
-        keyType::mask_storeu(keys + i * keyType::numlanes, ioMasks[j], keyVecs[i]);
-        valueType::mask_storeu(values + i * valueType::numlanes, ioMasks[j], valueVecs[i]);
+        keyType::mask_storeu(
+                keys + i * keyType::numlanes, ioMasks[j], keyVecs[i]);
+        valueType::mask_storeu(
+                values + i * valueType::numlanes, ioMasks[j], valueVecs[i]);
     }
 }
 
 template <typename keyType, int maxN>
-X86_SIMD_SORT_INLINE void argsort_n(typename keyType::type_t *keys, arrsize_t *indices, int N)
+X86_SIMD_SORT_INLINE void
+argsort_n(typename keyType::type_t *keys, arrsize_t *indices, int N)
 {
     using indexType = typename index_64bit_vector_type<keyType::numlanes>::type;
-    
-    static_assert(keyType::numlanes == indexType::numlanes, "invalid pairing of value/index types");
+
+    static_assert(keyType::numlanes == indexType::numlanes,
+                  "invalid pairing of value/index types");
     constexpr int numVecs = maxN / keyType::numlanes;
     constexpr bool isMultiple = (maxN == (keyType::numlanes * numVecs));
     constexpr bool powerOfTwo = (numVecs != 0 && !(numVecs & (numVecs - 1)));
@@ -372,10 +404,13 @@ X86_SIMD_SORT_INLINE void argsort_n(typename keyType::type_t *keys, arrsize_t *i
 }
 
 template <typename keyType, typename valueType, int maxN>
-X86_SIMD_SORT_INLINE void kvsort_n(typename keyType::type_t *keys, typename valueType::type_t *values, int N)
-{   
-    static_assert(keyType::numlanes == valueType::numlanes, "invalid pairing of key/value types");
-    
+X86_SIMD_SORT_INLINE void kvsort_n(typename keyType::type_t *keys,
+                                   typename valueType::type_t *values,
+                                   int N)
+{
+    static_assert(keyType::numlanes == valueType::numlanes,
+                  "invalid pairing of key/value types");
+
     constexpr int numVecs = maxN / keyType::numlanes;
     constexpr bool isMultiple = (maxN == (keyType::numlanes * numVecs));
     constexpr bool powerOfTwo = (numVecs != 0 && !(numVecs & (numVecs - 1)));

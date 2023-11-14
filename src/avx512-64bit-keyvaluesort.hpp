@@ -182,8 +182,6 @@ X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t1 *keys,
     return l_store;
 }
 
-
-
 template <typename vtype1,
           typename vtype2,
           typename type1_t = typename vtype1::type_t,
