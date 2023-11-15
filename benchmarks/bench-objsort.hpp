@@ -1,31 +1,31 @@
 #include <cmath>
 struct Point3D {
-    double x;
-    double y;
-    double z;
+    float x;
+    float y;
+    float z;
     Point3D()
     {
-        x = (double)rand() / RAND_MAX;
-        y = (double)rand() / RAND_MAX;
-        z = (double)rand() / RAND_MAX;
+        x = (float)rand() / RAND_MAX;
+        y = (float)rand() / RAND_MAX;
+        z = (float)rand() / RAND_MAX;
     }
-    double distance()
+    float distance()
     {
-        return sqrt(x * x + y * y + z * z);
+        return x; //sqrt(x * x + y * y + z * z);
     }
 };
 
 struct Point2D {
-    double x;
-    double y;
+    float x;
+    float y;
     Point2D()
     {
-        x = (double)rand() / RAND_MAX;
-        y = (double)rand() / RAND_MAX;
+        x = (float)rand() / RAND_MAX;
+        y = (float)rand() / RAND_MAX;
     }
-    double distance()
+    float distance()
     {
-        return sqrt(x * x + y * y);
+        return x; //sqrt(x * x + y * y);
     }
 };
 
@@ -54,6 +54,8 @@ static void scalarobjsort(benchmark::State &state)
 {
     // set up array
     std::vector<T> arr = init_data<T>(state.range(0));
+    //std::sort(arr.begin(), arr.end(), less_than_key<T>());
+    //std::reverse(arr.begin(), arr.end());
     std::vector<T> arr_bkp = arr;
     // benchmark
     for (auto _ : state) {
@@ -69,10 +71,12 @@ static void simdobjsort(benchmark::State &state)
 {
     // set up array
     std::vector<T> arr = init_data<T>(state.range(0));
+    //std::sort(arr.begin(), arr.end(), less_than_key<T>());
+    //std::reverse(arr.begin(), arr.end());
     std::vector<T> arr_bkp = arr;
     // benchmark
     for (auto _ : state) {
-        x86simdsort::object_qsort(arr.data(), arr.size(), [](T p) -> double {
+        x86simdsort::object_qsort(arr.data(), arr.size(), [](T p) -> float {
             return p.distance();
         });
         state.PauseTiming();
