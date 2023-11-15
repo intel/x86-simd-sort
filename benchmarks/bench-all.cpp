@@ -4,3 +4,4 @@
 #include "bench-qselect.hpp"
 #include "bench-qsort.hpp"
 #include "bench-keyvalue.hpp"
+#include "bench-objsort.hpp"
