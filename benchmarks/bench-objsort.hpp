@@ -1,31 +1,31 @@
 #include <cmath>
 struct Point3D {
-    float x;
-    float y;
-    float z;
+    double x;
+    double y;
+    double z;
     Point3D()
     {
-        x = (float)rand() / RAND_MAX;
-        y = (float)rand() / RAND_MAX;
-        z = (float)rand() / RAND_MAX;
+        x = (double)rand() / RAND_MAX;
+        y = (double)rand() / RAND_MAX;
+        z = (double)rand() / RAND_MAX;
     }
-    float distance()
+    double distance()
     {
-        return x; //sqrt(x * x + y * y + z * z);
+        return std::sqrt(x * x + y * y + z * z);
     }
 };
 
 struct Point2D {
-    float x;
-    float y;
+    double x;
+    double y;
     Point2D()
     {
-        x = (float)rand() / RAND_MAX;
-        y = (float)rand() / RAND_MAX;
+        x = (double)rand() / RAND_MAX;
+        y = (double)rand() / RAND_MAX;
     }
-    float distance()
+    double distance()
     {
-        return x; //sqrt(x * x + y * y);
+        return std::sqrt(x * x + y * y);
     }
 };
 
@@ -54,8 +54,6 @@ static void scalarobjsort(benchmark::State &state)
 {
     // set up array
     std::vector<T> arr = init_data<T>(state.range(0));
-    //std::sort(arr.begin(), arr.end(), less_than_key<T>());
-    //std::reverse(arr.begin(), arr.end());
     std::vector<T> arr_bkp = arr;
     // benchmark
     for (auto _ : state) {
@@ -71,12 +69,10 @@ static void simdobjsort(benchmark::State &state)
 {
     // set up array
     std::vector<T> arr = init_data<T>(state.range(0));
-    //std::sort(arr.begin(), arr.end(), less_than_key<T>());
-    //std::reverse(arr.begin(), arr.end());
     std::vector<T> arr_bkp = arr;
     // benchmark
     for (auto _ : state) {
-        x86simdsort::object_qsort(arr.data(), arr.size(), [](T p) -> float {
+        x86simdsort::object_qsort(arr.data(), arr.size(), [](T p) -> double {
             return p.distance();
         });
         state.PauseTiming();
@@ -90,6 +86,7 @@ static void simdobjsort(benchmark::State &state)
 
 #define BENCHMARK_OBJSORT(func, T) \
     BENCHMARK_TEMPLATE(func, T) \
+            ->Arg(10e1) \
             ->Arg(10e2) \
             ->Arg(10e3) \
             ->Arg(10e4) \
