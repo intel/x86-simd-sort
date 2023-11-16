@@ -8,32 +8,32 @@ namespace fp
     inline constexpr bool is_floating_point_v = std::is_floating_point_v<T>;
 
     template <typename T>
-    bool isnan(T elem)
+    static bool isnan(T elem)
     {
         return std::isnan(elem);
     }
     template <typename T>
-    bool isunordered(T a, T b)
+    static bool isunordered(T a, T b)
     {
         return std::isunordered(a, b);
     }
     template <typename T>
-    T max()
+    static T max()
     {
         return std::numeric_limits<T>::max();
     }
     template <typename T>
-    T min()
+    static T min()
     {
         return std::numeric_limits<T>::min();
     }
     template <typename T>
-    T infinity()
+    static T infinity()
     {
         return std::numeric_limits<T>::infinity();
     }
     template <typename T>
-    T quiet_NaN()
+    static T quiet_NaN()
     {
         return std::numeric_limits<T>::quiet_NaN();
     }
@@ -44,7 +44,7 @@ namespace fp
         uint16_t i_;
     } Fp16Bits;
 
-    _Float16 convert_bits(uint16_t val)
+    static _Float16 convert_bits(uint16_t val)
     {
         Fp16Bits temp;
         temp.i_ = val;
@@ -52,35 +52,35 @@ namespace fp
     }
 
     template <>
-    inline constexpr bool is_floating_point_v<_Float16> = true;
+    [[maybe_unused]] inline constexpr bool is_floating_point_v<_Float16> = true;
 
     template <>
-    bool isnan<_Float16>(_Float16 elem)
+    [[maybe_unused]] bool isnan<_Float16>(_Float16 elem)
     {
         return elem != elem;
     }
     template <>
-    bool isunordered<_Float16>(_Float16 a, _Float16 b)
+    [[maybe_unused]] bool isunordered<_Float16>(_Float16 a, _Float16 b)
     {
         return isnan(a) || isnan(b);
     }
     template <>
-    _Float16 max<_Float16>()
+    [[maybe_unused]] _Float16 max<_Float16>()
     {
         return convert_bits(0x7bff);
     }
     template <>
-    _Float16 min<_Float16>()
+    [[maybe_unused]] _Float16 min<_Float16>()
     {
         return convert_bits(0x0400);
     }
     template <>
-    _Float16 infinity<_Float16>()
+    [[maybe_unused]] _Float16 infinity<_Float16>()
     {
         return convert_bits(0x7c00);
     }
     template <>
-    _Float16 quiet_NaN<_Float16>()
+    [[maybe_unused]] _Float16 quiet_NaN<_Float16>()
     {
         return convert_bits(0x7c01);
     }
