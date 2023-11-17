@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstddef>
 #include <functional>
+#include <numeric>
 
 #define XSS_EXPORT_SYMBOL __attribute__((visibility("default")))
 #define XSS_HIDE_SYMBOL __attribute__((visibility("hidden")))
@@ -53,10 +54,12 @@ XSS_EXPORT_SYMBOL void object_qsort(T *arr, size_t arrsize, Func key_func)
         keys[ii] = key_func(arr[ii]);
     }
 
-    /* (2) Call argsort based on the keys */
-    std::vector<size_t> arg = argsort(keys.data(), arrsize);
+    /* (2) Call arg based on keys using the keyvalue sort */
+    std::vector<size_t> arg(arrsize);
+    std::iota(arg.begin(), arg.end(), 0);
+    keyvalue_qsort(keys.data(), arg.data(), arrsize);
 
-    /* (3) Permute array in-place */
+    /* (3) Permute obj array in-place */
     std::vector<bool> done(arrsize);
     for (size_t i = 0; i < arrsize; ++i)
     {
