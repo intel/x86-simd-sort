@@ -35,16 +35,19 @@ TYPED_TEST_P(simdkvsort, test_kvsort)
     for (auto type : this->arrtype) {
         bool hasnan = (type == "rand_with_nan") ? true : false;
         for (auto size : this->arrsize) {
-            std::vector<T1> v1 = get_array<T1>(type, size);
-            std::vector<T2> v2 = get_array<T2>(type, size);
-            std::vector<T1> v1_bckp = v1;
-            std::vector<T2> v2_bckp = v2;
-            xss::scalar::keyvalue_qsort(v1_bckp.data(), v2_bckp.data(), size, hasnan);
-            x86simdsort::keyvalue_qsort(v1.data(), v2.data(), size, hasnan);
-            ASSERT_EQ(v1, v1_bckp);
-            ASSERT_EQ(v2, v2_bckp);
-            v1.clear(); v2.clear();
-            v1_bckp.clear(); v2_bckp.clear();
+            std::vector<T1> key = get_array<T1>(type, size);
+            std::vector<T2> val = get_array<T2>(type, size);
+            std::vector<T1> key_bckp = key;
+            std::vector<T2> val_bckp = val;
+            x86simdsort::keyvalue_qsort(key.data(), val.data(), size, hasnan);
+            xss::scalar::keyvalue_qsort(key_bckp.data(), val_bckp.data(), size, hasnan);
+            ASSERT_EQ(key, key_bckp);
+            const bool hasDuplicates = std::adjacent_find(key.begin(), key.end()) != key.end();
+            if (!hasDuplicates) {
+                ASSERT_EQ(val, val_bckp);
+            }
+            key.clear(); val.clear();
+            key_bckp.clear(); val_bckp.clear();
         }
     }
 }
