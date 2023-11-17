@@ -6,6 +6,12 @@ libtests += static_library('tests_qsort',
   include_directories : [lib, utils],
   )
 
+libtests += static_library('tests_kvsort',
+  files('test-keyvalue.cpp', ),
+  dependencies: gtest_dep,
+  include_directories : [lib, utils],
+  )
+
 #if cancompilefp16
 #  libtests += static_library('tests_qsortfp16',
 #    files('test-qsortfp16.cpp', ),

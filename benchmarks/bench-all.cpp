@@ -44,3 +44,4 @@
 #include "bench-partial-qsort.hpp"
 #include "bench-qselect.hpp"
 #include "bench-qsort.hpp"
+#include "bench-keyvalue.hpp"

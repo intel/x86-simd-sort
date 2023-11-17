@@ -34,5 +34,10 @@ template <typename T>
 XSS_EXPORT_SYMBOL std::vector<size_t>
 argselect(T *arr, size_t k, size_t arrsize, bool hasnan = false);
 
+// argselect
+template <typename T1, typename T2>
+XSS_EXPORT_SYMBOL void
+keyvalue_qsort(T1 *key, T2* val, size_t arrsize, bool hasnan = false);
+
 } // namespace x86simdsort
 #endif
