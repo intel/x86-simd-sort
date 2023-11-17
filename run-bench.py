@@ -31,6 +31,9 @@ if args.benchcompare:
     elif "argsort" in args.benchcompare:
         baseline = "scalarargsort.*" + filterb
         contender = "simdargsort.*" + filterb
+    elif "keyvalue" in args.benchcompare:
+        baseline = "scalarkvsort.*" + filterb
+        contender = "simdkvsort.*" + filterb
     else:
         parser.print_help(sys.stderr)
         parser.error("ERROR: Unknown argument '%s'" % args.benchcompare)
