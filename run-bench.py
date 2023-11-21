@@ -19,7 +19,10 @@ if args.filter is not None:
 if args.benchcompare:
     baseline = ""
     contender = ""
-    if "qsort" in args.benchcompare:
+    if "vqsort" in args.benchcompare:
+        baseline = "vqsort.*" + filterb
+        contender = "simdsort.*" + filterb
+    elif "qsort" in args.benchcompare:
         baseline = "scalarsort.*" + filterb
         contender = "simdsort.*" + filterb
     elif "select" in args.benchcompare:

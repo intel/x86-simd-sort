@@ -68,7 +68,7 @@ get_uniform_rand_array_with_uniquevalues(int64_t arrsize,
 template <typename T>
 static std::vector<T>
 get_array(std::string arrtype,
-          int64_t arrsize,
+          size_t arrsize,
           T min = xss::fp::min<T>(),
           T max = xss::fp::max<T>())
 {
@@ -80,7 +80,7 @@ get_array(std::string arrtype,
     }
     else if (arrtype == "constant") {
         T temp = get_uniform_rand_array<T>(1, max, min)[0];
-        for (auto ii = 0; ii < arrsize; ++ii) {
+        for (size_t ii = 0; ii < arrsize; ++ii) {
             arr.push_back(temp);
         }
     }
@@ -90,7 +90,20 @@ get_array(std::string arrtype,
         std::reverse(arr.begin(), arr.end());
     }
     else if (arrtype == "smallrange") {
-        arr = get_uniform_rand_array<T>(arrsize, 10, 1);
+        arr = get_uniform_rand_array<T>(arrsize, 20, 1);
+    }
+    else if (arrtype == "random_5d") {
+        size_t temp = std::max((size_t) 1, (size_t) (0.5 * arrsize));
+        std::vector<T> temparr = get_uniform_rand_array<T>(temp);
+        for (size_t ii = 0; ii < arrsize; ++ii) {
+            if (ii < temp) {
+                arr.push_back(temparr[ii]);
+            }
+            else {
+                arr.push_back((T) 0);
+            }
+        }
+        std::shuffle(arr.begin(), arr.end(), std::default_random_engine(42));
     }
     else if (arrtype == "max_at_the_end") {
         arr = get_uniform_rand_array<T>(arrsize, max, min);
@@ -126,7 +139,7 @@ get_array(std::string arrtype,
         else {
             val = std::numeric_limits<T>::max();
         }
-        for (auto ii = 1; ii <= arrsize; ++ii) {
+        for (size_t ii = 1; ii <= arrsize; ++ii) {
             if (rand() % 0x1) {
                 arr[ii] = val;
             }
