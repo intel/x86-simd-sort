@@ -224,7 +224,6 @@ int avx2_double_compressstore32(void *left_addr,
                                 typename avx2_vector<T>::reg_t reg)
 {
     using vtype = avx2_vector<T>;
-    const __m256i oxff = _mm256_set1_epi32(0xFFFFFFFF);
 
     T *leftStore = (T *)left_addr;
     T *rightStore = (T *)right_addr;
@@ -232,13 +231,11 @@ int avx2_double_compressstore32(void *left_addr,
     int32_t shortMask = convert_avx2_mask_to_int(k);
     const __m256i &perm = _mm256_loadu_si256(
             (const __m256i *)avx2_compressstore_lut32_perm[shortMask].data());
-    const __m256i &left = _mm256_loadu_si256(
-            (const __m256i *)avx2_compressstore_lut32_left[shortMask].data());
 
     typename vtype::reg_t temp = vtype::permutevar(reg, perm);
 
-    vtype::mask_storeu(leftStore, left, temp);
-    vtype::mask_storeu(rightStore, _mm256_xor_si256(oxff, left), temp);
+    vtype::storeu(leftStore, temp);
+    vtype::storeu(rightStore, temp);
 
     return _mm_popcnt_u32(shortMask);
 }
@@ -250,7 +247,6 @@ int32_t avx2_double_compressstore64(void *left_addr,
                                     typename avx2_vector<T>::reg_t reg)
 {
     using vtype = avx2_vector<T>;
-    const __m256i oxff = _mm256_set1_epi32(0xFFFFFFFF);
 
     T *leftStore = (T *)left_addr;
     T *rightStore = (T *)right_addr;
@@ -258,14 +254,12 @@ int32_t avx2_double_compressstore64(void *left_addr,
     int32_t shortMask = convert_avx2_mask_to_int_64bit(k);
     const __m256i &perm = _mm256_loadu_si256(
             (const __m256i *)avx2_compressstore_lut64_perm[shortMask].data());
-    const __m256i &left = _mm256_loadu_si256(
-            (const __m256i *)avx2_compressstore_lut64_left[shortMask].data());
 
     typename vtype::reg_t temp = vtype::cast_from(
             _mm256_permutevar8x32_epi32(vtype::cast_to(reg), perm));
 
-    vtype::mask_storeu(leftStore, left, temp);
-    vtype::mask_storeu(rightStore, _mm256_xor_si256(oxff, left), temp);
+    vtype::storeu(leftStore, temp);
+    vtype::storeu(rightStore, temp);
 
     return _mm_popcnt_u32(shortMask);
 }
