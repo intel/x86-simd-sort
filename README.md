@@ -8,13 +8,31 @@ AVX2 specific implementations, please see
 [README](https://github.com/intel/x86-simd-sort/blob/main/src/README.md) file under
 `src/` directory. The following routines are currently supported:
 
+
+#### Sort routines on arrays
 ```cpp
 x86simdsort::qsort(T* arr, size_t size, bool hasnan);
 x86simdsort::qselect(T* arr, size_t k, size_t size, bool hasnan);
 x86simdsort::partial_qsort(T* arr, size_t k, size_t size, bool hasnan);
+```
+Supported datatypes: `T $\in$ [_Float16, uint16_t, int16_t, float, uint32_t,
+int32_t, double, uint64_t, int64_t]`
+
+#### Key-value sort routines on pairs of arrays
+```cpp
+x86simdsort::keyvalue_qsort(T1* key, T2* val, size_t size, bool hasnan);
+```
+Supported datatypes: `T1, T2 $\in$ [float, uint32_t, int32_t, double,
+uint64_t, int64_t]` Note that keyvalue sort is not yet supported for 16-bit
+data types.
+
+#### Arg sort routines on arrays
+```cpp
 std::vector<size_t> arg = x86simdsort::argsort(T* arr, size_t size, bool hasnan);
 std::vector<size_t> arg = x86simdsort::argselect(T* arr, size_t k, size_t size, bool hasnan);
 ```
+Supported datatypes: `T $\in$ [_Float16, uint16_t, int16_t, float, uint32_t,
+int32_t, double, uint64_t, int64_t]`
 
 ### Build/Install
 
