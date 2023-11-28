@@ -33,9 +33,34 @@
         return avx512_argselect(arr, k, arrsize, hasnan); \
     }
 
-#define DEFINE_KEYVALUE_METHODS(type1, type2) \
+#define DEFINE_KEYVALUE_METHODS(type) \
     template <> \
-    void keyvalue_qsort(type1 *key, type2* val, size_t arrsize, bool hasnan) \
+    void keyvalue_qsort(type *key, uint64_t* val, size_t arrsize, bool hasnan) \
+    { \
+        avx512_qsort_kv(key, val, arrsize, hasnan); \
+    } \
+    template <> \
+    void keyvalue_qsort(type *key, int64_t* val, size_t arrsize, bool hasnan) \
+    { \
+        avx512_qsort_kv(key, val, arrsize, hasnan); \
+    } \
+    template <> \
+    void keyvalue_qsort(type *key, double* val, size_t arrsize, bool hasnan) \
+    { \
+        avx512_qsort_kv(key, val, arrsize, hasnan); \
+    } \
+    template <> \
+    void keyvalue_qsort(type *key, uint32_t* val, size_t arrsize, bool hasnan) \
+    { \
+        avx512_qsort_kv(key, val, arrsize, hasnan); \
+    } \
+    template <> \
+    void keyvalue_qsort(type *key, int32_t* val, size_t arrsize, bool hasnan) \
+    { \
+        avx512_qsort_kv(key, val, arrsize, hasnan); \
+    } \
+    template <> \
+    void keyvalue_qsort(type *key, float* val, size_t arrsize, bool hasnan) \
     { \
         avx512_qsort_kv(key, val, arrsize, hasnan); \
     } \
@@ -49,14 +74,11 @@ namespace avx512 {
     DEFINE_ALL_METHODS(uint64_t)
     DEFINE_ALL_METHODS(int64_t)
     DEFINE_ALL_METHODS(double)
-    DEFINE_KEYVALUE_METHODS(double, uint64_t)
-    DEFINE_KEYVALUE_METHODS(double, int64_t)
-    DEFINE_KEYVALUE_METHODS(double, double)
-    DEFINE_KEYVALUE_METHODS(uint64_t, uint64_t)
-    DEFINE_KEYVALUE_METHODS(uint64_t, int64_t)
-    DEFINE_KEYVALUE_METHODS(uint64_t, double)
-    DEFINE_KEYVALUE_METHODS(int64_t, uint64_t)
-    DEFINE_KEYVALUE_METHODS(int64_t, int64_t)
-    DEFINE_KEYVALUE_METHODS(int64_t, double)
+    DEFINE_KEYVALUE_METHODS(uint64_t)
+    DEFINE_KEYVALUE_METHODS(int64_t)
+    DEFINE_KEYVALUE_METHODS(double)
+    DEFINE_KEYVALUE_METHODS(uint32_t)
+    DEFINE_KEYVALUE_METHODS(int32_t)
+    DEFINE_KEYVALUE_METHODS(float)
 } // namespace avx512
 } // namespace xss

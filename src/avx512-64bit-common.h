@@ -186,6 +186,10 @@ struct ymm_vector<float> {
         //    return _mm256_shuffle_ps(zmm, zmm, mask);
         //}
     }
+    static reg_t sort_vec(reg_t x)
+    {
+        return sort_zmm_64bit<ymm_vector<type_t>>(x);
+    }
     static void storeu(void *mem, reg_t x)
     {
         _mm256_storeu_ps((float *)mem, x);
@@ -342,6 +346,10 @@ struct ymm_vector<uint32_t> {
          * 32-bit and 64-bit */
         return _mm256_shuffle_epi32(zmm, 0b10110001);
     }
+    static reg_t sort_vec(reg_t x)
+    {
+        return sort_zmm_64bit<ymm_vector<type_t>>(x);
+    }
     static void storeu(void *mem, reg_t x)
     {
         _mm256_storeu_si256((__m256i *)mem, x);
@@ -497,6 +505,10 @@ struct ymm_vector<int32_t> {
         /* Hack!: have to make shuffles within 128-bit lanes work for both
          * 32-bit and 64-bit */
         return _mm256_shuffle_epi32(zmm, 0b10110001);
+    }
+    static reg_t sort_vec(reg_t x)
+    {
+        return sort_zmm_64bit<ymm_vector<type_t>>(x);
     }
     static void storeu(void *mem, reg_t x)
     {
