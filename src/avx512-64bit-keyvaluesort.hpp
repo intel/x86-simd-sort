@@ -558,7 +558,7 @@ template <typename vtype1,
 X86_SIMD_SORT_INLINE void
 heap_sort(type1_t *keys, type2_t *indexes, arrsize_t size)
 {
-    for (arrsize_t i = size / 2 - 1; ; i--) {
+    for (arrsize_t i = size / 2 - 1;; i--) {
         heapify<vtype1, vtype2>(keys, indexes, i, size);
         if (i == 0) { break; }
     }
@@ -617,26 +617,33 @@ template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
 avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
 {
-    UNUSED(hasnan);
+    using keytype = typename std::conditional<sizeof(T1) == sizeof(int32_t),
+                                              ymm_vector<T1>,
+                                              zmm_vector<T1>>::type;
+    using valtype = typename std::conditional<sizeof(T2) == sizeof(int32_t),
+                                              ymm_vector<T2>,
+                                              zmm_vector<T2>>::type;
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T1>) {
-            arrsize_t nan_count
-                    = replace_nan_with_inf<zmm_vector<double>>(keys, arrsize);
-            qsort_64bit_<zmm_vector<T1>, zmm_vector<T2>>(
-                    keys,
-                    indexes,
-                    0,
-                    arrsize - 1,
-                    2 * (arrsize_t)log2(arrsize));
+            arrsize_t nan_count = 0;
+            if (UNLIKELY(hasnan)) {
+                nan_count = replace_nan_with_inf<zmm_vector<double>>(keys,
+                                                                     arrsize);
+            }
+            qsort_64bit_<keytype, valtype>(keys,
+                                           indexes,
+                                           0,
+                                           arrsize - 1,
+                                           2 * (arrsize_t)log2(arrsize));
             replace_inf_with_nan(keys, arrsize, nan_count);
         }
         else {
-            qsort_64bit_<zmm_vector<T1>, zmm_vector<T2>>(
-                    keys,
-                    indexes,
-                    0,
-                    arrsize - 1,
-                    2 * (arrsize_t)log2(arrsize));
+            UNUSED(hasnan);
+            qsort_64bit_<keytype, valtype>(keys,
+                                           indexes,
+                                           0,
+                                           arrsize - 1,
+                                           2 * (arrsize_t)log2(arrsize));
         }
     }
 }
