@@ -1,8 +1,16 @@
 #include <cmath>
+
+static constexpr char x[] = "x";
+static constexpr char euclidean[] = "euclidean";
+static constexpr char taxicab[] = "taxicab";
+static constexpr char chebyshev[] = "chebyshev";
+
+template <const char* val>
 struct Point3D {
     double x;
     double y;
     double z;
+    static constexpr std::string_view name {val};
     Point3D()
     {
         x = (double)rand() / RAND_MAX;
@@ -11,21 +19,18 @@ struct Point3D {
     }
     double distance()
     {
-        return std::sqrt(x * x + y * y + z * z);
-    }
-};
-
-struct Point2D {
-    double x;
-    double y;
-    Point2D()
-    {
-        x = (double)rand() / RAND_MAX;
-        y = (double)rand() / RAND_MAX;
-    }
-    double distance()
-    {
-        return std::sqrt(x * x + y * y);
+        if constexpr (name == "x") {
+            return x;
+        }
+        else if constexpr (name == "euclidean") {
+            return std::sqrt(x * x + y * y + z * z);
+        }
+        else if constexpr (name == "taxicab") {
+            return abs(x) + abs(y) + abs(z);
+        }
+        else if constexpr (name == "chebyshev") {
+            return std::max(std::max(x, y), z);
+        }
     }
 };
 
@@ -93,7 +98,11 @@ static void simdobjsort(benchmark::State &state)
             ->Arg(10e5) \
             ->Arg(10e6);
 
-BENCHMARK_OBJSORT(simdobjsort, Point2D)
-BENCHMARK_OBJSORT(scalarobjsort, Point2D)
-BENCHMARK_OBJSORT(simdobjsort, Point3D)
-BENCHMARK_OBJSORT(scalarobjsort, Point3D)
+BENCHMARK_OBJSORT(simdobjsort, Point3D<x>)
+BENCHMARK_OBJSORT(scalarobjsort, Point3D<x>)
+BENCHMARK_OBJSORT(simdobjsort, Point3D<taxicab>)
+BENCHMARK_OBJSORT(scalarobjsort, Point3D<taxicab>)
+BENCHMARK_OBJSORT(simdobjsort, Point3D<euclidean>)
+BENCHMARK_OBJSORT(scalarobjsort, Point3D<euclidean>)
+BENCHMARK_OBJSORT(simdobjsort, Point3D<chebyshev>)
+BENCHMARK_OBJSORT(scalarobjsort, Point3D<chebyshev>)
