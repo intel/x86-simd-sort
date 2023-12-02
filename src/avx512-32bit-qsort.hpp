@@ -41,6 +41,7 @@ struct zmm_vector<int32_t> {
     static constexpr int network_sort_threshold = 512;
 #endif
     static constexpr int partition_unroll_factor = 8;
+    static constexpr simd_type vec_type = simd_type::AVX512;
 
     using swizzle_ops = avx512_32bit_swizzle_ops;
 
@@ -180,6 +181,7 @@ struct zmm_vector<uint32_t> {
     static constexpr int network_sort_threshold = 512;
 #endif
     static constexpr int partition_unroll_factor = 8;
+    static constexpr simd_type vec_type = simd_type::AVX512;
 
     using swizzle_ops = avx512_32bit_swizzle_ops;
 
@@ -319,6 +321,7 @@ struct zmm_vector<float> {
     static constexpr int network_sort_threshold = 512;
 #endif
     static constexpr int partition_unroll_factor = 8;
+    static constexpr simd_type vec_type = simd_type::AVX512;
 
     using swizzle_ops = avx512_32bit_swizzle_ops;
 
