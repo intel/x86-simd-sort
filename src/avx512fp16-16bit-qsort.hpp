@@ -23,6 +23,7 @@ struct zmm_vector<_Float16> {
     static const uint8_t numlanes = 32;
     static constexpr int network_sort_threshold = 128;
     static constexpr int partition_unroll_factor = 0;
+    static constexpr simd_type vec_type = simd_type::AVX512;
 
     using swizzle_ops = avx512_16bit_swizzle_ops;
 

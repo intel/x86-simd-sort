@@ -70,6 +70,7 @@ struct avx2_vector<int32_t> {
     static constexpr int network_sort_threshold = 256;
 #endif
     static constexpr int partition_unroll_factor = 4;
+    static constexpr simd_type vec_type = simd_type::AVX2;
 
     using swizzle_ops = avx2_32bit_swizzle_ops;
 
@@ -225,6 +226,7 @@ struct avx2_vector<uint32_t> {
     static constexpr int network_sort_threshold = 256;
 #endif
     static constexpr int partition_unroll_factor = 4;
+    static constexpr simd_type vec_type = simd_type::AVX2;
 
     using swizzle_ops = avx2_32bit_swizzle_ops;
 
@@ -369,6 +371,7 @@ struct avx2_vector<float> {
     static constexpr int network_sort_threshold = 256;
 #endif
     static constexpr int partition_unroll_factor = 4;
+    static constexpr simd_type vec_type = simd_type::AVX2;
 
     using swizzle_ops = avx2_32bit_swizzle_ops;
 

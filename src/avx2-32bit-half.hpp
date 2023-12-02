@@ -71,6 +71,7 @@ struct avx2_half_vector<int32_t> {
     using ymmi_t = __m128i;
     using opmask_t = __m128i;
     static const uint8_t numlanes = 4;
+    static constexpr simd_type vec_type = simd_type::AVX2;
     
     using swizzle_ops = avx2_32bit_half_swizzle_ops;
 
@@ -226,6 +227,7 @@ struct avx2_half_vector<uint32_t> {
     using ymmi_t = __m128i;
     using opmask_t = __m128i;
     static const uint8_t numlanes = 4;
+    static constexpr simd_type vec_type = simd_type::AVX2;
     
     using swizzle_ops = avx2_32bit_half_swizzle_ops;
 
@@ -371,6 +373,7 @@ struct avx2_half_vector<float> {
     using ymmi_t = __m128i;
     using opmask_t = __m128i;
     static const uint8_t numlanes = 4;
+    static constexpr simd_type vec_type = simd_type::AVX2;
     
     using swizzle_ops = avx2_32bit_half_swizzle_ops;
 

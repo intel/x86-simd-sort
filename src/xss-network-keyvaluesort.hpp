@@ -21,14 +21,16 @@ struct index_64bit_vector_type<4> {
 
 template <typename keyType, typename valueType>
 typename valueType::opmask_t extend_mask(typename keyType::opmask_t mask){
-    if constexpr (sizeof(typename valueType::reg_t) == 64){
+    if constexpr (keyType::vec_type == simd_type::AVX512){
         return mask;
-    }else{
+    }else if constexpr (keyType::vec_type == simd_type::AVX2){
         if constexpr (sizeof(mask) == 32){
             return mask;
         }else{
             return _mm256_cvtepi32_epi64(mask);
         }
+    }else{
+        static_assert(keyType::vec_type == simd_type::AVX512, "Should not reach here"); 
     }
 }
 >>>>>>> d1e90bb (Support for AVX2 argsort/argselect)
