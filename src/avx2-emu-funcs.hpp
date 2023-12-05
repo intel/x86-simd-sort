@@ -107,8 +107,10 @@ constexpr auto avx2_compressstore_lut32_half_gen = [] {
     return lutPair;
 }();
 
-constexpr auto avx2_compressstore_lut32_half_perm = avx2_compressstore_lut32_half_gen[0];
-constexpr auto avx2_compressstore_lut32_half_left = avx2_compressstore_lut32_half_gen[1];
+constexpr auto avx2_compressstore_lut32_half_perm
+        = avx2_compressstore_lut32_half_gen[0];
+constexpr auto avx2_compressstore_lut32_half_left
+        = avx2_compressstore_lut32_half_gen[1];
 
 constexpr auto avx2_compressstore_lut64_gen = [] {
     std::array<std::array<int32_t, 8>, 16> permLut {};
@@ -281,9 +283,10 @@ void avx2_emu_mask_compressstoreu32(void *base_addr,
 }
 
 template <typename T>
-void avx2_emu_mask_compressstoreu32_half(void *base_addr,
-                                    typename avx2_half_vector<T>::opmask_t k,
-                                    typename avx2_half_vector<T>::reg_t reg)
+void avx2_emu_mask_compressstoreu32_half(
+        void *base_addr,
+        typename avx2_half_vector<T>::opmask_t k,
+        typename avx2_half_vector<T>::reg_t reg)
 {
     using vtype = avx2_half_vector<T>;
 
@@ -291,9 +294,11 @@ void avx2_emu_mask_compressstoreu32_half(void *base_addr,
 
     int32_t shortMask = convert_avx2_mask_to_int_half(k);
     const __m128i &perm = _mm_loadu_si128(
-            (const __m128i *)avx2_compressstore_lut32_half_perm[shortMask].data());
+            (const __m128i *)avx2_compressstore_lut32_half_perm[shortMask]
+                    .data());
     const __m128i &left = _mm_loadu_si128(
-            (const __m128i *)avx2_compressstore_lut32_half_left[shortMask].data());
+            (const __m128i *)avx2_compressstore_lut32_half_left[shortMask]
+                    .data());
 
     typename vtype::reg_t temp = vtype::permutevar(reg, perm);
 
@@ -346,9 +351,9 @@ int avx2_double_compressstore32(void *left_addr,
 
 template <typename T>
 int avx2_double_compressstore32_half(void *left_addr,
-                                void *right_addr,
-                                typename avx2_half_vector<T>::opmask_t k,
-                                typename avx2_half_vector<T>::reg_t reg)
+                                     void *right_addr,
+                                     typename avx2_half_vector<T>::opmask_t k,
+                                     typename avx2_half_vector<T>::reg_t reg)
 {
     using vtype = avx2_half_vector<T>;
 
@@ -357,7 +362,8 @@ int avx2_double_compressstore32_half(void *left_addr,
 
     int32_t shortMask = convert_avx2_mask_to_int_half(k);
     const __m128i &perm = _mm_loadu_si128(
-            (const __m128i *)avx2_compressstore_lut32_half_perm[shortMask].data());
+            (const __m128i *)avx2_compressstore_lut32_half_perm[shortMask]
+                    .data());
 
     typename vtype::reg_t temp = vtype::permutevar(reg, perm);
 
