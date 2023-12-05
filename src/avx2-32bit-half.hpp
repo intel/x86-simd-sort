@@ -29,37 +29,26 @@
 template <typename vtype, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE reg_t sort_ymm_32bit_half(reg_t ymm)
 {
-    //static_assert(vtype::numlanes == 0, "This function is not implemented");
-    typename vtype::type_t buffer[vtype::numlanes];
-    vtype::storeu(buffer, ymm);
-    std::sort(&buffer[0], &buffer[vtype::numlanes], comparison_func<vtype>);
-    return vtype::loadu(buffer);
-    /*
-    const typename vtype::opmask_t oxAA = _mm256_set_epi32(
-            0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 0xFFFFFFFF, 0);
-    const typename vtype::opmask_t oxCC = _mm256_set_epi32(
-            0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0);
-    const typename vtype::opmask_t oxF0 = _mm256_set_epi32(
-            0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0);
-
-    const typename vtype::ymmi_t rev_index = vtype::seti(NETWORK_32BIT_AVX2_2);
-    ymm = cmp_merge<vtype>(
-            ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
+    using swizzle = typename vtype::swizzle_ops;
+    
+    const typename vtype::opmask_t oxAA
+            = vtype::seti(-1, 0, -1, 0);
+    const typename vtype::opmask_t oxCC
+            = vtype::seti(-1, -1, 0, 0);
+            
     ymm = cmp_merge<vtype>(
             ymm,
-            vtype::permutexvar(vtype::seti(NETWORK_32BIT_AVX2_1), ymm),
-            oxCC);
-    ymm = cmp_merge<vtype>(
-            ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
-    ymm = cmp_merge<vtype>(ymm, vtype::permutexvar(rev_index, ymm), oxF0);
+            swizzle::template swap_n<vtype, 2>(ymm),
+            oxAA);
     ymm = cmp_merge<vtype>(
             ymm,
-            vtype::permutexvar(vtype::seti(NETWORK_32BIT_AVX2_3), ymm),
+            vtype::reverse(ymm),
             oxCC);
     ymm = cmp_merge<vtype>(
-            ymm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(ymm), oxAA);
+            ymm,
+            swizzle::template swap_n<vtype, 2>(ymm),
+            oxAA);
     return ymm;
-    */
 }
 
 struct avx2_32bit_half_swizzle_ops;

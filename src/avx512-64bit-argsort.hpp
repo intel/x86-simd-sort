@@ -8,13 +8,8 @@
 #define AVX512_ARGSORT_64BIT
 
 #include "xss-common-qsort.h"
-//#include "avx512-64bit-common.h"
-//#include "avx2-32bit-half.hpp"
 #include "xss-network-keyvaluesort.hpp"
 #include <numeric>
-
-template <typename T>
-struct avx2_half_vector;
 
 template <typename T>
 X86_SIMD_SORT_INLINE void std_argselect_withnan(
@@ -134,9 +129,9 @@ X86_SIMD_SORT_INLINE int32_t partition_vec(type_t *arg,
                                            reg_t *smallest_vec,
                                            reg_t *biggest_vec)
 {
-    if constexpr (sizeof (argreg_t) == 64){
+    if constexpr (vtype::vec_type == simd_type::AVX512){
         return partition_vec_avx512<vtype, argtype, type_t>(arg, left, right, arg_vec, curr_vec, pivot_vec, smallest_vec, biggest_vec);
-    }else if constexpr (sizeof (argreg_t) == 32){
+    }else if constexpr (vtype::vec_type == simd_type::AVX2){
         return partition_vec_avx2<vtype, argtype, type_t>(arg, left, right, arg_vec, curr_vec, pivot_vec, smallest_vec, biggest_vec);
     }else{
         static_assert(sizeof(argreg_t) == 0, "Should not get here");

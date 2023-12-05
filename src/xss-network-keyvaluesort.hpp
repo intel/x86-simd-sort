@@ -487,6 +487,16 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
 
     kreg_t keyVecs[numVecs];
     ireg_t indexVecs[numVecs];
+    
+    // Generate masks for loading and storing
+    typename keyType::opmask_t ioMasks[numVecs - numVecs / 2];
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
+        uint64_t num_to_read
+                = std::min((uint64_t)std::max(0, N - i * keyType::numlanes),
+                           (uint64_t)keyType::numlanes);
+        ioMasks[j] = keyType::get_partial_loadmask(num_to_read);
+    }
 
     // Unmasked part of the load
     X86_SIMD_SORT_UNROLL_LOOP(64)
@@ -498,20 +508,13 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
     // Masked part of the load
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2; i < numVecs; i++) {
-        uint64_t num_to_read
-                = std::min((uint64_t)std::max(0, N - i * keyType::numlanes),
-                           (uint64_t)keyType::numlanes);
-       
-        auto indexMask = indexType::get_partial_loadmask(num_to_read);
-        auto keyMask = keyType::get_partial_loadmask(num_to_read);
-        
         indexVecs[i] = indexType::mask_loadu(indexType::zmm_max(),
-                                             indexMask,
+                                             extend_mask<keyType, indexType>(ioMasks[i - numVecs/2]),
                                              indices + i * indexType::numlanes);
 
         keyVecs[i] = keyType::template mask_i64gather<sizeof(
                 typename keyType::type_t)>(
-                keyType::zmm_max(), keyMask, indexVecs[i], keys);
+                keyType::zmm_max(), ioMasks[i - numVecs / 2], indexVecs[i], keys);
     }
 
     // Sort each loaded vector
@@ -531,13 +534,8 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
     // Masked part of the store
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
-        uint64_t num_to_read
-                = std::min((uint64_t)std::max(0, N - i * keyType::numlanes),
-                           (uint64_t)keyType::numlanes);
-        
-        auto indexMask = indexType::get_partial_loadmask(num_to_read);
         indexType::mask_storeu(
-                indices + i * indexType::numlanes, indexMask, indexVecs[i]);
+                indices + i * indexType::numlanes, extend_mask<keyType, indexType>(ioMasks[i - numVecs/2]), indexVecs[i]);
     }
 }
 
