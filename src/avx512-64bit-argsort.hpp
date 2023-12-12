@@ -657,9 +657,8 @@ avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
 }
 
 template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx512_argsort(T *arr,
-                                                           arrsize_t arrsize,
-                                                           bool hasnan = false)
+X86_SIMD_SORT_INLINE std::vector<arrsize_t>
+avx512_argsort(T *arr, arrsize_t arrsize, bool hasnan = false)
 {
     std::vector<arrsize_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
@@ -669,8 +668,11 @@ X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx512_argsort(T *arr,
 
 /* argselect methods for 32-bit and 64-bit dtypes */
 template <typename T>
-X86_SIMD_SORT_INLINE void
-avx512_argselect(T *arr, arrsize_t *arg, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
+                                           arrsize_t *arg,
+                                           arrsize_t k,
+                                           arrsize_t arrsize,
+                                           bool hasnan = false)
 {
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               ymm_vector<T>,

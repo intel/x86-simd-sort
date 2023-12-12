@@ -69,4 +69,57 @@ jobs:
         python -c "import numpy; numpy.show_config()" &&
         python -m pytest $NUMPY_SITE/numpy/_core/tests/test_multiarray.py
 
+  NumPy-SPR-baseline:
 
+    runs-on: intel-ubuntu-latest
+
+    steps:
+    - name: Checkout x86-simd-sort
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        path: x86-simd-sort
+
+    - name: Specify branch name
+      working-directory: ${{ github.workspace }}/x86-simd-sort
+      run: git switch -c pr-branch
+
+    - name: Install build dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install g++-12 gcc-12 git
+
+    - name: Checkout NumPy main
+      uses: actions/checkout@v3
+      with:
+        repository: numpy/numpy
+        submodules: recursive
+        fetch-depth: 0
+        ref: main
+        path: numpy
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install NumPy dependencies
+      working-directory: ${{ github.workspace }}/numpy
+      run: |
+        pip install -r build_requirements.txt
+        pip install -r test_requirements.txt
+
+    - name: Update x86-simd-sort
+      working-directory: ${{ github.workspace }}/numpy
+      run: |
+        cd numpy/_core/src/npysort/x86-simd-sort
+        git remote add temp ${{ github.workspace }}/x86-simd-sort
+        git fetch temp
+        git checkout temp/pr-branch
+
+    - name: Build NumPy with cpu basline SPR
+      working-directory: ${{ github.workspace }}/numpy
+      env:
+        CXX: g++-12
+        CC: gcc-12
+      run: |
+        spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_spr

@@ -38,6 +38,7 @@
 
 /* Compiler specific macros specific */
 #ifdef _MSC_VER
+#define X86_SIMD_SORT_INLINE_ONLY inline
 #define X86_SIMD_SORT_INLINE static inline
 #define X86_SIMD_SORT_FINLINE static __forceinline
 #define LIKELY(x) (x)
@@ -47,14 +48,17 @@
  * Force inline in cygwin to work around a compiler bug. See
  * https://github.com/numpy/numpy/pull/22315#issuecomment-1267757584
  */
+#define X86_SIMD_SORT_INLINE_ONLY inline
 #define X86_SIMD_SORT_INLINE static __attribute__((always_inline))
 #define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
 #elif defined(__GNUC__)
+#define X86_SIMD_SORT_INLINE_ONLY inline
 #define X86_SIMD_SORT_INLINE static inline
 #define X86_SIMD_SORT_FINLINE static inline __attribute__((always_inline))
 #define LIKELY(x) __builtin_expect((x), 1)
 #define UNLIKELY(x) __builtin_expect((x), 0)
 #else
+#define X86_SIMD_SORT_INLINE_ONLY
 #define X86_SIMD_SORT_INLINE static
 #define X86_SIMD_SORT_FINLINE static
 #define LIKELY(x) (x)
