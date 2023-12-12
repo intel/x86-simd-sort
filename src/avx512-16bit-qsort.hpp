@@ -499,8 +499,10 @@ replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr, arrsize_t arrsize)
 {
     arrsize_t nan_count = 0;
     __mmask16 loadmask = 0xFFFF;
-    while (arrsize > 0) {
-        if (arrsize < 16) { loadmask = (0x0001 << arrsize) - 0x0001; }
+    for (arrsize_t ii = 0; ii < arrsize; ii = ii + zmm_vector<float16>::numlanes / 2) {
+        if (arrsize - ii < 16) {
+            loadmask = (0x0001 << (arrsize-ii)) - 0x0001;
+        }
         __m256i in_zmm = _mm256_maskz_loadu_epi16(loadmask, arr);
         __m512 in_zmm_asfloat = _mm512_cvtph_ps(in_zmm);
         __mmask16 nanmask = _mm512_cmp_ps_mask(
@@ -508,7 +510,6 @@ replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr, arrsize_t arrsize)
         nan_count += _mm_popcnt_u32((int32_t)nanmask);
         _mm256_mask_storeu_epi16(arr, nanmask, YMM_MAX_HALF);
         arr += 16;
-        arrsize -= 16;
     }
     return nan_count;
 }
