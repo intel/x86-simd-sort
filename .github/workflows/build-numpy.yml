@@ -130,12 +130,20 @@ jobs:
       run: |
         spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_spr
 
-    - name: SIMD tests (SPR)
+    - name: Run tests on TGL
+      working-directory: ${{ github.workspace }}/numpy
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -tgl -- python -c "import numpy; numpy.show_config()" &&
+        sde -tgl -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_multiarray.py
+
+    - name: Run tests on SPR
+      working-directory: ${{ github.workspace }}/numpy
       run: |
         export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
         sde -spr -- python -c "import numpy; numpy.show_config()" &&
-        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
-                                     $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
-                                     $NUMPY_SITE/numpy/linalg/tests/test_*
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_multiarray.py
