@@ -69,7 +69,6 @@ jobs:
         python -c "import numpy; numpy.show_config()" &&
         python -m pytest $NUMPY_SITE/numpy/_core/tests/test_multiarray.py
 
-jobs:
   NumPy-SPR-baseline:
 
     runs-on: intel-ubuntu-latest
