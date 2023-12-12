@@ -465,7 +465,8 @@ struct zmm_vector<uint16_t> {
 };
 
 template <>
-bool comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
+X86_SIMD_SORT_INLINE_ONLY bool
+comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
 {
     uint16_t signa = a & 0x8000, signb = b & 0x8000;
     uint16_t expa = a & 0x7c00, expb = b & 0x7c00;
@@ -493,8 +494,8 @@ bool comparison_func<zmm_vector<float16>>(const uint16_t &a, const uint16_t &b)
 }
 
 template <>
-arrsize_t replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr,
-                                                    arrsize_t arrsize)
+X86_SIMD_SORT_INLINE_ONLY arrsize_t
+replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr, arrsize_t arrsize)
 {
     arrsize_t nan_count = 0;
     __mmask16 loadmask = 0xFFFF;
@@ -513,13 +514,13 @@ arrsize_t replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr,
 }
 
 template <>
-bool is_a_nan<uint16_t>(uint16_t elem)
+X86_SIMD_SORT_INLINE_ONLY bool is_a_nan<uint16_t>(uint16_t elem)
 {
     return ((elem & 0x7c00u) == 0x7c00u) && ((elem & 0x03ffu) != 0);
 }
 
-X86_SIMD_SORT_INLINE
-void avx512_qsort_fp16(uint16_t *arr, arrsize_t arrsize, bool hasnan = false)
+X86_SIMD_SORT_INLINE void
+avx512_qsort_fp16(uint16_t *arr, arrsize_t arrsize, bool hasnan = false)
 {
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
@@ -533,11 +534,10 @@ void avx512_qsort_fp16(uint16_t *arr, arrsize_t arrsize, bool hasnan = false)
     }
 }
 
-X86_SIMD_SORT_INLINE
-void avx512_qselect_fp16(uint16_t *arr,
-                         arrsize_t k,
-                         arrsize_t arrsize,
-                         bool hasnan = false)
+X86_SIMD_SORT_INLINE void avx512_qselect_fp16(uint16_t *arr,
+                                              arrsize_t k,
+                                              arrsize_t arrsize,
+                                              bool hasnan = false)
 {
     arrsize_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
@@ -549,11 +549,10 @@ void avx512_qselect_fp16(uint16_t *arr,
     }
 }
 
-X86_SIMD_SORT_INLINE
-void avx512_partial_qsort_fp16(uint16_t *arr,
-                               arrsize_t k,
-                               arrsize_t arrsize,
-                               bool hasnan = false)
+X86_SIMD_SORT_INLINE void avx512_partial_qsort_fp16(uint16_t *arr,
+                                                    arrsize_t k,
+                                                    arrsize_t arrsize,
+                                                    bool hasnan = false)
 {
     avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
     avx512_qsort_fp16(arr, k - 1);

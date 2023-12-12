@@ -160,13 +160,14 @@ struct zmm_vector<_Float16> {
 };
 
 template <>
-bool is_a_nan<_Float16>(_Float16 elem)
+X86_SIMD_SORT_INLINE_ONLY bool is_a_nan<_Float16>(_Float16 elem)
 {
     return elem != elem;
 }
 
 template <>
-void replace_inf_with_nan(_Float16 *arr, arrsize_t size, arrsize_t nan_count)
+X86_SIMD_SORT_INLINE_ONLY void
+replace_inf_with_nan(_Float16 *arr, arrsize_t size, arrsize_t nan_count)
 {
     Fp16Bits val;
     val.i_ = 0x7c01;
@@ -177,7 +178,8 @@ void replace_inf_with_nan(_Float16 *arr, arrsize_t size, arrsize_t nan_count)
 }
 /* Specialized template function for _Float16 qsort_*/
 template <>
-void avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan)
+X86_SIMD_SORT_INLINE_ONLY void
+avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan)
 {
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
@@ -192,7 +194,8 @@ void avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan)
 }
 
 template <>
-void avx512_qselect(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
+X86_SIMD_SORT_INLINE_ONLY void
+avx512_qselect(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
     arrsize_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
@@ -204,10 +207,8 @@ void avx512_qselect(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
     }
 }
 template <>
-void avx512_partial_qsort(_Float16 *arr,
-                          arrsize_t k,
-                          arrsize_t arrsize,
-                          bool hasnan)
+X86_SIMD_SORT_INLINE_ONLY void
+avx512_partial_qsort(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
     avx512_qselect(arr, k - 1, arrsize, hasnan);
     avx512_qsort(arr, k - 1, hasnan);
