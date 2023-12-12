@@ -2,7 +2,7 @@
 #include "avx2-32bit-qsort.hpp"
 #include "avx2-64bit-qsort.hpp"
 #include "avx2-32bit-half.hpp"
-#include "avx512-64bit-argsort.hpp"
+#include "xss-common-argsort.h"
 #include "x86simdsort-internal.h"
 
 #define DEFINE_ALL_METHODS(type) \
