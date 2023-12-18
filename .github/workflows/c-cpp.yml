@@ -168,7 +168,7 @@ jobs:
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe
 
-  32-bit:
+  manylinux-32bit:
 
     runs-on: intel-ubuntu-latest
 
