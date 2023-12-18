@@ -9,7 +9,7 @@ on:
   - cron: '0 5 * * *'
 
 jobs:
-  NumPyMultiarrayTests:
+  np-multiarray-tgl:
 
     runs-on: intel-ubuntu-latest
 
@@ -42,6 +42,12 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
     - name: Install NumPy dependencies
       working-directory: ${{ github.workspace }}/numpy
       run: |
@@ -66,10 +72,9 @@ jobs:
         export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
-        python -c "import numpy; numpy.show_config()" &&
-        python -m pytest $NUMPY_SITE/numpy/_core/tests/test_multiarray.py
+        sde -tgl -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_multiarray.py
 
-  NumPy-SPR-baseline:
+  np-multiarray-spr:
 
     runs-on: intel-ubuntu-latest
 
@@ -129,15 +134,6 @@ jobs:
         CC: gcc-12
       run: |
         spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_spr
-
-    - name: Run tests on TGL
-      working-directory: ${{ github.workspace }}/numpy
-      run: |
-        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
-        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
-        cd build-install &&
-        sde -tgl -- python -c "import numpy; numpy.show_config()" &&
-        sde -tgl -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_multiarray.py
 
     - name: Run tests on SPR
       working-directory: ${{ github.workspace }}/numpy
