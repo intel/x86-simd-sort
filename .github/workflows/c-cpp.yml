@@ -167,3 +167,15 @@ jobs:
 
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe
+
+  32-bit:
+
+    runs-on: intel-ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - script : |
+        docker run -v $(pwd):/xss quay.io/pypa/manylinux2014_i686 \
+        /bin/bash -xc "source /xss/.github/workflows/build-test-on-32bit.sh"
+      displayName: 'Build and test on 32-bit manylinux2014'
