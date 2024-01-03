@@ -1,5 +1,8 @@
-#ifndef AVX512_KEYVALUE_NETWORKS
-#define AVX512_KEYVALUE_NETWORKS
+#ifndef XSS_KEYVALUE_NETWORKS
+#define XSS_KEYVALUE_NETWORKS
+
+#include "avx512-64bit-qsort.hpp"
+#include "avx2-64bit-qsort.hpp"
 
 template <typename vtype1,
           typename vtype2,
@@ -84,6 +87,7 @@ X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t key_zmm, index_type &index_zmm)
             0xAA);
     return key_zmm;
 }
+
 // Assumes zmm is bitonic and performs a recursive half cleaner
 template <typename vtype1,
           typename vtype2,
@@ -116,382 +120,292 @@ X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_64bit(reg_t key_zmm,
             0xAA);
     return key_zmm;
 }
-// Assumes zmm1 and zmm2 are sorted and performs a recursive half cleaner
-template <typename vtype1,
-          typename vtype2,
-          typename reg_t = typename vtype1::reg_t,
-          typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_two_zmm_64bit(reg_t &key_zmm1,
-                                                      reg_t &key_zmm2,
-                                                      index_type &index_zmm1,
-                                                      index_type &index_zmm2)
+
+template <typename keyType, typename valueType>
+X86_SIMD_SORT_INLINE void
+bitonic_merge_dispatch(typename keyType::reg_t &key,
+                       typename valueType::reg_t &value)
 {
-    const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
-    const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
-    // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
-    key_zmm2 = vtype1::permutexvar(rev_index1, key_zmm2);
-    index_zmm2 = vtype2::permutexvar(rev_index2, index_zmm2);
-
-    reg_t key_zmm3 = vtype1::min(key_zmm1, key_zmm2);
-    reg_t key_zmm4 = vtype1::max(key_zmm1, key_zmm2);
-
-    typename vtype1::opmask_t movmask = vtype1::eq(key_zmm3, key_zmm1);
-
-    index_type index_zmm3 = vtype2::mask_mov(index_zmm2, movmask, index_zmm1);
-    index_type index_zmm4 = vtype2::mask_mov(index_zmm1, movmask, index_zmm2);
-
-    /* need to reverse the lower registers to keep the correct order */
-    key_zmm4 = vtype1::permutexvar(rev_index1, key_zmm4);
-    index_zmm4 = vtype2::permutexvar(rev_index2, index_zmm4);
-
-    // 2) Recursive half cleaner for each
-    key_zmm1 = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm3, index_zmm3);
-    key_zmm2 = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm4, index_zmm4);
-    index_zmm1 = index_zmm3;
-    index_zmm2 = index_zmm4;
-}
-// Assumes [zmm0, zmm1] and [zmm2, zmm3] are sorted and performs a recursive
-// half cleaner
-template <typename vtype1,
-          typename vtype2,
-          typename reg_t = typename vtype1::reg_t,
-          typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_four_zmm_64bit(reg_t *key_zmm,
-                                                       index_type *index_zmm)
-{
-    const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
-    const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
-    // 1) First step of a merging network
-    reg_t key_zmm2r = vtype1::permutexvar(rev_index1, key_zmm[2]);
-    reg_t key_zmm3r = vtype1::permutexvar(rev_index1, key_zmm[3]);
-    index_type index_zmm2r = vtype2::permutexvar(rev_index2, index_zmm[2]);
-    index_type index_zmm3r = vtype2::permutexvar(rev_index2, index_zmm[3]);
-
-    reg_t key_reg_t1 = vtype1::min(key_zmm[0], key_zmm3r);
-    reg_t key_reg_t2 = vtype1::min(key_zmm[1], key_zmm2r);
-    reg_t key_zmm_m1 = vtype1::max(key_zmm[0], key_zmm3r);
-    reg_t key_zmm_m2 = vtype1::max(key_zmm[1], key_zmm2r);
-
-    typename vtype1::opmask_t movmask1 = vtype1::eq(key_reg_t1, key_zmm[0]);
-    typename vtype1::opmask_t movmask2 = vtype1::eq(key_reg_t2, key_zmm[1]);
-
-    index_type index_reg_t1
-            = vtype2::mask_mov(index_zmm3r, movmask1, index_zmm[0]);
-    index_type index_zmm_m1
-            = vtype2::mask_mov(index_zmm[0], movmask1, index_zmm3r);
-    index_type index_reg_t2
-            = vtype2::mask_mov(index_zmm2r, movmask2, index_zmm[1]);
-    index_type index_zmm_m2
-            = vtype2::mask_mov(index_zmm[1], movmask2, index_zmm2r);
-
-    // 2) Recursive half clearer: 16
-    reg_t key_reg_t3 = vtype1::permutexvar(rev_index1, key_zmm_m2);
-    reg_t key_reg_t4 = vtype1::permutexvar(rev_index1, key_zmm_m1);
-    index_type index_reg_t3 = vtype2::permutexvar(rev_index2, index_zmm_m2);
-    index_type index_reg_t4 = vtype2::permutexvar(rev_index2, index_zmm_m1);
-
-    reg_t key_zmm0 = vtype1::min(key_reg_t1, key_reg_t2);
-    reg_t key_zmm1 = vtype1::max(key_reg_t1, key_reg_t2);
-    reg_t key_zmm2 = vtype1::min(key_reg_t3, key_reg_t4);
-    reg_t key_zmm3 = vtype1::max(key_reg_t3, key_reg_t4);
-
-    movmask1 = vtype1::eq(key_zmm0, key_reg_t1);
-    movmask2 = vtype1::eq(key_zmm2, key_reg_t3);
-
-    index_type index_zmm0
-            = vtype2::mask_mov(index_reg_t2, movmask1, index_reg_t1);
-    index_type index_zmm1
-            = vtype2::mask_mov(index_reg_t1, movmask1, index_reg_t2);
-    index_type index_zmm2
-            = vtype2::mask_mov(index_reg_t4, movmask2, index_reg_t3);
-    index_type index_zmm3
-            = vtype2::mask_mov(index_reg_t3, movmask2, index_reg_t4);
-
-    key_zmm[0] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm0, index_zmm0);
-    key_zmm[1] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm1, index_zmm1);
-    key_zmm[2] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm2, index_zmm2);
-    key_zmm[3] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_zmm3, index_zmm3);
-
-    index_zmm[0] = index_zmm0;
-    index_zmm[1] = index_zmm1;
-    index_zmm[2] = index_zmm2;
-    index_zmm[3] = index_zmm3;
+    constexpr int numlanes = keyType::numlanes;
+    if constexpr (numlanes == 8) {
+        key = bitonic_merge_zmm_64bit<keyType, valueType>(key, value);
+    }
+    else {
+        static_assert(numlanes == -1, "should not reach here");
+        UNUSED(key);
+        UNUSED(value);
+    }
 }
 
-template <typename vtype1,
-          typename vtype2,
-          typename reg_t = typename vtype1::reg_t,
-          typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_eight_zmm_64bit(reg_t *key_zmm,
-                                                        index_type *index_zmm)
+template <typename keyType, typename valueType>
+X86_SIMD_SORT_INLINE void sort_vec_dispatch(typename keyType::reg_t &key,
+                                            typename valueType::reg_t &value)
 {
-    const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
-    const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
-    reg_t key_zmm4r = vtype1::permutexvar(rev_index1, key_zmm[4]);
-    reg_t key_zmm5r = vtype1::permutexvar(rev_index1, key_zmm[5]);
-    reg_t key_zmm6r = vtype1::permutexvar(rev_index1, key_zmm[6]);
-    reg_t key_zmm7r = vtype1::permutexvar(rev_index1, key_zmm[7]);
-    index_type index_zmm4r = vtype2::permutexvar(rev_index2, index_zmm[4]);
-    index_type index_zmm5r = vtype2::permutexvar(rev_index2, index_zmm[5]);
-    index_type index_zmm6r = vtype2::permutexvar(rev_index2, index_zmm[6]);
-    index_type index_zmm7r = vtype2::permutexvar(rev_index2, index_zmm[7]);
-
-    reg_t key_reg_t1 = vtype1::min(key_zmm[0], key_zmm7r);
-    reg_t key_reg_t2 = vtype1::min(key_zmm[1], key_zmm6r);
-    reg_t key_reg_t3 = vtype1::min(key_zmm[2], key_zmm5r);
-    reg_t key_reg_t4 = vtype1::min(key_zmm[3], key_zmm4r);
-
-    reg_t key_zmm_m1 = vtype1::max(key_zmm[0], key_zmm7r);
-    reg_t key_zmm_m2 = vtype1::max(key_zmm[1], key_zmm6r);
-    reg_t key_zmm_m3 = vtype1::max(key_zmm[2], key_zmm5r);
-    reg_t key_zmm_m4 = vtype1::max(key_zmm[3], key_zmm4r);
-
-    typename vtype1::opmask_t movmask1 = vtype1::eq(key_reg_t1, key_zmm[0]);
-    typename vtype1::opmask_t movmask2 = vtype1::eq(key_reg_t2, key_zmm[1]);
-    typename vtype1::opmask_t movmask3 = vtype1::eq(key_reg_t3, key_zmm[2]);
-    typename vtype1::opmask_t movmask4 = vtype1::eq(key_reg_t4, key_zmm[3]);
-
-    index_type index_reg_t1
-            = vtype2::mask_mov(index_zmm7r, movmask1, index_zmm[0]);
-    index_type index_zmm_m1
-            = vtype2::mask_mov(index_zmm[0], movmask1, index_zmm7r);
-    index_type index_reg_t2
-            = vtype2::mask_mov(index_zmm6r, movmask2, index_zmm[1]);
-    index_type index_zmm_m2
-            = vtype2::mask_mov(index_zmm[1], movmask2, index_zmm6r);
-    index_type index_reg_t3
-            = vtype2::mask_mov(index_zmm5r, movmask3, index_zmm[2]);
-    index_type index_zmm_m3
-            = vtype2::mask_mov(index_zmm[2], movmask3, index_zmm5r);
-    index_type index_reg_t4
-            = vtype2::mask_mov(index_zmm4r, movmask4, index_zmm[3]);
-    index_type index_zmm_m4
-            = vtype2::mask_mov(index_zmm[3], movmask4, index_zmm4r);
-
-    reg_t key_reg_t5 = vtype1::permutexvar(rev_index1, key_zmm_m4);
-    reg_t key_reg_t6 = vtype1::permutexvar(rev_index1, key_zmm_m3);
-    reg_t key_reg_t7 = vtype1::permutexvar(rev_index1, key_zmm_m2);
-    reg_t key_reg_t8 = vtype1::permutexvar(rev_index1, key_zmm_m1);
-    index_type index_reg_t5 = vtype2::permutexvar(rev_index2, index_zmm_m4);
-    index_type index_reg_t6 = vtype2::permutexvar(rev_index2, index_zmm_m3);
-    index_type index_reg_t7 = vtype2::permutexvar(rev_index2, index_zmm_m2);
-    index_type index_reg_t8 = vtype2::permutexvar(rev_index2, index_zmm_m1);
-
-    COEX<vtype1, vtype2>(key_reg_t1, key_reg_t3, index_reg_t1, index_reg_t3);
-    COEX<vtype1, vtype2>(key_reg_t2, key_reg_t4, index_reg_t2, index_reg_t4);
-    COEX<vtype1, vtype2>(key_reg_t5, key_reg_t7, index_reg_t5, index_reg_t7);
-    COEX<vtype1, vtype2>(key_reg_t6, key_reg_t8, index_reg_t6, index_reg_t8);
-    COEX<vtype1, vtype2>(key_reg_t1, key_reg_t2, index_reg_t1, index_reg_t2);
-    COEX<vtype1, vtype2>(key_reg_t3, key_reg_t4, index_reg_t3, index_reg_t4);
-    COEX<vtype1, vtype2>(key_reg_t5, key_reg_t6, index_reg_t5, index_reg_t6);
-    COEX<vtype1, vtype2>(key_reg_t7, key_reg_t8, index_reg_t7, index_reg_t8);
-    key_zmm[0]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t1, index_reg_t1);
-    key_zmm[1]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t2, index_reg_t2);
-    key_zmm[2]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t3, index_reg_t3);
-    key_zmm[3]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t4, index_reg_t4);
-    key_zmm[4]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t5, index_reg_t5);
-    key_zmm[5]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t6, index_reg_t6);
-    key_zmm[6]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t7, index_reg_t7);
-    key_zmm[7]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t8, index_reg_t8);
-
-    index_zmm[0] = index_reg_t1;
-    index_zmm[1] = index_reg_t2;
-    index_zmm[2] = index_reg_t3;
-    index_zmm[3] = index_reg_t4;
-    index_zmm[4] = index_reg_t5;
-    index_zmm[5] = index_reg_t6;
-    index_zmm[6] = index_reg_t7;
-    index_zmm[7] = index_reg_t8;
+    constexpr int numlanes = keyType::numlanes;
+    if constexpr (numlanes == 8) {
+        key = sort_zmm_64bit<keyType, valueType>(key, value);
+    }
+    else {
+        static_assert(numlanes == -1, "should not reach here");
+        UNUSED(key);
+        UNUSED(value);
+    }
 }
 
-template <typename vtype1,
-          typename vtype2,
-          typename reg_t = typename vtype1::reg_t,
-          typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE void bitonic_merge_sixteen_zmm_64bit(reg_t *key_zmm,
-                                                          index_type *index_zmm)
+template <typename keyType, typename valueType, int numVecs>
+X86_SIMD_SORT_INLINE void bitonic_clean_n_vec(typename keyType::reg_t *keys,
+                                              typename valueType::reg_t *values)
 {
-    const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
-    const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
-    reg_t key_zmm8r = vtype1::permutexvar(rev_index1, key_zmm[8]);
-    reg_t key_zmm9r = vtype1::permutexvar(rev_index1, key_zmm[9]);
-    reg_t key_zmm10r = vtype1::permutexvar(rev_index1, key_zmm[10]);
-    reg_t key_zmm11r = vtype1::permutexvar(rev_index1, key_zmm[11]);
-    reg_t key_zmm12r = vtype1::permutexvar(rev_index1, key_zmm[12]);
-    reg_t key_zmm13r = vtype1::permutexvar(rev_index1, key_zmm[13]);
-    reg_t key_zmm14r = vtype1::permutexvar(rev_index1, key_zmm[14]);
-    reg_t key_zmm15r = vtype1::permutexvar(rev_index1, key_zmm[15]);
-
-    index_type index_zmm8r = vtype2::permutexvar(rev_index2, index_zmm[8]);
-    index_type index_zmm9r = vtype2::permutexvar(rev_index2, index_zmm[9]);
-    index_type index_zmm10r = vtype2::permutexvar(rev_index2, index_zmm[10]);
-    index_type index_zmm11r = vtype2::permutexvar(rev_index2, index_zmm[11]);
-    index_type index_zmm12r = vtype2::permutexvar(rev_index2, index_zmm[12]);
-    index_type index_zmm13r = vtype2::permutexvar(rev_index2, index_zmm[13]);
-    index_type index_zmm14r = vtype2::permutexvar(rev_index2, index_zmm[14]);
-    index_type index_zmm15r = vtype2::permutexvar(rev_index2, index_zmm[15]);
-
-    reg_t key_reg_t1 = vtype1::min(key_zmm[0], key_zmm15r);
-    reg_t key_reg_t2 = vtype1::min(key_zmm[1], key_zmm14r);
-    reg_t key_reg_t3 = vtype1::min(key_zmm[2], key_zmm13r);
-    reg_t key_reg_t4 = vtype1::min(key_zmm[3], key_zmm12r);
-    reg_t key_reg_t5 = vtype1::min(key_zmm[4], key_zmm11r);
-    reg_t key_reg_t6 = vtype1::min(key_zmm[5], key_zmm10r);
-    reg_t key_reg_t7 = vtype1::min(key_zmm[6], key_zmm9r);
-    reg_t key_reg_t8 = vtype1::min(key_zmm[7], key_zmm8r);
-
-    reg_t key_zmm_m1 = vtype1::max(key_zmm[0], key_zmm15r);
-    reg_t key_zmm_m2 = vtype1::max(key_zmm[1], key_zmm14r);
-    reg_t key_zmm_m3 = vtype1::max(key_zmm[2], key_zmm13r);
-    reg_t key_zmm_m4 = vtype1::max(key_zmm[3], key_zmm12r);
-    reg_t key_zmm_m5 = vtype1::max(key_zmm[4], key_zmm11r);
-    reg_t key_zmm_m6 = vtype1::max(key_zmm[5], key_zmm10r);
-    reg_t key_zmm_m7 = vtype1::max(key_zmm[6], key_zmm9r);
-    reg_t key_zmm_m8 = vtype1::max(key_zmm[7], key_zmm8r);
-
-    index_type index_reg_t1 = vtype2::mask_mov(
-            index_zmm15r, vtype1::eq(key_reg_t1, key_zmm[0]), index_zmm[0]);
-    index_type index_zmm_m1 = vtype2::mask_mov(
-            index_zmm[0], vtype1::eq(key_reg_t1, key_zmm[0]), index_zmm15r);
-    index_type index_reg_t2 = vtype2::mask_mov(
-            index_zmm14r, vtype1::eq(key_reg_t2, key_zmm[1]), index_zmm[1]);
-    index_type index_zmm_m2 = vtype2::mask_mov(
-            index_zmm[1], vtype1::eq(key_reg_t2, key_zmm[1]), index_zmm14r);
-    index_type index_reg_t3 = vtype2::mask_mov(
-            index_zmm13r, vtype1::eq(key_reg_t3, key_zmm[2]), index_zmm[2]);
-    index_type index_zmm_m3 = vtype2::mask_mov(
-            index_zmm[2], vtype1::eq(key_reg_t3, key_zmm[2]), index_zmm13r);
-    index_type index_reg_t4 = vtype2::mask_mov(
-            index_zmm12r, vtype1::eq(key_reg_t4, key_zmm[3]), index_zmm[3]);
-    index_type index_zmm_m4 = vtype2::mask_mov(
-            index_zmm[3], vtype1::eq(key_reg_t4, key_zmm[3]), index_zmm12r);
-
-    index_type index_reg_t5 = vtype2::mask_mov(
-            index_zmm11r, vtype1::eq(key_reg_t5, key_zmm[4]), index_zmm[4]);
-    index_type index_zmm_m5 = vtype2::mask_mov(
-            index_zmm[4], vtype1::eq(key_reg_t5, key_zmm[4]), index_zmm11r);
-    index_type index_reg_t6 = vtype2::mask_mov(
-            index_zmm10r, vtype1::eq(key_reg_t6, key_zmm[5]), index_zmm[5]);
-    index_type index_zmm_m6 = vtype2::mask_mov(
-            index_zmm[5], vtype1::eq(key_reg_t6, key_zmm[5]), index_zmm10r);
-    index_type index_reg_t7 = vtype2::mask_mov(
-            index_zmm9r, vtype1::eq(key_reg_t7, key_zmm[6]), index_zmm[6]);
-    index_type index_zmm_m7 = vtype2::mask_mov(
-            index_zmm[6], vtype1::eq(key_reg_t7, key_zmm[6]), index_zmm9r);
-    index_type index_reg_t8 = vtype2::mask_mov(
-            index_zmm8r, vtype1::eq(key_reg_t8, key_zmm[7]), index_zmm[7]);
-    index_type index_zmm_m8 = vtype2::mask_mov(
-            index_zmm[7], vtype1::eq(key_reg_t8, key_zmm[7]), index_zmm8r);
-
-    reg_t key_reg_t9 = vtype1::permutexvar(rev_index1, key_zmm_m8);
-    reg_t key_reg_t10 = vtype1::permutexvar(rev_index1, key_zmm_m7);
-    reg_t key_reg_t11 = vtype1::permutexvar(rev_index1, key_zmm_m6);
-    reg_t key_reg_t12 = vtype1::permutexvar(rev_index1, key_zmm_m5);
-    reg_t key_reg_t13 = vtype1::permutexvar(rev_index1, key_zmm_m4);
-    reg_t key_reg_t14 = vtype1::permutexvar(rev_index1, key_zmm_m3);
-    reg_t key_reg_t15 = vtype1::permutexvar(rev_index1, key_zmm_m2);
-    reg_t key_reg_t16 = vtype1::permutexvar(rev_index1, key_zmm_m1);
-    index_type index_reg_t9 = vtype2::permutexvar(rev_index2, index_zmm_m8);
-    index_type index_reg_t10 = vtype2::permutexvar(rev_index2, index_zmm_m7);
-    index_type index_reg_t11 = vtype2::permutexvar(rev_index2, index_zmm_m6);
-    index_type index_reg_t12 = vtype2::permutexvar(rev_index2, index_zmm_m5);
-    index_type index_reg_t13 = vtype2::permutexvar(rev_index2, index_zmm_m4);
-    index_type index_reg_t14 = vtype2::permutexvar(rev_index2, index_zmm_m3);
-    index_type index_reg_t15 = vtype2::permutexvar(rev_index2, index_zmm_m2);
-    index_type index_reg_t16 = vtype2::permutexvar(rev_index2, index_zmm_m1);
-
-    COEX<vtype1, vtype2>(key_reg_t1, key_reg_t5, index_reg_t1, index_reg_t5);
-    COEX<vtype1, vtype2>(key_reg_t2, key_reg_t6, index_reg_t2, index_reg_t6);
-    COEX<vtype1, vtype2>(key_reg_t3, key_reg_t7, index_reg_t3, index_reg_t7);
-    COEX<vtype1, vtype2>(key_reg_t4, key_reg_t8, index_reg_t4, index_reg_t8);
-    COEX<vtype1, vtype2>(key_reg_t9, key_reg_t13, index_reg_t9, index_reg_t13);
-    COEX<vtype1, vtype2>(
-            key_reg_t10, key_reg_t14, index_reg_t10, index_reg_t14);
-    COEX<vtype1, vtype2>(
-            key_reg_t11, key_reg_t15, index_reg_t11, index_reg_t15);
-    COEX<vtype1, vtype2>(
-            key_reg_t12, key_reg_t16, index_reg_t12, index_reg_t16);
-
-    COEX<vtype1, vtype2>(key_reg_t1, key_reg_t3, index_reg_t1, index_reg_t3);
-    COEX<vtype1, vtype2>(key_reg_t2, key_reg_t4, index_reg_t2, index_reg_t4);
-    COEX<vtype1, vtype2>(key_reg_t5, key_reg_t7, index_reg_t5, index_reg_t7);
-    COEX<vtype1, vtype2>(key_reg_t6, key_reg_t8, index_reg_t6, index_reg_t8);
-    COEX<vtype1, vtype2>(key_reg_t9, key_reg_t11, index_reg_t9, index_reg_t11);
-    COEX<vtype1, vtype2>(
-            key_reg_t10, key_reg_t12, index_reg_t10, index_reg_t12);
-    COEX<vtype1, vtype2>(
-            key_reg_t13, key_reg_t15, index_reg_t13, index_reg_t15);
-    COEX<vtype1, vtype2>(
-            key_reg_t14, key_reg_t16, index_reg_t14, index_reg_t16);
-
-    COEX<vtype1, vtype2>(key_reg_t1, key_reg_t2, index_reg_t1, index_reg_t2);
-    COEX<vtype1, vtype2>(key_reg_t3, key_reg_t4, index_reg_t3, index_reg_t4);
-    COEX<vtype1, vtype2>(key_reg_t5, key_reg_t6, index_reg_t5, index_reg_t6);
-    COEX<vtype1, vtype2>(key_reg_t7, key_reg_t8, index_reg_t7, index_reg_t8);
-    COEX<vtype1, vtype2>(key_reg_t9, key_reg_t10, index_reg_t9, index_reg_t10);
-    COEX<vtype1, vtype2>(
-            key_reg_t11, key_reg_t12, index_reg_t11, index_reg_t12);
-    COEX<vtype1, vtype2>(
-            key_reg_t13, key_reg_t14, index_reg_t13, index_reg_t14);
-    COEX<vtype1, vtype2>(
-            key_reg_t15, key_reg_t16, index_reg_t15, index_reg_t16);
-    //
-    key_zmm[0]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t1, index_reg_t1);
-    key_zmm[1]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t2, index_reg_t2);
-    key_zmm[2]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t3, index_reg_t3);
-    key_zmm[3]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t4, index_reg_t4);
-    key_zmm[4]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t5, index_reg_t5);
-    key_zmm[5]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t6, index_reg_t6);
-    key_zmm[6]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t7, index_reg_t7);
-    key_zmm[7]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t8, index_reg_t8);
-    key_zmm[8]
-            = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t9, index_reg_t9);
-    key_zmm[9] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t10,
-                                                         index_reg_t10);
-    key_zmm[10] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t11,
-                                                          index_reg_t11);
-    key_zmm[11] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t12,
-                                                          index_reg_t12);
-    key_zmm[12] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t13,
-                                                          index_reg_t13);
-    key_zmm[13] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t14,
-                                                          index_reg_t14);
-    key_zmm[14] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t15,
-                                                          index_reg_t15);
-    key_zmm[15] = bitonic_merge_zmm_64bit<vtype1, vtype2>(key_reg_t16,
-                                                          index_reg_t16);
-
-    index_zmm[0] = index_reg_t1;
-    index_zmm[1] = index_reg_t2;
-    index_zmm[2] = index_reg_t3;
-    index_zmm[3] = index_reg_t4;
-    index_zmm[4] = index_reg_t5;
-    index_zmm[5] = index_reg_t6;
-    index_zmm[6] = index_reg_t7;
-    index_zmm[7] = index_reg_t8;
-    index_zmm[8] = index_reg_t9;
-    index_zmm[9] = index_reg_t10;
-    index_zmm[10] = index_reg_t11;
-    index_zmm[11] = index_reg_t12;
-    index_zmm[12] = index_reg_t13;
-    index_zmm[13] = index_reg_t14;
-    index_zmm[14] = index_reg_t15;
-    index_zmm[15] = index_reg_t16;
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int num = numVecs / 2; num >= 2; num /= 2) {
+        X86_SIMD_SORT_UNROLL_LOOP(64)
+        for (int j = 0; j < numVecs; j += num) {
+            X86_SIMD_SORT_UNROLL_LOOP(64)
+            for (int i = 0; i < num / 2; i++) {
+                arrsize_t index1 = i + j;
+                arrsize_t index2 = i + j + num / 2;
+                COEX<keyType, valueType>(keys[index1],
+                                         keys[index2],
+                                         values[index1],
+                                         values[index2]);
+            }
+        }
+    }
 }
-#endif // AVX512_KEYVALUE_NETWORKS
+
+template <typename keyType, typename valueType, int numVecs>
+X86_SIMD_SORT_INLINE void bitonic_merge_n_vec(typename keyType::reg_t *keys,
+                                              typename valueType::reg_t *values)
+{
+    // Do the reverse part
+    if constexpr (numVecs == 2) {
+        keys[1] = keyType::reverse(keys[1]);
+        values[1] = valueType::reverse(values[1]);
+        COEX<keyType, valueType>(keys[0], keys[1], values[0], values[1]);
+        keys[1] = keyType::reverse(keys[1]);
+        values[1] = valueType::reverse(values[1]);
+    }
+    else if constexpr (numVecs > 2) {
+        // Reverse upper half
+        X86_SIMD_SORT_UNROLL_LOOP(64)
+        for (int i = 0; i < numVecs / 2; i++) {
+            keys[numVecs - i - 1] = keyType::reverse(keys[numVecs - i - 1]);
+            values[numVecs - i - 1]
+                    = valueType::reverse(values[numVecs - i - 1]);
+
+            COEX<keyType, valueType>(keys[i],
+                                     keys[numVecs - i - 1],
+                                     values[i],
+                                     values[numVecs - i - 1]);
+
+            keys[numVecs - i - 1] = keyType::reverse(keys[numVecs - i - 1]);
+            values[numVecs - i - 1]
+                    = valueType::reverse(values[numVecs - i - 1]);
+        }
+    }
+
+    // Call cleaner
+    bitonic_clean_n_vec<keyType, valueType, numVecs>(keys, values);
+
+    // Now do bitonic_merge
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = 0; i < numVecs; i++) {
+        bitonic_merge_dispatch<keyType, valueType>(keys[i], values[i]);
+    }
+}
+
+template <typename keyType, typename valueType, int numVecs, int numPer = 2>
+X86_SIMD_SORT_INLINE void
+bitonic_fullmerge_n_vec(typename keyType::reg_t *keys,
+                        typename valueType::reg_t *values)
+{
+    if constexpr (numPer > numVecs) {
+        UNUSED(keys);
+        UNUSED(values);
+        return;
+    }
+    else {
+        X86_SIMD_SORT_UNROLL_LOOP(64)
+        for (int i = 0; i < numVecs / numPer; i++) {
+            bitonic_merge_n_vec<keyType, valueType, numPer>(
+                    keys + i * numPer, values + i * numPer);
+        }
+        bitonic_fullmerge_n_vec<keyType, valueType, numVecs, numPer * 2>(
+                keys, values);
+    }
+}
+
+template <typename keyType, typename indexType, int numVecs>
+X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
+                                        typename indexType::type_t *indices,
+                                        int N)
+{
+    using kreg_t = typename keyType::reg_t;
+    using ireg_t = typename indexType::reg_t;
+
+    static_assert(numVecs > 0, "numVecs should be > 0");
+    if constexpr (numVecs > 1) {
+        if (N * 2 <= numVecs * keyType::numlanes) {
+            argsort_n_vec<keyType, indexType, numVecs / 2>(keys, indices, N);
+            return;
+        }
+    }
+
+    kreg_t keyVecs[numVecs];
+    ireg_t indexVecs[numVecs];
+
+    // Generate masks for loading and storing
+    typename keyType::opmask_t ioMasks[numVecs - numVecs / 2];
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
+        uint64_t num_to_read
+                = std::min((uint64_t)std::max(0, N - i * keyType::numlanes),
+                           (uint64_t)keyType::numlanes);
+        ioMasks[j] = keyType::get_partial_loadmask(num_to_read);
+    }
+
+    // Unmasked part of the load
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = 0; i < numVecs / 2; i++) {
+        indexVecs[i] = indexType::loadu(indices + i * indexType::numlanes);
+        keyVecs[i]
+                = keyType::i64gather(keys, indices + i * indexType::numlanes);
+    }
+    // Masked part of the load
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
+        indexVecs[i] = indexType::mask_loadu(indexType::zmm_max(),
+                                             ioMasks[j],
+                                             indices + i * indexType::numlanes);
+
+        keyVecs[i] = keyType::template mask_i64gather<sizeof(
+                typename keyType::type_t)>(
+                keyType::zmm_max(), ioMasks[j], indexVecs[i], keys);
+    }
+
+    // Sort each loaded vector
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = 0; i < numVecs; i++) {
+        sort_vec_dispatch<keyType, indexType>(keyVecs[i], indexVecs[i]);
+    }
+
+    // Run the full merger
+    bitonic_fullmerge_n_vec<keyType, indexType, numVecs>(keyVecs, indexVecs);
+
+    // Unmasked part of the store
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = 0; i < numVecs / 2; i++) {
+        indexType::storeu(indices + i * indexType::numlanes, indexVecs[i]);
+    }
+    // Masked part of the store
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
+        indexType::mask_storeu(
+                indices + i * indexType::numlanes, ioMasks[j], indexVecs[i]);
+    }
+}
+
+template <typename keyType, typename valueType, int numVecs>
+X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys,
+                                       typename valueType::type_t *values,
+                                       int N)
+{
+    using kreg_t = typename keyType::reg_t;
+    using vreg_t = typename valueType::reg_t;
+
+    static_assert(numVecs > 0, "numVecs should be > 0");
+    if constexpr (numVecs > 1) {
+        if (N * 2 <= numVecs * keyType::numlanes) {
+            kvsort_n_vec<keyType, valueType, numVecs / 2>(keys, values, N);
+            return;
+        }
+    }
+
+    kreg_t keyVecs[numVecs];
+    vreg_t valueVecs[numVecs];
+
+    // Generate masks for loading and storing
+    typename keyType::opmask_t ioMasks[numVecs - numVecs / 2];
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
+        uint64_t num_to_read
+                = std::min((uint64_t)std::max(0, N - i * keyType::numlanes),
+                           (uint64_t)keyType::numlanes);
+        ioMasks[j] = keyType::get_partial_loadmask(num_to_read);
+    }
+
+    // Unmasked part of the load
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = 0; i < numVecs / 2; i++) {
+        keyVecs[i] = keyType::loadu(keys + i * keyType::numlanes);
+        valueVecs[i] = valueType::loadu(values + i * valueType::numlanes);
+    }
+    // Masked part of the load
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
+        keyVecs[i] = keyType::mask_loadu(
+                keyType::zmm_max(), ioMasks[j], keys + i * keyType::numlanes);
+        valueVecs[i] = valueType::mask_loadu(valueType::zmm_max(),
+                                             ioMasks[j],
+                                             values + i * valueType::numlanes);
+    }
+
+    // Sort each loaded vector
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = 0; i < numVecs; i++) {
+        sort_vec_dispatch<keyType, valueType>(keyVecs[i], valueVecs[i]);
+    }
+
+    // Run the full merger
+    bitonic_fullmerge_n_vec<keyType, valueType, numVecs>(keyVecs, valueVecs);
+
+    // Unmasked part of the store
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = 0; i < numVecs / 2; i++) {
+        keyType::storeu(keys + i * keyType::numlanes, keyVecs[i]);
+        valueType::storeu(values + i * valueType::numlanes, valueVecs[i]);
+    }
+    // Masked part of the store
+    X86_SIMD_SORT_UNROLL_LOOP(64)
+    for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
+        keyType::mask_storeu(
+                keys + i * keyType::numlanes, ioMasks[j], keyVecs[i]);
+        valueType::mask_storeu(
+                values + i * valueType::numlanes, ioMasks[j], valueVecs[i]);
+    }
+}
+
+template <typename keyType, typename indexType, int maxN>
+X86_SIMD_SORT_INLINE void
+argsort_n(typename keyType::type_t *keys, arrsize_t *indices, int N)
+{
+    static_assert(keyType::numlanes == indexType::numlanes,
+                  "invalid pairing of value/index types");
+
+    constexpr int numVecs = maxN / keyType::numlanes;
+    constexpr bool isMultiple = (maxN == (keyType::numlanes * numVecs));
+    constexpr bool powerOfTwo = (numVecs != 0 && !(numVecs & (numVecs - 1)));
+    static_assert(powerOfTwo == true && isMultiple == true,
+                  "maxN must be keyType::numlanes times a power of 2");
+
+    argsort_n_vec<keyType, indexType, numVecs>(keys, indices, N);
+}
+
+template <typename keyType, typename valueType, int maxN>
+X86_SIMD_SORT_INLINE void kvsort_n(typename keyType::type_t *keys,
+                                   typename valueType::type_t *values,
+                                   int N)
+{
+    static_assert(keyType::numlanes == valueType::numlanes,
+                  "invalid pairing of key/value types");
+
+    constexpr int numVecs = maxN / keyType::numlanes;
+    constexpr bool isMultiple = (maxN == (keyType::numlanes * numVecs));
+    constexpr bool powerOfTwo = (numVecs != 0 && !(numVecs & (numVecs - 1)));
+    static_assert(powerOfTwo == true && isMultiple == true,
+                  "maxN must be keyType::numlanes times a power of 2");
+
+    kvsort_n_vec<keyType, valueType, numVecs>(keys, values, N);
+}
+
+#endif

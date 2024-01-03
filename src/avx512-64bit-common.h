@@ -8,6 +8,7 @@
 #define AVX512_64BIT_COMMON
 
 #include "xss-common-includes.h"
+#include "avx2-32bit-qsort.hpp"
 
 /*
  * Constants used in sorting 8 elements in a ZMM registers. Based on Bitonic
@@ -194,6 +195,19 @@ struct ymm_vector<float> {
     {
         _mm256_storeu_ps((float *)mem, x);
     }
+    static reg_t cast_from(__m256i v)
+    {
+        return _mm256_castsi256_ps(v);
+    }
+    static __m256i cast_to(reg_t v)
+    {
+        return _mm256_castps_si256(v);
+    }
+    static reg_t reverse(reg_t ymm)
+    {
+        const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
+        return permutexvar(rev_index, ymm);
+    }
 };
 template <>
 struct ymm_vector<uint32_t> {
@@ -354,6 +368,19 @@ struct ymm_vector<uint32_t> {
     {
         _mm256_storeu_si256((__m256i *)mem, x);
     }
+    static reg_t cast_from(__m256i v)
+    {
+        return v;
+    }
+    static __m256i cast_to(reg_t v)
+    {
+        return v;
+    }
+    static reg_t reverse(reg_t ymm)
+    {
+        const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
+        return permutexvar(rev_index, ymm);
+    }
 };
 template <>
 struct ymm_vector<int32_t> {
@@ -513,6 +540,19 @@ struct ymm_vector<int32_t> {
     static void storeu(void *mem, reg_t x)
     {
         _mm256_storeu_si256((__m256i *)mem, x);
+    }
+    static reg_t cast_from(__m256i v)
+    {
+        return v;
+    }
+    static __m256i cast_to(reg_t v)
+    {
+        return v;
+    }
+    static reg_t reverse(reg_t ymm)
+    {
+        const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
+        return permutexvar(rev_index, ymm);
     }
 };
 template <>

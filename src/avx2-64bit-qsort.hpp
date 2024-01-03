@@ -12,15 +12,6 @@
 #include "avx2-emu-funcs.hpp"
 
 /*
- * Constants used in sorting 8 elements in a ymm registers. Based on Bitonic
- * sorting network (see
- * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg)
- */
-// ymm                  3, 2, 1, 0
-#define NETWORK_64BIT_R 0, 1, 2, 3
-#define NETWORK_64BIT_1 1, 0, 3, 2
-
-/*
  * Assumes ymm is random and performs a full sorting network defined in
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
