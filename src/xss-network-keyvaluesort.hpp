@@ -4,17 +4,6 @@
 #include "avx512-64bit-qsort.hpp"
 #include "avx2-64bit-qsort.hpp"
 
-template <int num_lanes>
-struct index_64bit_vector_type;
-template <>
-struct index_64bit_vector_type<8> {
-    using type = zmm_vector<uint64_t>;
-};
-template <>
-struct index_64bit_vector_type<4> {
-    using type = avx2_vector<uint64_t>;
-};
-
 template <typename vtype1,
           typename vtype2,
           typename reg_t1 = typename vtype1::reg_t,
