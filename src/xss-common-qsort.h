@@ -87,8 +87,7 @@ X86_SIMD_SORT_INLINE bool array_has_nan(type_t *arr, arrsize_t size)
         else {
             in = vtype::loadu(arr + ii);
         }
-        auto nanmask = vtype::convert_mask_to_int(
-                vtype::template fpclass<0x01 | 0x80>(in));
+        opmask_t nanmask = vtype::template fpclass<0x01 | 0x80>(in);
         if (nanmask != 0x00) {
             found_nan = true;
             break;

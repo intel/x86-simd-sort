@@ -1,8 +1,6 @@
 // AVX2 specific routines:
 #include "avx2-32bit-qsort.hpp"
 #include "avx2-64bit-qsort.hpp"
-#include "avx2-32bit-half.hpp"
-#include "xss-common-argsort.h"
 #include "x86simdsort-internal.h"
 
 #define DEFINE_ALL_METHODS(type) \
@@ -20,17 +18,6 @@
     void partial_qsort(type *arr, size_t k, size_t arrsize, bool hasnan) \
     { \
         avx2_partial_qsort(arr, k, arrsize, hasnan); \
-    }\
-    template <> \
-    std::vector<size_t> argsort(type *arr, size_t arrsize, bool hasnan) \
-    { \
-        return avx2_argsort(arr, arrsize, hasnan); \
-    } \
-    template <> \
-    std::vector<size_t> argselect( \
-            type *arr, size_t k, size_t arrsize, bool hasnan) \
-    { \
-        return avx2_argselect(arr, k, arrsize, hasnan); \
     }
 
 namespace xss {
