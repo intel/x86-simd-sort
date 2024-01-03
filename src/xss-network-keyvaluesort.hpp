@@ -386,14 +386,13 @@ X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys,
     }
 }
 
-template <typename keyType, int maxN>
+template <typename keyType, typename indexType, int maxN>
 X86_SIMD_SORT_INLINE void
 argsort_n(typename keyType::type_t *keys, arrsize_t *indices, int N)
 {
-    using indexType = typename index_64bit_vector_type<keyType::numlanes>::type;
-
     static_assert(keyType::numlanes == indexType::numlanes,
                   "invalid pairing of value/index types");
+
     constexpr int numVecs = maxN / keyType::numlanes;
     constexpr bool isMultiple = (maxN == (keyType::numlanes * numVecs));
     constexpr bool powerOfTwo = (numVecs != 0 && !(numVecs & (numVecs - 1)));
