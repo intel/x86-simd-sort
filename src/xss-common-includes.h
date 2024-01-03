@@ -82,4 +82,9 @@ struct ymm_vector;
 template <typename type>
 struct avx2_vector;
 
+template <typename type>
+struct avx2_half_vector;
+
+enum class simd_type : int { AVX2, AVX512 };
+
 #endif // XSS_COMMON_INCLUDES

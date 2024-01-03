@@ -12,15 +12,6 @@
 #include "avx2-emu-funcs.hpp"
 
 /*
- * Constants used in sorting 8 elements in a ymm registers. Based on Bitonic
- * sorting network (see
- * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg)
- */
-// ymm                  3, 2, 1, 0
-#define NETWORK_64BIT_R 0, 1, 2, 3
-#define NETWORK_64BIT_1 1, 0, 3, 2
-
-/*
  * Assumes ymm is random and performs a full sorting network defined in
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
@@ -61,6 +52,7 @@ struct avx2_vector<int64_t> {
     static constexpr int network_sort_threshold = 64;
 #endif
     static constexpr int partition_unroll_factor = 8;
+    static constexpr simd_type vec_type = simd_type::AVX2;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
@@ -82,6 +74,10 @@ struct avx2_vector<int64_t> {
         return convert_int_to_avx2_mask_64bit(mask);
     }
     static ymmi_t seti(int v1, int v2, int v3, int v4)
+    {
+        return _mm256_set_epi64x(v1, v2, v3, v4);
+    }
+    static reg_t set(type_t v1, type_t v2, type_t v3, type_t v4)
     {
         return _mm256_set_epi64x(v1, v2, v3, v4);
     }
@@ -107,12 +103,12 @@ struct avx2_vector<int64_t> {
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i64gather_epi64(src, base, index, mask, scale);
+        return _mm256_mask_i64gather_epi64(
+                src, (const long long int *)base, index, mask, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m256i index, void const *base)
+    static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
-        return _mm256_i64gather_epi64((int64_t const *)base, index, scale);
+        return set(arr[ind[3]], arr[ind[2]], arr[ind[1]], arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -220,6 +216,7 @@ struct avx2_vector<uint64_t> {
     static constexpr int network_sort_threshold = 64;
 #endif
     static constexpr int partition_unroll_factor = 8;
+    static constexpr simd_type vec_type = simd_type::AVX2;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
@@ -244,17 +241,20 @@ struct avx2_vector<uint64_t> {
     {
         return _mm256_set_epi64x(v1, v2, v3, v4);
     }
+    static reg_t set(type_t v1, type_t v2, type_t v3, type_t v4)
+    {
+        return _mm256_set_epi64x(v1, v2, v3, v4);
+    }
     template <int scale>
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i64gather_epi64(src, base, index, mask, scale);
+        return _mm256_mask_i64gather_epi64(
+                src, (const long long int *)base, index, mask, scale);
     }
-    template <int scale>
-    static reg_t i64gather(__m256i index, void const *base)
+    static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
-        return _mm256_i64gather_epi64(
-                (long long int const *)base, index, scale);
+        return set(arr[ind[3]], arr[ind[2]], arr[ind[1]], arr[ind[0]]);
     }
     static opmask_t gt(reg_t x, reg_t y)
     {
@@ -378,6 +378,7 @@ struct avx2_vector<double> {
     static constexpr int network_sort_threshold = 64;
 #endif
     static constexpr int partition_unroll_factor = 8;
+    static constexpr simd_type vec_type = simd_type::AVX2;
 
     using swizzle_ops = avx2_64bit_swizzle_ops;
 
@@ -416,7 +417,10 @@ struct avx2_vector<double> {
     {
         return _mm256_set_epi64x(v1, v2, v3, v4);
     }
-
+    static reg_t set(type_t v1, type_t v2, type_t v3, type_t v4)
+    {
+        return _mm256_set_pd(v1, v2, v3, v4);
+    }
     static reg_t maskz_loadu(opmask_t mask, void const *mem)
     {
         return _mm256_maskload_pd((const double *)mem, mask);
@@ -433,14 +437,16 @@ struct avx2_vector<double> {
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i64gather_pd(
-                src, base, index, _mm256_castsi256_pd(mask), scale);
+        return _mm256_mask_i64gather_pd(src,
+                                        (const type_t *)base,
+                                        index,
+                                        _mm256_castsi256_pd(mask),
+                                        scale);
         ;
     }
-    template <int scale>
-    static reg_t i64gather(__m256i index, void const *base)
+    static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
-        return _mm256_i64gather_pd((double *)base, index, scale);
+        return set(arr[ind[3]], arr[ind[2]], arr[ind[1]], arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
