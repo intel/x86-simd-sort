@@ -397,7 +397,8 @@ X86_SIMD_SORT_INLINE void argsort_64bit_(type_t *arr,
      * Base case: use bitonic networks to sort arrays <= 64
      */
     if (right + 1 - left <= 256) {
-        argsort_n<vtype, indexType, 256>(arr, arg + left, (int32_t)(right + 1 - left));
+        argsort_n<vtype, indexType, 256>(
+                arr, arg + left, (int32_t)(right + 1 - left));
         return;
     }
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
@@ -406,9 +407,11 @@ X86_SIMD_SORT_INLINE void argsort_64bit_(type_t *arr,
     arrsize_t pivot_index = partition_avx512_unrolled<vtype, 4>(
             arr, arg, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest)
-        argsort_64bit_<vtype, indexType>(arr, arg, left, pivot_index - 1, max_iters - 1);
+        argsort_64bit_<vtype, indexType>(
+                arr, arg, left, pivot_index - 1, max_iters - 1);
     if (pivot != biggest)
-        argsort_64bit_<vtype, indexType>(arr, arg, pivot_index, right, max_iters - 1);
+        argsort_64bit_<vtype, indexType>(
+                arr, arg, pivot_index, right, max_iters - 1);
 }
 
 template <typename vtype, typename indexType, typename type_t>
@@ -430,7 +433,8 @@ X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
      * Base case: use bitonic networks to sort arrays <= 64
      */
     if (right + 1 - left <= 256) {
-        argsort_n<vtype, indexType, 256>(arr, arg + left, (int32_t)(right + 1 - left));
+        argsort_n<vtype, indexType, 256>(
+                arr, arg + left, (int32_t)(right + 1 - left));
         return;
     }
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
@@ -454,8 +458,12 @@ avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               ymm_vector<T>,
                                               zmm_vector<T>>::type;
-    using indextype = typename std::conditional<sizeof(arrsize_t) * vectype::numlanes == 32, ymm_vector<arrsize_t>, zmm_vector<arrsize_t>>::type;
-    
+    using indextype =
+            typename std::conditional<sizeof(arrsize_t) * vectype::numlanes
+                                              == 32,
+                                      ymm_vector<arrsize_t>,
+                                      zmm_vector<arrsize_t>>::type;
+
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
@@ -490,7 +498,11 @@ X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               ymm_vector<T>,
                                               zmm_vector<T>>::type;
-    using indextype = typename std::conditional<sizeof(arrsize_t) * vectype::numlanes == 32, ymm_vector<arrsize_t>, zmm_vector<arrsize_t>>::type;
+    using indextype =
+            typename std::conditional<sizeof(arrsize_t) * vectype::numlanes
+                                              == 32,
+                                      ymm_vector<arrsize_t>,
+                                      zmm_vector<arrsize_t>>::type;
 
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
