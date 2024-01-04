@@ -30,24 +30,13 @@ template <typename vtype, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE reg_t sort_ymm_32bit_half(reg_t ymm)
 {
     using swizzle = typename vtype::swizzle_ops;
-    
-    const typename vtype::opmask_t oxAA
-            = vtype::seti(-1, 0, -1, 0);
-    const typename vtype::opmask_t oxCC
-            = vtype::seti(-1, -1, 0, 0);
-            
-    ymm = cmp_merge<vtype>(
-            ymm,
-            swizzle::template swap_n<vtype, 2>(ymm),
-            oxAA);
-    ymm = cmp_merge<vtype>(
-            ymm,
-            vtype::reverse(ymm),
-            oxCC);
-    ymm = cmp_merge<vtype>(
-            ymm,
-            swizzle::template swap_n<vtype, 2>(ymm),
-            oxAA);
+
+    const typename vtype::opmask_t oxAA = vtype::seti(-1, 0, -1, 0);
+    const typename vtype::opmask_t oxCC = vtype::seti(-1, -1, 0, 0);
+
+    ymm = cmp_merge<vtype>(ymm, swizzle::template swap_n<vtype, 2>(ymm), oxAA);
+    ymm = cmp_merge<vtype>(ymm, vtype::reverse(ymm), oxCC);
+    ymm = cmp_merge<vtype>(ymm, swizzle::template swap_n<vtype, 2>(ymm), oxAA);
     return ymm;
 }
 
@@ -61,7 +50,7 @@ struct avx2_half_vector<int32_t> {
     using opmask_t = __m128i;
     static const uint8_t numlanes = 4;
     static constexpr simd_type vec_type = simd_type::AVX2;
-    
+
     using swizzle_ops = avx2_32bit_half_swizzle_ops;
 
     static type_t type_max()
@@ -81,13 +70,11 @@ struct avx2_half_vector<int32_t> {
         auto mask = ((0x1ull << num_to_read) - 0x1ull);
         return convert_int_to_avx2_mask_half(mask);
     }
-    static ymmi_t
-    seti(int v1, int v2, int v3, int v4)
+    static ymmi_t seti(int v1, int v2, int v3, int v4)
     {
         return _mm_set_epi32(v1, v2, v3, v4);
     }
-    static reg_t
-    set(int v1, int v2, int v3, int v4)
+    static reg_t set(int v1, int v2, int v3, int v4)
     {
         return _mm_set_epi32(v1, v2, v3, v4);
     }
@@ -99,8 +86,8 @@ struct avx2_half_vector<int32_t> {
     {
         opmask_t equal = eq(x, y);
         opmask_t greater = _mm_cmpgt_epi32(x, y);
-        return _mm_castps_si128(_mm_or_ps(_mm_castsi128_ps(equal),
-                                                _mm_castsi128_ps(greater)));
+        return _mm_castps_si128(
+                _mm_or_ps(_mm_castsi128_ps(equal), _mm_castsi128_ps(greater)));
     }
     static opmask_t eq(reg_t x, reg_t y)
     {
@@ -110,14 +97,12 @@ struct avx2_half_vector<int32_t> {
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i64gather_epi32(src, (const int *) base, index, mask, scale);
+        return _mm256_mask_i64gather_epi32(
+                src, (const int *)base, index, mask, scale);
     }
     static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
-        return set(arr[ind[3]],
-                   arr[ind[2]],
-                   arr[ind[1]],
-                   arr[ind[0]]);
+        return set(arr[ind[3]], arr[ind[2]], arr[ind[1]], arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -143,8 +128,8 @@ struct avx2_half_vector<int32_t> {
     static reg_t mask_mov(reg_t x, opmask_t mask, reg_t y)
     {
         return _mm_castps_si128(_mm_blendv_ps(_mm_castsi128_ps(x),
-                                                    _mm_castsi128_ps(y),
-                                                    _mm_castsi128_ps(mask)));
+                                              _mm_castsi128_ps(y),
+                                              _mm_castsi128_ps(mask)));
     }
     static void mask_storeu(void *mem, opmask_t mask, reg_t x)
     {
@@ -217,7 +202,7 @@ struct avx2_half_vector<uint32_t> {
     using opmask_t = __m128i;
     static const uint8_t numlanes = 4;
     static constexpr simd_type vec_type = simd_type::AVX2;
-    
+
     using swizzle_ops = avx2_32bit_half_swizzle_ops;
 
     static type_t type_max()
@@ -237,13 +222,11 @@ struct avx2_half_vector<uint32_t> {
         auto mask = ((0x1ull << num_to_read) - 0x1ull);
         return convert_int_to_avx2_mask_half(mask);
     }
-    static ymmi_t
-    seti(int v1, int v2, int v3, int v4)
+    static ymmi_t seti(int v1, int v2, int v3, int v4)
     {
         return _mm_set_epi32(v1, v2, v3, v4);
     }
-    static reg_t
-    set(int v1, int v2, int v3, int v4)
+    static reg_t set(int v1, int v2, int v3, int v4)
     {
         return _mm_set_epi32(v1, v2, v3, v4);
     }
@@ -251,14 +234,12 @@ struct avx2_half_vector<uint32_t> {
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i64gather_epi32(src, (const int *) base, index, mask, scale);
+        return _mm256_mask_i64gather_epi32(
+                src, (const int *)base, index, mask, scale);
     }
     static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
-        return set(arr[ind[3]],
-                   arr[ind[2]],
-                   arr[ind[1]],
-                   arr[ind[0]]);
+        return set(arr[ind[3]], arr[ind[2]], arr[ind[1]], arr[ind[0]]);
     }
     static opmask_t ge(reg_t x, reg_t y)
     {
@@ -289,8 +270,8 @@ struct avx2_half_vector<uint32_t> {
     static reg_t mask_mov(reg_t x, opmask_t mask, reg_t y)
     {
         return _mm_castps_si128(_mm_blendv_ps(_mm_castsi128_ps(x),
-                                                    _mm_castsi128_ps(y),
-                                                    _mm_castsi128_ps(mask)));
+                                              _mm_castsi128_ps(y),
+                                              _mm_castsi128_ps(mask)));
     }
     static void mask_storeu(void *mem, opmask_t mask, reg_t x)
     {
@@ -363,7 +344,7 @@ struct avx2_half_vector<float> {
     using opmask_t = __m128i;
     static const uint8_t numlanes = 4;
     static constexpr simd_type vec_type = simd_type::AVX2;
-    
+
     using swizzle_ops = avx2_32bit_half_swizzle_ops;
 
     static type_t type_max()
@@ -379,13 +360,11 @@ struct avx2_half_vector<float> {
         return _mm_set1_ps(type_max());
     }
 
-    static ymmi_t
-    seti(int v1, int v2, int v3, int v4)
+    static ymmi_t seti(int v1, int v2, int v3, int v4)
     {
         return _mm_set_epi32(v1, v2, v3, v4);
     }
-    static reg_t
-    set(float v1, float v2, float v3, float v4)
+    static reg_t set(float v1, float v2, float v3, float v4)
     {
         return _mm_set_ps(v1, v2, v3, v4);
     }
@@ -424,14 +403,12 @@ struct avx2_half_vector<float> {
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i64gather_ps(src, (const float*) base, index, _mm_castsi128_ps(mask), scale);
+        return _mm256_mask_i64gather_ps(
+                src, (const float *)base, index, _mm_castsi128_ps(mask), scale);
     }
     static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
-        return set(arr[ind[3]],
-                   arr[ind[2]],
-                   arr[ind[1]],
-                   arr[ind[0]]);
+        return set(arr[ind[3]], arr[ind[2]], arr[ind[1]], arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -490,8 +467,7 @@ struct avx2_half_vector<float> {
     template <uint8_t mask>
     static reg_t shuffle(reg_t ymm)
     {
-        return _mm_castsi128_ps(
-                _mm_shuffle_epi32(_mm_castps_si128(ymm), mask));
+        return _mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(ymm), mask));
     }
     static void storeu(void *mem, reg_t x)
     {
@@ -566,9 +542,7 @@ struct avx2_32bit_half_swizzle_ops {
         __m128i v1 = vtype::cast_to(reg);
         __m128i v2 = vtype::cast_to(other);
 
-        if constexpr (scale == 2) {
-            v1 = _mm_blend_epi32(v1, v2, 0b0101);
-        }
+        if constexpr (scale == 2) { v1 = _mm_blend_epi32(v1, v2, 0b0101); }
         else if constexpr (scale == 4) {
             v1 = _mm_blend_epi32(v1, v2, 0b0011);
         }

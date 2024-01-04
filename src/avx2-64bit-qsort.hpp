@@ -77,10 +77,7 @@ struct avx2_vector<int64_t> {
     {
         return _mm256_set_epi64x(v1, v2, v3, v4);
     }
-    static reg_t set(type_t v1,
-                     type_t v2,
-                     type_t v3,
-                     type_t v4)
+    static reg_t set(type_t v1, type_t v2, type_t v3, type_t v4)
     {
         return _mm256_set_epi64x(v1, v2, v3, v4);
     }
@@ -106,14 +103,12 @@ struct avx2_vector<int64_t> {
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i64gather_epi64(src, (const long long int *) base, index, mask, scale);
+        return _mm256_mask_i64gather_epi64(
+                src, (const long long int *)base, index, mask, scale);
     }
     static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
-        return set(arr[ind[3]],
-                   arr[ind[2]],
-                   arr[ind[1]],
-                   arr[ind[0]]);
+        return set(arr[ind[3]], arr[ind[2]], arr[ind[1]], arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {
@@ -246,10 +241,7 @@ struct avx2_vector<uint64_t> {
     {
         return _mm256_set_epi64x(v1, v2, v3, v4);
     }
-    static reg_t set(type_t v1,
-                     type_t v2,
-                     type_t v3,
-                     type_t v4)
+    static reg_t set(type_t v1, type_t v2, type_t v3, type_t v4)
     {
         return _mm256_set_epi64x(v1, v2, v3, v4);
     }
@@ -257,14 +249,12 @@ struct avx2_vector<uint64_t> {
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i64gather_epi64(src, (const long long int *) base, index, mask, scale);
+        return _mm256_mask_i64gather_epi64(
+                src, (const long long int *)base, index, mask, scale);
     }
     static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
-        return set(arr[ind[3]],
-                   arr[ind[2]],
-                   arr[ind[1]],
-                   arr[ind[0]]);
+        return set(arr[ind[3]], arr[ind[2]], arr[ind[1]], arr[ind[0]]);
     }
     static opmask_t gt(reg_t x, reg_t y)
     {
@@ -427,10 +417,7 @@ struct avx2_vector<double> {
     {
         return _mm256_set_epi64x(v1, v2, v3, v4);
     }
-    static reg_t set(type_t v1,
-                     type_t v2,
-                     type_t v3,
-                     type_t v4)
+    static reg_t set(type_t v1, type_t v2, type_t v3, type_t v4)
     {
         return _mm256_set_pd(v1, v2, v3, v4);
     }
@@ -450,16 +437,16 @@ struct avx2_vector<double> {
     static reg_t
     mask_i64gather(reg_t src, opmask_t mask, __m256i index, void const *base)
     {
-        return _mm256_mask_i64gather_pd(
-                src, (const type_t *) base, index, _mm256_castsi256_pd(mask), scale);
+        return _mm256_mask_i64gather_pd(src,
+                                        (const type_t *)base,
+                                        index,
+                                        _mm256_castsi256_pd(mask),
+                                        scale);
         ;
     }
     static reg_t i64gather(type_t *arr, arrsize_t *ind)
     {
-        return set(arr[ind[3]],
-                   arr[ind[2]],
-                   arr[ind[1]],
-                   arr[ind[0]]);
+        return set(arr[ind[3]], arr[ind[2]], arr[ind[1]], arr[ind[0]]);
     }
     static reg_t loadu(void const *mem)
     {

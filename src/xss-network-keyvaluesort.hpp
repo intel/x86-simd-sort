@@ -20,17 +20,18 @@ struct index_64bit_vector_type<4> {
 };
 
 template <typename keyType, typename valueType>
-typename valueType::opmask_t extend_mask(typename keyType::opmask_t mask){
-    if constexpr (keyType::vec_type == simd_type::AVX512){
-        return mask;
-    }else if constexpr (keyType::vec_type == simd_type::AVX2){
-        if constexpr (sizeof(mask) == 32){
-            return mask;
-        }else{
+typename valueType::opmask_t extend_mask(typename keyType::opmask_t mask)
+{
+    if constexpr (keyType::vec_type == simd_type::AVX512) { return mask; }
+    else if constexpr (keyType::vec_type == simd_type::AVX2) {
+        if constexpr (sizeof(mask) == 32) { return mask; }
+        else {
             return _mm256_cvtepi32_epi64(mask);
         }
-    }else{
-        static_assert(keyType::vec_type == simd_type::AVX512, "Should not reach here"); 
+    }
+    else {
+        static_assert(keyType::vec_type == simd_type::AVX512,
+                      "Should not reach here");
     }
 }
 >>>>>>> d1e90bb (Support for AVX2 argsort/argselect)
@@ -44,13 +45,11 @@ COEX(reg_t1 &key1, reg_t1 &key2, reg_t2 &index1, reg_t2 &index2)
 {
     reg_t1 key_t1 = vtype1::min(key1, key2);
     reg_t1 key_t2 = vtype1::max(key1, key2);
-    
+
     auto eqMask = extend_mask<vtype1, vtype2>(vtype1::eq(key_t1, key1));
 
-    reg_t2 index_t1
-            = vtype2::mask_mov(index2, eqMask, index1);
-    reg_t2 index_t2
-            = vtype2::mask_mov(index1, eqMask, index2);
+    reg_t2 index_t1 = vtype2::mask_mov(index2, eqMask, index1);
+    reg_t2 index_t2 = vtype2::mask_mov(index1, eqMask, index2);
 
     key1 = key_t1;
     key2 = key_t2;
@@ -70,7 +69,10 @@ X86_SIMD_SORT_INLINE reg_t1 cmp_merge(reg_t1 in1,
                                       opmask_t mask)
 {
     reg_t1 tmp_keys = cmp_merge<vtype1>(in1, in2, mask);
-    indexes1 = vtype2::mask_mov(indexes2, extend_mask<vtype1, vtype2>(vtype1::eq(tmp_keys, in1)), indexes1);
+    indexes1 = vtype2::mask_mov(
+            indexes2,
+            extend_mask<vtype1, vtype2>(vtype1::eq(tmp_keys, in1)),
+            indexes1);
     return tmp_keys; // 0 -> min, 1 -> max
 }
 
@@ -245,24 +247,21 @@ X86_SIMD_SORT_INLINE reg_t sort_ymm_64bit(reg_t key_zmm, index_type &index_zmm)
 {
     using key_swizzle = typename vtype1::swizzle_ops;
     using index_swizzle = typename vtype2::swizzle_ops;
-    
-    const typename vtype1::opmask_t oxAA
-            = vtype1::seti(-1, 0, -1, 0);
-    const typename vtype1::opmask_t oxCC
-            = vtype1::seti(-1, -1, 0, 0);
-            
+
+    const typename vtype1::opmask_t oxAA = vtype1::seti(-1, 0, -1, 0);
+    const typename vtype1::opmask_t oxCC = vtype1::seti(-1, -1, 0, 0);
+
     key_zmm = cmp_merge<vtype1, vtype2>(
             key_zmm,
             key_swizzle::template swap_n<vtype1, 2>(key_zmm),
             index_zmm,
             index_swizzle::template swap_n<vtype2, 2>(index_zmm),
             oxAA);
-    key_zmm = cmp_merge<vtype1, vtype2>(
-            key_zmm,
-            vtype1::reverse(key_zmm),
-            index_zmm,
-            vtype2::reverse(index_zmm),
-            oxCC);
+    key_zmm = cmp_merge<vtype1, vtype2>(key_zmm,
+                                        vtype1::reverse(key_zmm),
+                                        index_zmm,
+                                        vtype2::reverse(index_zmm),
+                                        oxCC);
     key_zmm = cmp_merge<vtype1, vtype2>(
             key_zmm,
             key_swizzle::template swap_n<vtype1, 2>(key_zmm),
@@ -314,12 +313,10 @@ X86_SIMD_SORT_INLINE reg_t bitonic_merge_ymm_64bit(reg_t key_zmm,
 {
     using key_swizzle = typename vtype1::swizzle_ops;
     using index_swizzle = typename vtype2::swizzle_ops;
-    
-    const typename vtype1::opmask_t oxAA
-            = vtype1::seti(-1, 0, -1, 0);
-    const typename vtype1::opmask_t oxCC
-            = vtype1::seti(-1, -1, 0, 0);
-            
+
+    const typename vtype1::opmask_t oxAA = vtype1::seti(-1, 0, -1, 0);
+    const typename vtype1::opmask_t oxCC = vtype1::seti(-1, -1, 0, 0);
+
     // 2) half_cleaner[4]
     key_zmm = cmp_merge<vtype1, vtype2>(
             key_zmm,
@@ -351,7 +348,8 @@ bitonic_merge_dispatch(typename keyType::reg_t &key,
         key = bitonic_merge_reg_16lanes<keyType, valueType>(key, value);
 =======
         key = bitonic_merge_zmm_64bit<keyType, valueType>(key, value);
-    }else if constexpr (numlanes == 4){
+    }
+    else if constexpr (numlanes == 4) {
         key = bitonic_merge_ymm_64bit<keyType, valueType>(key, value);
 >>>>>>> d1e90bb (Support for AVX2 argsort/argselect)
     }
@@ -375,7 +373,8 @@ X86_SIMD_SORT_INLINE void sort_vec_dispatch(typename keyType::reg_t &key,
         key = sort_reg_16lanes<keyType, valueType>(key, value);
 =======
         key = sort_zmm_64bit<keyType, valueType>(key, value);
-    }else if constexpr (numlanes == 4){
+    }
+    else if constexpr (numlanes == 4) {
         key = sort_ymm_64bit<keyType, valueType>(key, value);
 >>>>>>> d1e90bb (Support for AVX2 argsort/argselect)
     }
@@ -487,7 +486,7 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
 
     kreg_t keyVecs[numVecs];
     ireg_t indexVecs[numVecs];
-    
+
     // Generate masks for loading and storing
     typename keyType::opmask_t ioMasks[numVecs - numVecs / 2];
     X86_SIMD_SORT_UNROLL_LOOP(64)
@@ -508,13 +507,16 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
     // Masked part of the load
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2; i < numVecs; i++) {
-        indexVecs[i] = indexType::mask_loadu(indexType::zmm_max(),
-                                             extend_mask<keyType, indexType>(ioMasks[i - numVecs/2]),
-                                             indices + i * indexType::numlanes);
+        indexVecs[i] = indexType::mask_loadu(
+                indexType::zmm_max(),
+                extend_mask<keyType, indexType>(ioMasks[i - numVecs / 2]),
+                indices + i * indexType::numlanes);
 
         keyVecs[i] = keyType::template mask_i64gather<sizeof(
-                typename keyType::type_t)>(
-                keyType::zmm_max(), ioMasks[i - numVecs / 2], indexVecs[i], keys);
+                typename keyType::type_t)>(keyType::zmm_max(),
+                                           ioMasks[i - numVecs / 2],
+                                           indexVecs[i],
+                                           keys);
     }
 
     // Sort each loaded vector
@@ -535,7 +537,9 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         indexType::mask_storeu(
-                indices + i * indexType::numlanes, extend_mask<keyType, indexType>(ioMasks[i - numVecs/2]), indexVecs[i]);
+                indices + i * indexType::numlanes,
+                extend_mask<keyType, indexType>(ioMasks[i - numVecs / 2]),
+                indexVecs[i]);
     }
 }
 

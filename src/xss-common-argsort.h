@@ -614,7 +614,6 @@ avx2_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
                                       avx2_half_vector<arrsize_t>,
                                       avx2_vector<arrsize_t>>::type;
 
-
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
