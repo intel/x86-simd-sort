@@ -44,10 +44,10 @@ build_branch $basebranch
 contender=$(realpath ${branch}/builddir/benchexe)
 baseline=$(realpath ${basebranch}/builddir/benchexe)
 
-if [ -z "$2" ]; then
+if [ -z "$3" ]; then
     echo "Comparing all benchmarks .."
-    $compare benchmarks $baseline $contender
+    $compare benchmarks $baseline $contender --benchmark_repetitions=$2
 else
     echo "Comparing benchmark $2 .."
-    $compare benchmarksfiltered $baseline $2 $contender $2
+    $compare benchmarksfiltered $baseline $2 $contender $2 --benchmark_repetitions=$3
 fi
