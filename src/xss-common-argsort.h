@@ -482,16 +482,13 @@ X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
     }
 }
 
-template <typename vtype, typename type_t>
+template <typename vtype, typename argtype, typename type_t>
 X86_SIMD_SORT_INLINE void argsort_64bit_(type_t *arr,
                                          arrsize_t *arg,
                                          arrsize_t left,
                                          arrsize_t right,
                                          arrsize_t max_iters)
 {
-    using argtype = typename std::conditional<vtype::numlanes == 4,
-                                              avx2_vector<arrsize_t>,
-                                              zmm_vector<arrsize_t>>::type;
     /*
      * Resort to std::sort if quicksort isnt making any progress
      */
@@ -503,7 +500,8 @@ X86_SIMD_SORT_INLINE void argsort_64bit_(type_t *arr,
      * Base case: use bitonic networks to sort arrays <= 64
      */
     if (right + 1 - left <= 256) {
-        argsort_n<vtype, 256>(arr, arg + left, (int32_t)(right + 1 - left));
+        argsort_n<vtype, argtype, 256>(
+                arr, arg + left, (int32_t)(right + 1 - left));
         return;
     }
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
@@ -512,12 +510,14 @@ X86_SIMD_SORT_INLINE void argsort_64bit_(type_t *arr,
     arrsize_t pivot_index = partition_avx512_unrolled<vtype, argtype, 4>(
             arr, arg, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest)
-        argsort_64bit_<vtype>(arr, arg, left, pivot_index - 1, max_iters - 1);
+        argsort_64bit_<vtype, argtype>(
+                arr, arg, left, pivot_index - 1, max_iters - 1);
     if (pivot != biggest)
-        argsort_64bit_<vtype>(arr, arg, pivot_index, right, max_iters - 1);
+        argsort_64bit_<vtype, argtype>(
+                arr, arg, pivot_index, right, max_iters - 1);
 }
 
-template <typename vtype, typename type_t>
+template <typename vtype, typename argtype, typename type_t>
 X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
                                            arrsize_t *arg,
                                            arrsize_t pos,
@@ -525,9 +525,6 @@ X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
                                            arrsize_t right,
                                            arrsize_t max_iters)
 {
-    using argtype = typename std::conditional<vtype::numlanes == 4,
-                                              avx2_vector<arrsize_t>,
-                                              zmm_vector<arrsize_t>>::type;
     /*
      * Resort to std::sort if quicksort isnt making any progress
      */
@@ -539,7 +536,8 @@ X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
      * Base case: use bitonic networks to sort arrays <= 64
      */
     if (right + 1 - left <= 256) {
-        argsort_n<vtype, 256>(arr, arg + left, (int32_t)(right + 1 - left));
+        argsort_n<vtype, argtype, 256>(
+                arr, arg + left, (int32_t)(right + 1 - left));
         return;
     }
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
@@ -548,10 +546,10 @@ X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
     arrsize_t pivot_index = partition_avx512_unrolled<vtype, argtype, 4>(
             arr, arg, left, right + 1, pivot, &smallest, &biggest);
     if ((pivot != smallest) && (pos < pivot_index))
-        argselect_64bit_<vtype>(
+        argselect_64bit_<vtype, argtype>(
                 arr, arg, pos, left, pivot_index - 1, max_iters - 1);
     else if ((pivot != biggest) && (pos >= pivot_index))
-        argselect_64bit_<vtype>(
+        argselect_64bit_<vtype, argtype>(
                 arr, arg, pos, pivot_index, right, max_iters - 1);
 }
 
@@ -560,9 +558,25 @@ template <typename T>
 X86_SIMD_SORT_INLINE void
 avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
 {
+    /* TODO optimization: on 32-bit, use zmm_vector for 32-bit dtype */
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               ymm_vector<T>,
                                               zmm_vector<T>>::type;
+
+/* Workaround for NumPy failed build on macOS x86_64: implicit instantiation of
+ * undefined template 'zmm_vector<unsigned long>'*/
+#ifdef __APPLE__
+    using argtype =
+            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                      ymm_vector<uint32_t>,
+                                      zmm_vector<uint64_t>>::type;
+#else
+    using argtype =
+            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                      ymm_vector<arrsize_t>,
+                                      zmm_vector<arrsize_t>>::type;
+#endif
+
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
@@ -571,7 +585,7 @@ avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
             }
         }
         UNUSED(hasnan);
-        argsort_64bit_<vectype>(
+        argsort_64bit_<vectype, argtype>(
                 arr, arg, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
 }
@@ -594,6 +608,13 @@ avx2_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               avx2_half_vector<T>,
                                               avx2_vector<T>>::type;
+
+    using argtype =
+            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                      avx2_half_vector<arrsize_t>,
+                                      avx2_vector<arrsize_t>>::type;
+
+
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
@@ -602,7 +623,7 @@ avx2_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
             }
         }
         UNUSED(hasnan);
-        argsort_64bit_<vectype>(
+        argsort_64bit_<vectype, argtype>(
                 arr, arg, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
 }
@@ -625,9 +646,24 @@ X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
                                            arrsize_t arrsize,
                                            bool hasnan = false)
 {
+    /* TODO optimization: on 32-bit, use zmm_vector for 32-bit dtype */
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               ymm_vector<T>,
                                               zmm_vector<T>>::type;
+
+/* Workaround for NumPy failed build on macOS x86_64: implicit instantiation of
+ * undefined template 'zmm_vector<unsigned long>'*/
+#ifdef __APPLE__
+    using argtype =
+            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                      ymm_vector<uint32_t>,
+                                      zmm_vector<uint64_t>>::type;
+#else
+    using argtype =
+            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                      ymm_vector<arrsize_t>,
+                                      zmm_vector<arrsize_t>>::type;
+#endif
 
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
@@ -637,7 +673,7 @@ X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
             }
         }
         UNUSED(hasnan);
-        argselect_64bit_<vectype>(
+        argselect_64bit_<vectype, argtype>(
                 arr, arg, k, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
 }
@@ -664,6 +700,11 @@ X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
                                               avx2_half_vector<T>,
                                               avx2_vector<T>>::type;
 
+    using argtype =
+            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                      avx2_half_vector<arrsize_t>,
+                                      avx2_vector<arrsize_t>>::type;
+
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
@@ -672,7 +713,7 @@ X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
             }
         }
         UNUSED(hasnan);
-        argselect_64bit_<vectype>(
+        argselect_64bit_<vectype, argtype>(
                 arr, arg, k, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
 }
