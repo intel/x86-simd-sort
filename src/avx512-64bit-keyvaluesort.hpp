@@ -267,12 +267,17 @@ template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
 avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
 {
-    using keytype = typename std::conditional<sizeof(T1) == sizeof(int32_t),
-                                              ymm_vector<T1>,
-                                              zmm_vector<T1>>::type;
-    using valtype = typename std::conditional<sizeof(T2) == sizeof(int32_t),
-                                              ymm_vector<T2>,
-                                              zmm_vector<T2>>::type;
+    using keytype =
+            typename std::conditional<sizeof(T1) != sizeof(T2)
+                                              && sizeof(T1) == sizeof(int32_t),
+                                      ymm_vector<T1>,
+                                      zmm_vector<T1>>::type;
+    using valtype =
+            typename std::conditional<sizeof(T1) != sizeof(T2)
+                                              && sizeof(T2) == sizeof(int32_t),
+                                      ymm_vector<T2>,
+                                      zmm_vector<T2>>::type;
+
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T1>) {
             arrsize_t nan_count = 0;

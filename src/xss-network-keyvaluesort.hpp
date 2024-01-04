@@ -45,7 +45,112 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
           typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t key_zmm, index_type &index_zmm)
+X86_SIMD_SORT_INLINE reg_t sort_reg_16lanes(reg_t key_zmm,
+                                            index_type &index_zmm)
+{
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(key_zmm),
+            index_zmm,
+            vtype2::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(index_zmm),
+            0xAAAA);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::template shuffle<SHUFFLE_MASK(0, 1, 2, 3)>(key_zmm),
+            index_zmm,
+            vtype2::template shuffle<SHUFFLE_MASK(0, 1, 2, 3)>(index_zmm),
+            0xCCCC);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(key_zmm),
+            index_zmm,
+            vtype2::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(index_zmm),
+            0xAAAA);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::permutexvar(vtype1::seti(NETWORK_32BIT_3), key_zmm),
+            index_zmm,
+            vtype2::permutexvar(vtype2::seti(NETWORK_32BIT_3), index_zmm),
+            0xF0F0);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(key_zmm),
+            index_zmm,
+            vtype2::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(index_zmm),
+            0xCCCC);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(key_zmm),
+            index_zmm,
+            vtype2::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(index_zmm),
+            0xAAAA);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::permutexvar(vtype1::seti(NETWORK_32BIT_5), key_zmm),
+            index_zmm,
+            vtype2::permutexvar(vtype2::seti(NETWORK_32BIT_5), index_zmm),
+            0xFF00);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::permutexvar(vtype1::seti(NETWORK_32BIT_6), key_zmm),
+            index_zmm,
+            vtype2::permutexvar(vtype2::seti(NETWORK_32BIT_6), index_zmm),
+            0xF0F0);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(key_zmm),
+            index_zmm,
+            vtype2::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(index_zmm),
+            0xCCCC);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(key_zmm),
+            index_zmm,
+            vtype2::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(index_zmm),
+            0xAAAA);
+    return key_zmm;
+}
+
+// Assumes zmm is bitonic and performs a recursive half cleaner
+template <typename vtype1,
+          typename vtype2,
+          typename reg_t = typename vtype1::reg_t,
+          typename index_type = typename vtype2::reg_t>
+X86_SIMD_SORT_INLINE reg_t bitonic_merge_reg_16lanes(reg_t key_zmm,
+                                                     index_type &index_zmm)
+{
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::permutexvar(vtype1::seti(NETWORK_32BIT_7), key_zmm),
+            index_zmm,
+            vtype2::permutexvar(vtype2::seti(NETWORK_32BIT_7), index_zmm),
+            0xFF00);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::permutexvar(vtype1::seti(NETWORK_32BIT_6), key_zmm),
+            index_zmm,
+            vtype2::permutexvar(vtype2::seti(NETWORK_32BIT_6), index_zmm),
+            0xF0F0);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(key_zmm),
+            index_zmm,
+            vtype2::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(index_zmm),
+            0xCCCC);
+    key_zmm = cmp_merge<vtype1, vtype2>(
+            key_zmm,
+            vtype1::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(key_zmm),
+            index_zmm,
+            vtype2::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(index_zmm),
+            0xAAAA);
+    return key_zmm;
+}
+
+template <typename vtype1,
+          typename vtype2,
+          typename reg_t = typename vtype1::reg_t,
+          typename index_type = typename vtype2::reg_t>
+X86_SIMD_SORT_INLINE reg_t sort_reg_8lanes(reg_t key_zmm, index_type &index_zmm)
 {
     const typename vtype1::regi_t rev_index1 = vtype1::seti(NETWORK_64BIT_2);
     const typename vtype2::regi_t rev_index2 = vtype2::seti(NETWORK_64BIT_2);
@@ -93,8 +198,8 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
           typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE reg_t bitonic_merge_zmm_64bit(reg_t key_zmm,
-                                                   index_type &index_zmm)
+X86_SIMD_SORT_INLINE reg_t bitonic_merge_reg_8lanes(reg_t key_zmm,
+                                                    index_type &index_zmm)
 {
 
     // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
@@ -128,10 +233,13 @@ bitonic_merge_dispatch(typename keyType::reg_t &key,
 {
     constexpr int numlanes = keyType::numlanes;
     if constexpr (numlanes == 8) {
-        key = bitonic_merge_zmm_64bit<keyType, valueType>(key, value);
+        key = bitonic_merge_reg_8lanes<keyType, valueType>(key, value);
+    }
+    else if constexpr (numlanes == 16) {
+        key = bitonic_merge_reg_16lanes<keyType, valueType>(key, value);
     }
     else {
-        static_assert(numlanes == -1, "should not reach here");
+        static_assert(numlanes == -1, "No implementation");
         UNUSED(key);
         UNUSED(value);
     }
@@ -143,10 +251,13 @@ X86_SIMD_SORT_INLINE void sort_vec_dispatch(typename keyType::reg_t &key,
 {
     constexpr int numlanes = keyType::numlanes;
     if constexpr (numlanes == 8) {
-        key = sort_zmm_64bit<keyType, valueType>(key, value);
+        key = sort_reg_8lanes<keyType, valueType>(key, value);
+    }
+    else if constexpr (numlanes == 16) {
+        key = sort_reg_16lanes<keyType, valueType>(key, value);
     }
     else {
-        static_assert(numlanes == -1, "should not reach here");
+        static_assert(numlanes == -1, "No implementation");
         UNUSED(key);
         UNUSED(value);
     }
