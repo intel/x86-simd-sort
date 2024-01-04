@@ -5,19 +5,19 @@ static constexpr char euclidean[] = "euclidean";
 static constexpr char taxicab[] = "taxicab";
 static constexpr char chebyshev[] = "chebyshev";
 
-template <const char* val>
+template <typename T, const char* val>
 struct Point3D {
-    double x;
-    double y;
-    double z;
+    T x;
+    T y;
+    T z;
     static constexpr std::string_view name {val};
     Point3D()
     {
-        x = (double)rand() / RAND_MAX;
-        y = (double)rand() / RAND_MAX;
-        z = (double)rand() / RAND_MAX;
+        x = (T)rand() / RAND_MAX;
+        y = (T)rand() / RAND_MAX;
+        z = (T)rand() / RAND_MAX;
     }
-    double distance()
+    T distance()
     {
         if constexpr (name == "x") {
             return x;
@@ -77,7 +77,7 @@ static void simdobjsort(benchmark::State &state)
     std::vector<T> arr_bkp = arr;
     // benchmark
     for (auto _ : state) {
-        x86simdsort::object_qsort(arr.data(), arr.size(), [](T p) -> double {
+        x86simdsort::object_qsort(arr.data(), arr.size(), [](T p) {
             return p.distance();
         });
         state.PauseTiming();
@@ -89,8 +89,8 @@ static void simdobjsort(benchmark::State &state)
     }
 }
 
-#define BENCHMARK_OBJSORT(func, T) \
-    BENCHMARK_TEMPLATE(func, T) \
+#define BENCHMARK_OBJSORT(func, T, type, dist) \
+    BENCHMARK_TEMPLATE(func, T<type,dist>) \
             ->Arg(10e1) \
             ->Arg(10e2) \
             ->Arg(10e3) \
@@ -98,11 +98,13 @@ static void simdobjsort(benchmark::State &state)
             ->Arg(10e5) \
             ->Arg(10e6);
 
-BENCHMARK_OBJSORT(simdobjsort, Point3D<x>)
-BENCHMARK_OBJSORT(scalarobjsort, Point3D<x>)
-BENCHMARK_OBJSORT(simdobjsort, Point3D<taxicab>)
-BENCHMARK_OBJSORT(scalarobjsort, Point3D<taxicab>)
-BENCHMARK_OBJSORT(simdobjsort, Point3D<euclidean>)
-BENCHMARK_OBJSORT(scalarobjsort, Point3D<euclidean>)
-BENCHMARK_OBJSORT(simdobjsort, Point3D<chebyshev>)
-BENCHMARK_OBJSORT(scalarobjsort, Point3D<chebyshev>)
+BENCHMARK_OBJSORT(simdobjsort, Point3D, double, x)
+BENCHMARK_OBJSORT(scalarobjsort, Point3D, double, x)
+BENCHMARK_OBJSORT(simdobjsort, Point3D, float, x)
+BENCHMARK_OBJSORT(scalarobjsort, Point3D, float, x)
+BENCHMARK_OBJSORT(simdobjsort, Point3D, double, taxicab )
+BENCHMARK_OBJSORT(scalarobjsort, Point3D, double, taxicab)
+BENCHMARK_OBJSORT(simdobjsort, Point3D, double, euclidean)
+BENCHMARK_OBJSORT(scalarobjsort, Point3D, double, euclidean)
+BENCHMARK_OBJSORT(simdobjsort, Point3D, double, chebyshev)
+BENCHMARK_OBJSORT(scalarobjsort, Point3D, double, chebyshev)
