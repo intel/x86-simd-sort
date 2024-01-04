@@ -1,6 +1,7 @@
 #ifndef XSS_KEYVALUE_NETWORKS
 #define XSS_KEYVALUE_NETWORKS
 
+#include "avx512-32bit-qsort.hpp"
 #include "avx512-64bit-qsort.hpp"
 #include "avx2-64bit-qsort.hpp"
 
