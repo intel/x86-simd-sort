@@ -22,11 +22,24 @@ struct index_64bit_vector_type<4> {
 template <typename keyType, typename valueType>
 typename valueType::opmask_t extend_mask(typename keyType::opmask_t mask)
 {
+    using inT = typename keyType::opmask_t;
+    using outT = typename valueType::opmask_t;
+    
     if constexpr (keyType::vec_type == simd_type::AVX512) { return mask; }
     else if constexpr (keyType::vec_type == simd_type::AVX2) {
-        if constexpr (sizeof(mask) == 32) { return mask; }
-        else {
+        if constexpr (sizeof(inT) == sizeof(outT)) { return mask; }
+        else if constexpr (sizeof(inT) == 32 && sizeof(outT) == 16){
+            // We need to convert a mask made of 64 bit integers to 32 bit integers
+            // This does this by taking advantage of the fact that the only bit that matters
+            // is the very topmost bit, which becomes the sign bit when cast to floating point
+            
+            // TODO try and figure out if there is a better way to do this
+            return _mm_castps_si128(_mm256_cvtpd_ps(_mm256_castsi256_pd(mask)));
+        }
+        else if constexpr (sizeof(inT) == 16 && sizeof(outT) == 32){
             return _mm256_cvtepi32_epi64(mask);
+        }else{
+            static_assert(sizeof(inT) == -1, "should not reach here");
         }
     }
     else {
