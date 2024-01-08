@@ -10,6 +10,20 @@ bench = include_directories('benchmarks')
 utils = include_directories('utils')
 tests = include_directories('tests')
 
+# Add IPP sort to benchmarks:
+benchipp = false
+ipplink = []
+if get_option('build_ippbench')
+  benchipp = true
+  ipplink = ['-lipps', '-lippcore']
+endif
+
+# Add google vqsort to benchmarks:
+benchvq = false
+if get_option('build_vqsortbench')
+  benchvq = true
+endif
+
 fp16code = '''#include<immintrin.h>
 int main() {
   __m512h temp = _mm512_set1_ph(1.0f);
@@ -50,13 +64,14 @@ if get_option('build_tests')
 endif
 
 # Build benchmarking suite if option build_benchmarks is set to true
+
 if get_option('build_benchmarks')
   gbench_dep = dependency('benchmark', required : true, static: false)
   subdir('benchmarks')
   benchexe = executable('benchexe',
                       include_directories : [src, lib, utils, bench],
                       dependencies : [gbench_dep],
-                      link_args: ['-lbenchmark_main'],
+                      link_args: ['-lbenchmark_main', ipplink],
                       link_whole : [libbench],
                       link_with : libsimdsort,
                      )
