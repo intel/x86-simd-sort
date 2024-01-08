@@ -32,6 +32,7 @@ template <>
 struct zmm_vector<int32_t> {
     using type_t = int32_t;
     using reg_t = __m512i;
+    using regi_t = __m512i;
     using halfreg_t = __m256i;
     using opmask_t = __mmask16;
     static const uint8_t numlanes = 16;
@@ -64,6 +65,10 @@ struct zmm_vector<int32_t> {
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_epi32_mask(x, y, _MM_CMPINT_NLT);
+    }
+    static opmask_t eq(reg_t x, reg_t y)
+    {
+        return _mm512_cmpeq_epi32_mask(x, y);
     }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
@@ -123,6 +128,40 @@ struct zmm_vector<int32_t> {
     {
         return _mm512_set1_epi32(v);
     }
+    static regi_t seti(int v1,
+                       int v2,
+                       int v3,
+                       int v4,
+                       int v5,
+                       int v6,
+                       int v7,
+                       int v8,
+                       int v9,
+                       int v10,
+                       int v11,
+                       int v12,
+                       int v13,
+                       int v14,
+                       int v15,
+                       int v16)
+    {
+        return _mm512_set_epi32(v1,
+                                v2,
+                                v3,
+                                v4,
+                                v5,
+                                v6,
+                                v7,
+                                v8,
+                                v9,
+                                v10,
+                                v11,
+                                v12,
+                                v13,
+                                v14,
+                                v15,
+                                v16);
+    }
     template <uint8_t mask>
     static reg_t shuffle(reg_t zmm)
     {
@@ -171,6 +210,7 @@ template <>
 struct zmm_vector<uint32_t> {
     using type_t = uint32_t;
     using reg_t = __m512i;
+    using regi_t = __m512i;
     using halfreg_t = __m256i;
     using opmask_t = __mmask16;
     static const uint8_t numlanes = 16;
@@ -213,6 +253,10 @@ struct zmm_vector<uint32_t> {
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_epu32_mask(x, y, _MM_CMPINT_NLT);
+    }
+    static opmask_t eq(reg_t x, reg_t y)
+    {
+        return _mm512_cmpeq_epu32_mask(x, y);
     }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
@@ -262,6 +306,40 @@ struct zmm_vector<uint32_t> {
     {
         return _mm512_set1_epi32(v);
     }
+    static regi_t seti(int v1,
+                       int v2,
+                       int v3,
+                       int v4,
+                       int v5,
+                       int v6,
+                       int v7,
+                       int v8,
+                       int v9,
+                       int v10,
+                       int v11,
+                       int v12,
+                       int v13,
+                       int v14,
+                       int v15,
+                       int v16)
+    {
+        return _mm512_set_epi32(v1,
+                                v2,
+                                v3,
+                                v4,
+                                v5,
+                                v6,
+                                v7,
+                                v8,
+                                v9,
+                                v10,
+                                v11,
+                                v12,
+                                v13,
+                                v14,
+                                v15,
+                                v16);
+    }
     template <uint8_t mask>
     static reg_t shuffle(reg_t zmm)
     {
@@ -310,6 +388,7 @@ template <>
 struct zmm_vector<float> {
     using type_t = float;
     using reg_t = __m512;
+    using regi_t = __m512i;
     using halfreg_t = __m256;
     using opmask_t = __mmask16;
     static const uint8_t numlanes = 16;
@@ -342,6 +421,10 @@ struct zmm_vector<float> {
     static opmask_t ge(reg_t x, reg_t y)
     {
         return _mm512_cmp_ps_mask(x, y, _CMP_GE_OQ);
+    }
+    static opmask_t eq(reg_t x, reg_t y)
+    {
+        return _mm512_cmpeq_ps_mask(x, y);
     }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
@@ -414,6 +497,40 @@ struct zmm_vector<float> {
     static reg_t set1(type_t v)
     {
         return _mm512_set1_ps(v);
+    }
+    static regi_t seti(int v1,
+                       int v2,
+                       int v3,
+                       int v4,
+                       int v5,
+                       int v6,
+                       int v7,
+                       int v8,
+                       int v9,
+                       int v10,
+                       int v11,
+                       int v12,
+                       int v13,
+                       int v14,
+                       int v15,
+                       int v16)
+    {
+        return _mm512_set_epi32(v1,
+                                v2,
+                                v3,
+                                v4,
+                                v5,
+                                v6,
+                                v7,
+                                v8,
+                                v9,
+                                v10,
+                                v11,
+                                v12,
+                                v13,
+                                v14,
+                                v15,
+                                v16);
     }
     template <uint8_t mask>
     static reg_t shuffle(reg_t zmm)

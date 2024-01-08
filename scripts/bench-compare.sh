@@ -14,4 +14,4 @@ compare=$(realpath .bench/google-benchmark/tools/compare.py)
 meson setup -Dbuild_benchmarks=true --warnlevel 0 --buildtype release builddir-${branch}
 cd builddir-${branch}
 ninja
-$compare filters ./benchexe $1 $2
+$compare filters ./benchexe $1 $2 --benchmark_repetitions=$3
