@@ -1,23 +1,13 @@
 #ifndef XSS_KEYVALUE_NETWORKS
 #define XSS_KEYVALUE_NETWORKS
 
-<<<<<<< HEAD
-#include "avx512-32bit-qsort.hpp"
-#include "avx512-64bit-qsort.hpp"
-#include "avx2-64bit-qsort.hpp"
-=======
 #include "xss-common-includes.h"
 
-template <int num_lanes>
-struct index_64bit_vector_type;
-template <>
-struct index_64bit_vector_type<8> {
-    using type = zmm_vector<uint64_t>;
-};
-template <>
-struct index_64bit_vector_type<4> {
-    using type = avx2_vector<uint64_t>;
-};
+#define NETWORK_32BIT_1 14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1
+#define NETWORK_32BIT_3 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7
+#define NETWORK_32BIT_5 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+#define NETWORK_32BIT_6 11, 10, 9, 8, 15, 14, 13, 12, 3, 2, 1, 0, 7, 6, 5, 4
+#define NETWORK_32BIT_7 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8
 
 template <typename keyType, typename valueType>
 typename valueType::opmask_t extend_mask(typename keyType::opmask_t mask)
@@ -44,10 +34,9 @@ typename valueType::opmask_t extend_mask(typename keyType::opmask_t mask)
     }
     else {
         static_assert(keyType::vec_type == simd_type::AVX512,
-                      "Should not reach here");
+                      "should not reach here");
     }
 }
->>>>>>> d1e90bb (Support for AVX2 argsort/argselect)
 
 template <typename vtype1,
           typename vtype2,
@@ -354,17 +343,13 @@ bitonic_merge_dispatch(typename keyType::reg_t &key,
 {
     constexpr int numlanes = keyType::numlanes;
     if constexpr (numlanes == 8) {
-<<<<<<< HEAD
         key = bitonic_merge_reg_8lanes<keyType, valueType>(key, value);
     }
     else if constexpr (numlanes == 16) {
         key = bitonic_merge_reg_16lanes<keyType, valueType>(key, value);
-=======
-        key = bitonic_merge_zmm_64bit<keyType, valueType>(key, value);
     }
     else if constexpr (numlanes == 4) {
         key = bitonic_merge_ymm_64bit<keyType, valueType>(key, value);
->>>>>>> d1e90bb (Support for AVX2 argsort/argselect)
     }
     else {
         static_assert(numlanes == -1, "No implementation");
@@ -379,17 +364,13 @@ X86_SIMD_SORT_INLINE void sort_vec_dispatch(typename keyType::reg_t &key,
 {
     constexpr int numlanes = keyType::numlanes;
     if constexpr (numlanes == 8) {
-<<<<<<< HEAD
         key = sort_reg_8lanes<keyType, valueType>(key, value);
     }
     else if constexpr (numlanes == 16) {
         key = sort_reg_16lanes<keyType, valueType>(key, value);
-=======
-        key = sort_zmm_64bit<keyType, valueType>(key, value);
     }
     else if constexpr (numlanes == 4) {
         key = sort_ymm_64bit<keyType, valueType>(key, value);
->>>>>>> d1e90bb (Support for AVX2 argsort/argselect)
     }
     else {
         static_assert(numlanes == -1, "No implementation");

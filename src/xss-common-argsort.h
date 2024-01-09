@@ -456,7 +456,7 @@ X86_SIMD_SORT_INLINE type_t get_pivot_64bit(type_t *arr,
                                         arr[arg[left + 7 * size]],
                                         arr[arg[left + 8 * size]]);
             // pivot will never be a nan, since there are no nan's!
-            reg_t sort = sort_zmm_64bit<vtype>(rand_vec);
+            reg_t sort = vtype::sort_vec(rand_vec);
             return ((type_t *)&sort)[4];
         }
         else {
