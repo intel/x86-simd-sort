@@ -64,20 +64,6 @@ std_argsort(T *arr, arrsize_t *arg, arrsize_t left, arrsize_t right)
               });
 }
 
-/* Workaround for NumPy failed build on macOS x86_64: implicit instantiation of
- * undefined template 'zmm_vector<unsigned long>'*/
-#ifdef __APPLE__
-using argtypeAVX512 =
-        typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
-                                  ymm_vector<uint32_t>,
-                                  zmm_vector<uint64_t>>::type;
-#else
-using argtypeAVX512 =
-        typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
-                                  ymm_vector<arrsize_t>,
-                                  zmm_vector<arrsize_t>>::type;
-#endif
-
 /*
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
@@ -129,7 +115,7 @@ X86_SIMD_SORT_INLINE int32_t partition_vec_avx2(type_t *arg,
     /* which elements are larger than the pivot */
     typename vtype::opmask_t ge_mask_vtype = vtype::ge(curr_vec, pivot_vec);
     typename argtype::opmask_t ge_mask
-            = extend_mask<vtype, argtype>(ge_mask_vtype);
+            = resize_mask<vtype, argtype>(ge_mask_vtype);
 
     auto l_store = arg + left;
     auto r_store = arg + right - vtype::numlanes;
@@ -725,21 +711,6 @@ avx2_argselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
     std::iota(indices.begin(), indices.end(), 0);
     avx2_argselect<T>(arr, indices.data(), k, arrsize, hasnan);
     return indices;
-}
-
-/* To maintain compatibility with NumPy build */
-template <typename T>
-X86_SIMD_SORT_INLINE void
-avx512_argselect(T *arr, int64_t *arg, arrsize_t k, arrsize_t arrsize)
-{
-    avx512_argselect(arr, reinterpret_cast<arrsize_t *>(arg), k, arrsize);
-}
-
-template <typename T>
-X86_SIMD_SORT_INLINE void
-avx512_argsort(T *arr, int64_t *arg, arrsize_t arrsize)
-{
-    avx512_argsort(arr, reinterpret_cast<arrsize_t *>(arg), arrsize);
 }
 
 #endif // XSS_COMMON_ARGSORT

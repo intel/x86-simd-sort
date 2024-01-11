@@ -10,7 +10,7 @@
 #define NETWORK_32BIT_7 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8
 
 template <typename keyType, typename valueType>
-typename valueType::opmask_t extend_mask(typename keyType::opmask_t mask)
+typename valueType::opmask_t resize_mask(typename keyType::opmask_t mask)
 {
     using inT = typename keyType::opmask_t;
     using outT = typename valueType::opmask_t;
@@ -48,7 +48,7 @@ COEX(reg_t1 &key1, reg_t1 &key2, reg_t2 &index1, reg_t2 &index2)
     reg_t1 key_t1 = vtype1::min(key1, key2);
     reg_t1 key_t2 = vtype1::max(key1, key2);
 
-    auto eqMask = extend_mask<vtype1, vtype2>(vtype1::eq(key_t1, key1));
+    auto eqMask = resize_mask<vtype1, vtype2>(vtype1::eq(key_t1, key1));
 
     reg_t2 index_t1 = vtype2::mask_mov(index2, eqMask, index1);
     reg_t2 index_t2 = vtype2::mask_mov(index1, eqMask, index2);
@@ -73,7 +73,7 @@ X86_SIMD_SORT_INLINE reg_t1 cmp_merge(reg_t1 in1,
     reg_t1 tmp_keys = cmp_merge<vtype1>(in1, in2, mask);
     indexes1 = vtype2::mask_mov(
             indexes2,
-            extend_mask<vtype1, vtype2>(vtype1::eq(tmp_keys, in1)),
+            resize_mask<vtype1, vtype2>(vtype1::eq(tmp_keys, in1)),
             indexes1);
     return tmp_keys; // 0 -> min, 1 -> max
 }
@@ -503,7 +503,7 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
     for (int i = numVecs / 2; i < numVecs; i++) {
         indexVecs[i] = indexType::mask_loadu(
                 indexType::zmm_max(),
-                extend_mask<keyType, indexType>(ioMasks[i - numVecs / 2]),
+                resize_mask<keyType, indexType>(ioMasks[i - numVecs / 2]),
                 indices + i * indexType::numlanes);
 
         keyVecs[i] = keyType::template mask_i64gather<sizeof(
@@ -532,7 +532,7 @@ X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         indexType::mask_storeu(
                 indices + i * indexType::numlanes,
-                extend_mask<keyType, indexType>(ioMasks[i - numVecs / 2]),
+                resize_mask<keyType, indexType>(ioMasks[i - numVecs / 2]),
                 indexVecs[i]);
     }
 }

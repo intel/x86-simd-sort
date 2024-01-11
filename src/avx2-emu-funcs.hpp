@@ -277,7 +277,7 @@ void avx2_emu_mask_compressstoreu32(void *base_addr,
     const __m256i &left = _mm256_loadu_si256(
             (const __m256i *)avx2_compressstore_lut32_left[shortMask].data());
 
-    typename vtype::reg_t temp = vtype::permutevar(reg, perm);
+    typename vtype::reg_t temp = vtype::permutexvar(perm, reg);
 
     vtype::mask_storeu(leftStore, left, temp);
 }
@@ -300,7 +300,7 @@ void avx2_emu_mask_compressstoreu32_half(
             (const __m128i *)avx2_compressstore_lut32_half_left[shortMask]
                     .data());
 
-    typename vtype::reg_t temp = vtype::permutevar(reg, perm);
+    typename vtype::reg_t temp = vtype::permutexvar(perm, reg);
 
     vtype::mask_storeu(leftStore, left, temp);
 }
@@ -341,7 +341,7 @@ int avx2_double_compressstore32(void *left_addr,
     const __m256i &perm = _mm256_loadu_si256(
             (const __m256i *)avx2_compressstore_lut32_perm[shortMask].data());
 
-    typename vtype::reg_t temp = vtype::permutevar(reg, perm);
+    typename vtype::reg_t temp = vtype::permutexvar(perm, reg);
 
     vtype::storeu(leftStore, temp);
     vtype::storeu(rightStore, temp);
@@ -365,7 +365,7 @@ int avx2_double_compressstore32_half(void *left_addr,
             (const __m128i *)avx2_compressstore_lut32_half_perm[shortMask]
                     .data());
 
-    typename vtype::reg_t temp = vtype::permutevar(reg, perm);
+    typename vtype::reg_t temp = vtype::permutexvar(perm, reg);
 
     vtype::storeu(leftStore, temp);
     vtype::storeu(rightStore, temp);

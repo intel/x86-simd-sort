@@ -7,7 +7,7 @@
 #ifndef AVX2_HALF_32BIT
 #define AVX2_HALF_32BIT
 
-#include "xss-common-qsort.h"
+#include "xss-common-includes.h"
 #include "avx2-emu-funcs.hpp"
 
 /*
@@ -46,7 +46,7 @@ template <>
 struct avx2_half_vector<int32_t> {
     using type_t = int32_t;
     using reg_t = __m128i;
-    using ymmi_t = __m128i;
+    using regi_t = __m128i;
     using opmask_t = __m128i;
     static const uint8_t numlanes = 4;
     static constexpr simd_type vec_type = simd_type::AVX2;
@@ -70,7 +70,7 @@ struct avx2_half_vector<int32_t> {
         auto mask = ((0x1ull << num_to_read) - 0x1ull);
         return convert_int_to_avx2_mask_half(mask);
     }
-    static ymmi_t seti(int v1, int v2, int v3, int v4)
+    static regi_t seti(int v1, int v2, int v3, int v4)
     {
         return _mm_set_epi32(v1, v2, v3, v4);
     }
@@ -86,8 +86,7 @@ struct avx2_half_vector<int32_t> {
     {
         opmask_t equal = eq(x, y);
         opmask_t greater = _mm_cmpgt_epi32(x, y);
-        return _mm_castps_si128(
-                _mm_or_ps(_mm_castsi128_ps(equal), _mm_castsi128_ps(greater)));
+        return _mm_or_si128(equal, greater);
     }
     static opmask_t eq(reg_t x, reg_t y)
     {
@@ -150,10 +149,6 @@ struct avx2_half_vector<int32_t> {
     {
         return _mm_castps_si128(_mm_permutevar_ps(_mm_castsi128_ps(ymm), idx));
     }
-    static reg_t permutevar(reg_t ymm, __m128i idx)
-    {
-        return _mm_castps_si128(_mm_permutevar_ps(_mm_castsi128_ps(ymm), idx));
-    }
     static reg_t reverse(reg_t ymm)
     {
         const __m128i rev_index = _mm_set_epi32(0, 1, 2, 3);
@@ -205,7 +200,7 @@ template <>
 struct avx2_half_vector<uint32_t> {
     using type_t = uint32_t;
     using reg_t = __m128i;
-    using ymmi_t = __m128i;
+    using regi_t = __m128i;
     using opmask_t = __m128i;
     static const uint8_t numlanes = 4;
     static constexpr simd_type vec_type = simd_type::AVX2;
@@ -229,7 +224,7 @@ struct avx2_half_vector<uint32_t> {
         auto mask = ((0x1ull << num_to_read) - 0x1ull);
         return convert_int_to_avx2_mask_half(mask);
     }
-    static ymmi_t seti(int v1, int v2, int v3, int v4)
+    static regi_t seti(int v1, int v2, int v3, int v4)
     {
         return _mm_set_epi32(v1, v2, v3, v4);
     }
@@ -299,10 +294,6 @@ struct avx2_half_vector<uint32_t> {
     {
         return _mm_castps_si128(_mm_permutevar_ps(_mm_castsi128_ps(ymm), idx));
     }
-    static reg_t permutevar(reg_t ymm, __m128i idx)
-    {
-        return _mm_castps_si128(_mm_permutevar_ps(_mm_castsi128_ps(ymm), idx));
-    }
     static reg_t reverse(reg_t ymm)
     {
         const __m128i rev_index = _mm_set_epi32(0, 1, 2, 3);
@@ -354,7 +345,7 @@ template <>
 struct avx2_half_vector<float> {
     using type_t = float;
     using reg_t = __m128;
-    using ymmi_t = __m128i;
+    using regi_t = __m128i;
     using opmask_t = __m128i;
     static const uint8_t numlanes = 4;
     static constexpr simd_type vec_type = simd_type::AVX2;
@@ -374,7 +365,7 @@ struct avx2_half_vector<float> {
         return _mm_set1_ps(type_max());
     }
 
-    static ymmi_t seti(int v1, int v2, int v3, int v4)
+    static regi_t seti(int v1, int v2, int v3, int v4)
     {
         return _mm_set_epi32(v1, v2, v3, v4);
     }
@@ -464,10 +455,6 @@ struct avx2_half_vector<float> {
     {
         return _mm_permutevar_ps(ymm, idx);
     }
-    static reg_t permutevar(reg_t ymm, __m128i idx)
-    {
-        return _mm_permutevar_ps(ymm, idx);
-    }
     static reg_t reverse(reg_t ymm)
     {
         const __m128i rev_index = _mm_set_epi32(0, 1, 2, 3);
@@ -520,23 +507,15 @@ struct avx2_32bit_half_swizzle_ops {
     template <typename vtype, int scale>
     X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg)
     {
-        __m128i v = vtype::cast_to(reg);
-
         if constexpr (scale == 2) {
-            __m128 vf = _mm_castsi128_ps(v);
-            vf = _mm_permute_ps(vf, 0b10110001);
-            v = _mm_castps_si128(vf);
+            return vtype::template shuffle<0b10110001>(reg);
         }
         else if constexpr (scale == 4) {
-            __m128 vf = _mm_castsi128_ps(v);
-            vf = _mm_permute_ps(vf, 0b01001110);
-            v = _mm_castps_si128(vf);
+            return vtype::template shuffle<0b01001110>(reg);
         }
         else {
             static_assert(scale == -1, "should not be reached");
         }
-
-        return vtype::cast_from(v);
     }
 
     template <typename vtype, int scale>
