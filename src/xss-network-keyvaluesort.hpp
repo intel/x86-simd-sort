@@ -3,38 +3,25 @@
 
 #include "xss-common-includes.h"
 
-#define NETWORK_32BIT_1 14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1
-#define NETWORK_32BIT_3 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7
-#define NETWORK_32BIT_5 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-#define NETWORK_32BIT_6 11, 10, 9, 8, 15, 14, 13, 12, 3, 2, 1, 0, 7, 6, 5, 4
-#define NETWORK_32BIT_7 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8
-
 template <typename keyType, typename valueType>
 typename valueType::opmask_t resize_mask(typename keyType::opmask_t mask)
 {
     using inT = typename keyType::opmask_t;
     using outT = typename valueType::opmask_t;
-    
-    if constexpr (keyType::vec_type == simd_type::AVX512) { return mask; }
-    else if constexpr (keyType::vec_type == simd_type::AVX2) {
-        if constexpr (sizeof(inT) == sizeof(outT)) { return mask; }
-        else if constexpr (sizeof(inT) == 32 && sizeof(outT) == 16){
-            // We need to convert a mask made of 64 bit integers to 32 bit integers
-            // This does this by taking advantage of the fact that the only bit that matters
-            // is the very topmost bit, which becomes the sign bit when cast to floating point
-            
-            // TODO try and figure out if there is a better way to do this
-            return _mm_castps_si128(_mm256_cvtpd_ps(_mm256_castsi256_pd(mask)));
-        }
-        else if constexpr (sizeof(inT) == 16 && sizeof(outT) == 32){
-            return _mm256_cvtepi32_epi64(mask);
-        }else{
-            static_assert(sizeof(inT) == -1, "should not reach here");
-        }
+
+    if constexpr (sizeof(inT) == sizeof(outT)) { //std::is_same_v<inT, outT>) {
+        return mask;
+    }
+    /* convert __m256i to __m128i */
+    else if constexpr (sizeof(inT) == 32 && sizeof(outT) == 16) {
+        return _mm_castps_si128(_mm256_cvtpd_ps(_mm256_castsi256_pd(mask)));
+    }
+    /* convert __m128i to __m256i */
+    else if constexpr (sizeof(inT) == 16 && sizeof(outT) == 32) {
+        return _mm256_cvtepi32_epi64(mask);
     }
     else {
-        static_assert(keyType::vec_type == simd_type::AVX512,
-                      "should not reach here");
+        static_assert(always_false<keyType>, "Error in func resize_mask");
     }
 }
 
@@ -77,17 +64,6 @@ X86_SIMD_SORT_INLINE reg_t1 cmp_merge(reg_t1 in1,
             indexes1);
     return tmp_keys; // 0 -> min, 1 -> max
 }
-
-/*
- * Constants used in sorting 8 elements in a ZMM registers. Based on Bitonic
- * sorting network (see
- * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg)
- */
-// ZMM                  7, 6, 5, 4, 3, 2, 1, 0
-#define NETWORK_64BIT_1 4, 5, 6, 7, 0, 1, 2, 3
-#define NETWORK_64BIT_2 0, 1, 2, 3, 4, 5, 6, 7
-#define NETWORK_64BIT_3 5, 4, 7, 6, 1, 0, 3, 2
-#define NETWORK_64BIT_4 3, 2, 1, 0, 7, 6, 5, 4
 
 template <typename vtype1,
           typename vtype2,
@@ -352,7 +328,7 @@ bitonic_merge_dispatch(typename keyType::reg_t &key,
         key = bitonic_merge_ymm_64bit<keyType, valueType>(key, value);
     }
     else {
-        static_assert(numlanes == -1, "No implementation");
+        static_assert(always_false<keyType>, "bitonic_merge_dispatch: No implementation");
         UNUSED(key);
         UNUSED(value);
     }
@@ -373,7 +349,7 @@ X86_SIMD_SORT_INLINE void sort_vec_dispatch(typename keyType::reg_t &key,
         key = sort_ymm_64bit<keyType, valueType>(key, value);
     }
     else {
-        static_assert(numlanes == -1, "No implementation");
+        static_assert(always_false<keyType>, "sort_vec_dispatch: No implementation");
         UNUSED(key);
         UNUSED(value);
     }
