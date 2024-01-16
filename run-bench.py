@@ -23,7 +23,13 @@ if args.repeat is not None:
 if args.benchcompare:
     baseline = ""
     contender = ""
-    if "vqsort" in args.benchcompare:
+    if "ippsort" in args.benchcompare:
+        baseline = "ippsort.*" + filterb
+        contender = "simdsort.*" + filterb
+    elif "ippargsort" in args.benchcompare:
+        baseline = "ippargsort.*" + filterb
+        contender = "simd_ordern_argsort.*" + filterb
+    elif "vqsort" in args.benchcompare:
         baseline = "vqsort.*" + filterb
         contender = "simdsort.*" + filterb
     elif "qsort" in args.benchcompare:

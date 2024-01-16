@@ -28,6 +28,8 @@
     MY_BENCHMARK_CAPTURE( \
             func, type, random_10m, 10000000, std::string("random")); \
     MY_BENCHMARK_CAPTURE( \
+            func, type, random_100m, 100000000, std::string("random")); \
+    MY_BENCHMARK_CAPTURE( \
             func, type, smallrange_128, 128, std::string("smallrange")); \
     MY_BENCHMARK_CAPTURE( \
             func, type, smallrange_256, 256, std::string("smallrange")); \
