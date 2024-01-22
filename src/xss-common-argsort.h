@@ -595,10 +595,17 @@ avx2_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
                                               avx2_half_vector<T>,
                                               avx2_vector<T>>::type;
 
+#ifdef __APPLE__
+    using argtype =
+            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                      avx2_half_vector<uint32_t>,
+                                      avx2_vector<uint64_t>>::type;
+#else
     using argtype =
             typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
                                       avx2_half_vector<arrsize_t>,
                                       avx2_vector<arrsize_t>>::type;
+#endif
 
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
@@ -685,10 +692,17 @@ X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
                                               avx2_half_vector<T>,
                                               avx2_vector<T>>::type;
 
+#ifdef __APPLE__
+    using argtype =
+            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
+                                      avx2_half_vector<uint32_t>,
+                                      avx2_vector<uint64_t>>::type;
+#else
     using argtype =
             typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
                                       avx2_half_vector<arrsize_t>,
                                       avx2_vector<arrsize_t>>::type;
+#endif
 
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {

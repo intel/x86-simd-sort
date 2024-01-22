@@ -328,7 +328,8 @@ bitonic_merge_dispatch(typename keyType::reg_t &key,
         key = bitonic_merge_ymm_64bit<keyType, valueType>(key, value);
     }
     else {
-        static_assert(always_false<keyType>, "bitonic_merge_dispatch: No implementation");
+        static_assert(always_false<keyType>,
+                      "bitonic_merge_dispatch: No implementation");
         UNUSED(key);
         UNUSED(value);
     }
@@ -349,7 +350,8 @@ X86_SIMD_SORT_INLINE void sort_vec_dispatch(typename keyType::reg_t &key,
         key = sort_ymm_64bit<keyType, valueType>(key, value);
     }
     else {
-        static_assert(always_false<keyType>, "sort_vec_dispatch: No implementation");
+        static_assert(always_false<keyType>,
+                      "sort_vec_dispatch: No implementation");
         UNUSED(key);
         UNUSED(value);
     }
@@ -584,8 +586,9 @@ X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys,
 }
 
 template <typename keyType, typename indexType, int maxN>
-X86_SIMD_SORT_INLINE void
-argsort_n(typename keyType::type_t *keys, arrsize_t *indices, int N)
+X86_SIMD_SORT_INLINE void argsort_n(typename keyType::type_t *keys,
+                                    typename indexType::type_t *indices,
+                                    int N)
 {
     static_assert(keyType::numlanes == indexType::numlanes,
                   "invalid pairing of value/index types");
