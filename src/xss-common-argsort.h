@@ -559,19 +559,10 @@ avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
                                               ymm_vector<T>,
                                               zmm_vector<T>>::type;
 
-/* Workaround for NumPy failed build on macOS x86_64: implicit instantiation of
- * undefined template 'zmm_vector<unsigned long>'*/
-#ifdef __APPLE__
-    using argtype =
-            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
-                                      ymm_vector<uint32_t>,
-                                      zmm_vector<uint64_t>>::type;
-#else
     using argtype =
             typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
                                       ymm_vector<arrsize_t>,
                                       zmm_vector<arrsize_t>>::type;
-#endif
 
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
@@ -605,18 +596,10 @@ avx2_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false)
                                               avx2_half_vector<T>,
                                               avx2_vector<T>>::type;
 
-#ifdef __APPLE__
-    using argtype =
-            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
-                                      avx2_half_vector<uint32_t>,
-                                      avx2_vector<uint64_t>>::type;
-#else
     using argtype =
             typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
                                       avx2_half_vector<arrsize_t>,
                                       avx2_vector<arrsize_t>>::type;
-#endif
-
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
@@ -653,19 +636,10 @@ X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
                                               ymm_vector<T>,
                                               zmm_vector<T>>::type;
 
-/* Workaround for NumPy failed build on macOS x86_64: implicit instantiation of
- * undefined template 'zmm_vector<unsigned long>'*/
-#ifdef __APPLE__
-    using argtype =
-            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
-                                      ymm_vector<uint32_t>,
-                                      zmm_vector<uint64_t>>::type;
-#else
     using argtype =
             typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
                                       ymm_vector<arrsize_t>,
                                       zmm_vector<arrsize_t>>::type;
-#endif
 
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
@@ -702,17 +676,10 @@ X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
                                               avx2_half_vector<T>,
                                               avx2_vector<T>>::type;
 
-#ifdef __APPLE__
-    using argtype =
-            typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
-                                      avx2_half_vector<uint32_t>,
-                                      avx2_vector<uint64_t>>::type;
-#else
     using argtype =
             typename std::conditional<sizeof(arrsize_t) == sizeof(int32_t),
                                       avx2_half_vector<arrsize_t>,
                                       avx2_vector<arrsize_t>>::type;
-#endif
 
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
