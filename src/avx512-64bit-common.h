@@ -912,6 +912,19 @@ struct zmm_vector<uint64_t> {
                 left_addr, right_addr, k, reg);
     }
 };
+
+/*
+ * workaround on 64-bit macOS which defines size_t as unsigned long and defines
+ * uint64_t as unsigned long long, both of which are 8 bytes
+ */
+#if defined(__APPLE__) && defined(__x86_64__)
+static_assert(sizeof(size_t) == sizeof(uint64_t),
+              "Size of size_t and uint64_t are not the same");
+template <>
+struct zmm_vector<size_t> : public zmm_vector<uint64_t> {
+};
+#endif
+
 template <>
 struct zmm_vector<double> {
     using type_t = double;

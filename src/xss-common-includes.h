@@ -90,15 +90,7 @@ constexpr bool always_false = false;
 #define NETWORK_32BIT_6 11, 10, 9, 8, 15, 14, 13, 12, 3, 2, 1, 0, 7, 6, 5, 4
 #define NETWORK_32BIT_7 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8
 
-/*
- * workaround on 64-bit macOS which defines size_t as unsigned long and defines
- * uint64_t as unsigned long long, both of which are 8 bytes
- */
-#if defined(__APPLE__) && defined(__x86_64__)
-typedef uint64_t arrsize_t;
-#else
 typedef size_t arrsize_t;
-#endif
 
 template <typename type>
 struct zmm_vector;
