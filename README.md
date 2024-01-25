@@ -93,7 +93,7 @@ the array. In addition to that, qsort will replace all your NAN's with
 the input are not preserved. Also note that the arg methods (argsort and
 argselect) will not use the SIMD based algorithms if they detect NAN's in the
 array. You can read details of all the implementations
-[here](https://github.com/intel/x86-simd-sort/src/README.md).
+[here](https://github.com/intel/x86-simd-sort/blob/main/src/README.md).
 
 ## Downstream projects using x86-simd-sort
 
