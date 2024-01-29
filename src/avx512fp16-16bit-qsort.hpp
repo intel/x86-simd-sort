@@ -150,6 +150,9 @@ struct zmm_vector<_Float16> {
     {
         return _mm512_castph_si512(v);
     }
+    static bool all_false(opmask_t k){
+        return k == 0;
+    }
     static int double_compressstore(type_t *left_addr,
                                     type_t *right_addr,
                                     opmask_t k,

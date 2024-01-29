@@ -498,14 +498,24 @@ qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
                 arr + left, (int32_t)(right + 1 - left));
         return;
     }
-
-    type_t pivot = get_pivot_blocks<vtype, type_t>(arr, left, right);
+    
+    auto pivot_result = get_pivot_smart<vtype, type_t>(arr, left, right);
+    type_t pivot = pivot_result.pivot;
+    
+    if (pivot_result.alreadySorted){
+        return;
+    }
+    
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
 
     arrsize_t pivot_index
             = partition_avx512_unrolled<vtype, vtype::partition_unroll_factor>(
                     arr, left, right + 1, pivot, &smallest, &biggest);
+    
+    if (pivot_result.only2Values){
+        return;
+    }
 
     if (pivot != smallest)
         qsort_<vtype>(arr, left, pivot_index - 1, max_iters - 1);

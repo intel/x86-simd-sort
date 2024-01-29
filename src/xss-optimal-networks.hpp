@@ -1,6 +1,9 @@
 // All of these sources files are generated from the optimal networks described in
 // https://bertdobbelaere.github.io/sorting_networks.html
 
+template <typename vtype, typename mm_t>
+X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b);
+
 template <typename vtype, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void optimal_sort_4(reg_t *vecs)
 {
