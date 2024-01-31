@@ -37,7 +37,7 @@ type_t next_value(type_t value){
 template <typename vtype, typename mm_t>
 X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b);
 
-template <typename vtype, typename T = typename vtype::type_t>
+template <typename vtype, typename T>
 X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b);
 
 template <typename vtype, typename type_t>

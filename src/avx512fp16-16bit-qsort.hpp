@@ -55,6 +55,10 @@ struct zmm_vector<_Float16> {
     {
         return _mm512_cmp_ph_mask(x, y, _CMP_GE_OQ);
     }
+    static opmask_t eq(reg_t x, reg_t y)
+    {
+        return _mm512_cmp_ph_mask(x, y, _CMP_EQ_OQ);
+    }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
         return ((0x1ull << num_to_read) - 0x1ull);
