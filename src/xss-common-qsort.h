@@ -136,7 +136,7 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr, arrsize_t size)
     return size - count - 1;
 }
 
-template <typename vtype, typename T = typename vtype::type_t>
+template <typename vtype, typename T>
 X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b)
 {
     return a < b;
