@@ -51,8 +51,8 @@ jobs:
     - name: Install NumPy dependencies
       working-directory: ${{ github.workspace }}/numpy
       run: |
-        pip install -r build_requirements.txt
-        pip install -r test_requirements.txt
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/test_requirements.txt
 
     - name: Update x86-simd-sort
       working-directory: ${{ github.workspace }}/numpy
@@ -116,8 +116,8 @@ jobs:
     - name: Install NumPy dependencies
       working-directory: ${{ github.workspace }}/numpy
       run: |
-        pip install -r build_requirements.txt
-        pip install -r test_requirements.txt
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/test_requirements.txt
 
     - name: Update x86-simd-sort
       working-directory: ${{ github.workspace }}/numpy
