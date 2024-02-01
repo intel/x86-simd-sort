@@ -43,7 +43,7 @@ keyvalue_qsort(T1 *key, T2* val, size_t arrsize, bool hasnan = false);
 
 // sort an object
 template <typename T, typename Func>
-XSS_EXPORT_SYMBOL void object_qsort(T *arr, size_t arrsize, Func key_func)
+XSS_EXPORT_SYMBOL void object_qsort(T *arr, uint32_t arrsize, Func key_func)
 {
     /* (1) Create a vector a keys */
     using return_type_of =
@@ -55,9 +55,9 @@ XSS_EXPORT_SYMBOL void object_qsort(T *arr, size_t arrsize, Func key_func)
     }
 
     /* (2) Call arg based on keys using the keyvalue sort */
-    std::vector<size_t> arg(arrsize);
+    std::vector<uint32_t> arg(arrsize);
     std::iota(arg.begin(), arg.end(), 0);
-    keyvalue_qsort(keys.data(), arg.data(), arrsize);
+    x86simdsort::keyvalue_qsort(keys.data(), arg.data(), arrsize);
 
     /* (3) Permute obj array in-place */
     std::vector<bool> done(arrsize);

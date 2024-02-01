@@ -26,7 +26,7 @@ struct Point3D {
             return std::sqrt(x * x + y * y + z * z);
         }
         else if constexpr (name == "taxicab") {
-            return abs(x) + abs(y) + abs(z);
+            return std::abs(x) + std::abs(y) + std::abs(z);
         }
         else if constexpr (name == "chebyshev") {
             return std::max(std::max(x, y), z);
@@ -98,13 +98,15 @@ static void simdobjsort(benchmark::State &state)
             ->Arg(10e5) \
             ->Arg(10e6);
 
-BENCHMARK_OBJSORT(simdobjsort, Point3D, double, x)
-BENCHMARK_OBJSORT(scalarobjsort, Point3D, double, x)
-BENCHMARK_OBJSORT(simdobjsort, Point3D, float, x)
-BENCHMARK_OBJSORT(scalarobjsort, Point3D, float, x)
-BENCHMARK_OBJSORT(simdobjsort, Point3D, double, taxicab )
-BENCHMARK_OBJSORT(scalarobjsort, Point3D, double, taxicab)
-BENCHMARK_OBJSORT(simdobjsort, Point3D, double, euclidean)
-BENCHMARK_OBJSORT(scalarobjsort, Point3D, double, euclidean)
-BENCHMARK_OBJSORT(simdobjsort, Point3D, double, chebyshev)
-BENCHMARK_OBJSORT(scalarobjsort, Point3D, double, chebyshev)
+#define BENCH_ALL(dtype) \
+    BENCHMARK_OBJSORT(simdobjsort, Point3D, dtype, x) \
+    BENCHMARK_OBJSORT(scalarobjsort, Point3D, dtype, x) \
+    BENCHMARK_OBJSORT(simdobjsort, Point3D, dtype, taxicab ) \
+    BENCHMARK_OBJSORT(scalarobjsort, Point3D, dtype, taxicab) \
+    BENCHMARK_OBJSORT(simdobjsort, Point3D, dtype, euclidean) \
+    BENCHMARK_OBJSORT(scalarobjsort, Point3D, dtype, euclidean) \
+    BENCHMARK_OBJSORT(simdobjsort, Point3D, dtype, chebyshev) \
+    BENCHMARK_OBJSORT(scalarobjsort, Point3D, dtype, chebyshev) \
+
+BENCH_ALL(double)
+BENCH_ALL(float)
