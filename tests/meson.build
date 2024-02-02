@@ -12,11 +12,8 @@ libtests += static_library('tests_kvsort',
   include_directories : [lib, utils],
   )
 
-#if cancompilefp16
-#  libtests += static_library('tests_qsortfp16',
-#    files('test-qsortfp16.cpp', ),
-#    dependencies: gtest_dep,
-#    include_directories : [src, utils],
-#    cpp_args : ['-O3', '-march=sapphirerapids'],
-#    )
-#endif
+libtests += static_library('tests_objsort',
+  files('test-objqsort.cpp', ),
+  dependencies: gtest_dep,
+  include_directories : [lib, utils],
+  )
