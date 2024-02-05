@@ -70,7 +70,7 @@ struct avx2_vector<int64_t> {
     } // TODO: this should broadcast bits as is?
     static opmask_t knot_opmask(opmask_t x)
     {
-        auto allTrue = _mm256_set1_epi64x(0xFFFF'FFFF);
+        auto allTrue = _mm256_set1_epi64x(0xFFFF'FFFF'FFFF'FFFF);
         return _mm256_xor_si256(x, allTrue);
     }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)
@@ -249,7 +249,7 @@ struct avx2_vector<uint64_t> {
     }
     static opmask_t knot_opmask(opmask_t x)
     {
-        auto allTrue = _mm256_set1_epi64x(0xFFFF'FFFF);
+        auto allTrue = _mm256_set1_epi64x(0xFFFF'FFFF'FFFF'FFFF);
         return _mm256_xor_si256(x, allTrue);
     }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)
@@ -439,7 +439,7 @@ struct avx2_vector<double> {
     }
     static opmask_t knot_opmask(opmask_t x)
     {
-        auto allTrue = _mm256_set1_epi64x(0xFFFF'FFFF);
+        auto allTrue = _mm256_set1_epi64x(0xFFFF'FFFF'FFFF'FFFF);
         return _mm256_xor_si256(x, allTrue);
     }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)

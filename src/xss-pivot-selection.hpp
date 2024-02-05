@@ -3,20 +3,17 @@
 
 #include "xss-network-qsort.hpp"
 
+enum class pivot_result_t : int { Normal, Sorted, Only2Values };
+
 template <typename type_t>
 struct pivot_results{
-    bool alreadySorted = false;
-    bool only2Values = false;
+    
+    pivot_result_t result = pivot_result_t::Normal;
     type_t pivot = 0;
     
-    pivot_results(type_t _pivot){
+    pivot_results(type_t _pivot, pivot_result_t _result = pivot_result_t::Normal){
         pivot = _pivot;
-        alreadySorted = false;
-    }
-    
-    pivot_results(type_t _pivot, bool _alreadySorted){
-        pivot = _pivot;
-        alreadySorted = _alreadySorted;
+        result = _result;
     }
 };
 
@@ -197,7 +194,7 @@ X86_SIMD_SORT_INLINE pivot_results<type_t> get_pivot_near_constant(type_t *arr,
     if (index == right + 1){
         // The array is completely constant
         // Setting the second flag to true skips partitioning, as the array is constant and thus sorted
-        return pivot_results<type_t>(commonValue, true);
+        return pivot_results<type_t>(commonValue, pivot_result_t::Sorted);
     }
     
     // Secondly, search for a second value not equal to either of the previous two
@@ -224,9 +221,7 @@ X86_SIMD_SORT_INLINE pivot_results<type_t> get_pivot_near_constant(type_t *arr,
         // We can also skip recursing, as it is guaranteed both partitions are constant after partitioning with the larger value
         // TODO this logic now assumes we use greater than or equal to specifically when partitioning, might be worth noting that somewhere
         type_t pivot = std::max(value1, commonValue, comparison_func<vtype>);
-        auto result = pivot_results<type_t>(pivot, false);
-        result.only2Values = true;
-        return result;
+        return pivot_results<type_t>(pivot, pivot_result_t::Only2Values);
     }
     
     // The array has at least 3 distinct values. Use the middle one as the pivot

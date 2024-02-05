@@ -502,7 +502,7 @@ qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
     auto pivot_result = get_pivot_smart<vtype, type_t>(arr, left, right);
     type_t pivot = pivot_result.pivot;
     
-    if (pivot_result.alreadySorted){
+    if (pivot_result.result == pivot_result_t::Sorted){
         return;
     }
     
@@ -513,7 +513,7 @@ qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
             = partition_avx512_unrolled<vtype, vtype::partition_unroll_factor>(
                     arr, left, right + 1, pivot, &smallest, &biggest);
     
-    if (pivot_result.only2Values){
+    if (pivot_result.result == pivot_result_t::Only2Values){
         return;
     }
 
