@@ -25,14 +25,14 @@ objects. `Func` needs to have the following signature:
 
 Note that the return type of the key `type_t` needs to be one of the following
 : `[float, uint32_t, int32_t, double, uint64_t, int64_t]`. `object_qsort` has a
-space complexity of `O(N)`. Specifically, it requires `arrsize*(sizeof(type_t)`
-\+ `sizeof(uint32_t))` additional space. It allocates two `std::vectors`: one
-for storing all the keys and another storing the indexes of the object array.
-    For performance reasons, we support `object_qsort` only when the array size
-    is less than or equal to `UINT32_MAX`. An example usage of `object_qsort`
-    is provided in the [examples](#Sort-an-array-of-Points-using-object_qsort)
-    section.  Refer to [section](#Performance-of-object_qsort) to get a sense
-    of how fast this is relative to `std::sort`.
+space complexity of `O(N)`. Specifically, it requires `arrsize *
+sizeof(type_t)` bytes to store a vector with all the keys and an additional
+`arrsize * sizeof(uint32_t)` bytes to store the indexes of the object array.
+For performance reasons, we support `object_qsort` only when the array size is
+less than or equal to `UINT32_MAX`.  An example usage of `object_qsort` is
+provided in the [examples](#Sort-an-array-of-Points-using-object_qsort)
+section.  Refer to [section](#Performance-of-object_qsort) to get a sense of
+how fast this is relative to `std::sort`.
 
 ## Sort an array of built-in integers and floats
 ```cpp
@@ -143,23 +143,29 @@ array. You can read details of all the implementations
 [here](https://github.com/intel/x86-simd-sort/blob/main/src/README.md).
 
 ## Performance comparison on AVX-512: `object_qsort` v/s `std::sort`
-`object_qsort` relies on key-value sort which is currently accelerated only on
-AVX-512 (we plan to add AVX2 version soon). Benchmarks added in
-[bench-objsort.hpp](./benchmarks/bench-objsort.hpp) measures performance of
-`object_qsort` relative to `std::sort` when sorting an array of `struct Point
-{double x, y, z;}` and `struct Point {float x, y, x;}` for various metrics:
+Performance of `object_qsort` can vary significantly depending on the defintion
+of the custom class and we highly recommend benchmarking before using it. For
+the sake of illustration, we provide a few examples in
+[./benchmarks/bench-objsort.hpp](./benchmarks/bench-objsort.hpp) which measures
+performance of `object_qsort` relative to `std::sort` when sorting an array of
+points in the cartesian coordinates represented by the class: `struct Point
+{double x, y, z;}` and `struct Point {float x, y, x;}`. We sort these points
+based on several different metrics:
 
 + sort by coordinate `x`
 + sort by manhanttan distance (relative to origin): `abs(x) + abx(y) + abs(z)`
 + sort by Euclidean distance (relative to origin): `sqrt(x*x + y*y + z*z)`
 + sort by Chebyshev distance (relative to origin): `max(x, y, z)`
 
-The data was collected on a processor with AVX-512 and is shown in the plot
-below. For the simplest of cases where we want to sort an array of struct by
-one of its members, `object_qsort` can be up-to 5x faster for 32-bit data type
-and about 4x for 64-bit data type. It tends to do better when the metric to
-sort by gets more complicated. Sorting by Euclidean distance can be up-to 10x
-faster.
+The performance data (shown in the plot below) can be collected by building the
+benchmarks suite and running `./builddir/benchexe --benchmark_filter==*obj*`.
+The data plot shown below was collected on a processor with AVX-512 because
+`object_qsort` is currently accelerated only on AVX-512 (we plan to add the
+AVX2 version soon). For the simplest of cases where we want to sort an array of
+struct by one of its members, `object_qsort` can be up-to 5x faster for 32-bit
+data type and about 4x for 64-bit data type.  It tends to do even better when
+the metric to sort by gets more complicated. Sorting by Euclidean distance can
+be up-to 10x faster.
 
 ![alt text](./misc/object_qsort-perf.jpg?raw=true)
 
