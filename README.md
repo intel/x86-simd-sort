@@ -161,7 +161,7 @@ and about 4x for 64-bit data type. It tends to do better when the metric to
 sort by gets more complicated. Sorting by Euclidean distance can be up-to 10x
 faster.
 
-![alt text](./benchmarks/object_qsort-perf.jpg?raw=true)
+![alt text](./misc/object_qsort-perf.jpg?raw=true)
 
 ## Downstream projects using x86-simd-sort
 
