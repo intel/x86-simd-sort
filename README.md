@@ -20,13 +20,13 @@ computes the `key` value for each object which is the metric used to sort the
 objects. `Func` needs to have the following signature:
 
 ```cpp
-[] (T obj) -> type_t { type_t key; /* compute key for obj */ return key; }
+[] (T obj) -> key_t { key_t key; /* compute key for obj */ return key; }
 ```
 
-Note that the return type of the key `type_t` needs to be one of the following
+Note that the return type of the key `key_t` needs to be one of the following
 : `[float, uint32_t, int32_t, double, uint64_t, int64_t]`. `object_qsort` has a
 space complexity of `O(N)`. Specifically, it requires `arrsize *
-sizeof(type_t)` bytes to store a vector with all the keys and an additional
+sizeof(key_t)` bytes to store a vector with all the keys and an additional
 `arrsize * sizeof(uint32_t)` bytes to store the indexes of the object array.
 For performance reasons, we support `object_qsort` only when the array size is
 less than or equal to `UINT32_MAX`.  An example usage of `object_qsort` is
@@ -148,14 +148,14 @@ of the custom class and we highly recommend benchmarking before using it. For
 the sake of illustration, we provide a few examples in
 [./benchmarks/bench-objsort.hpp](./benchmarks/bench-objsort.hpp) which measures
 performance of `object_qsort` relative to `std::sort` when sorting an array of
-points in the cartesian coordinates represented by the class: `struct Point
-{double x, y, z;}` and `struct Point {float x, y, x;}`. We sort these points
-based on several different metrics:
+3D points represented by the class: `struct Point {double x, y, z;}` and
+`struct Point {float x, y, x;}`. We sort these points based on several
+different metrics:
 
 + sort by coordinate `x`
 + sort by manhanttan distance (relative to origin): `abs(x) + abx(y) + abs(z)`
 + sort by Euclidean distance (relative to origin): `sqrt(x*x + y*y + z*z)`
-+ sort by Chebyshev distance (relative to origin): `max(x, y, z)`
++ sort by Chebyshev distance (relative to origin): `max(abs(x), abs(y), abs(z))`
 
 The performance data (shown in the plot below) can be collected by building the
 benchmarks suite and running `./builddir/benchexe --benchmark_filter==*obj*`.

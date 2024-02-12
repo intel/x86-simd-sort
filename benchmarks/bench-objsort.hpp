@@ -29,7 +29,7 @@ struct Point3D {
             return std::abs(x) + std::abs(y) + std::abs(z);
         }
         else if constexpr (name == "chebyshev") {
-            return std::max(std::max(x, y), z);
+            return std::max(std::max(std::abs(x), std::abs(y)), std::abs(z));
         }
     }
 };
