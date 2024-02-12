@@ -1,32 +1,57 @@
 # x86-simd-sort
 
 C++ template library for high performance SIMD based sorting routines for
-16-bit, 32-bit and 64-bit data types. The sorting routines are accelerated
-using AVX-512/AVX2 when available. The library auto picks the best version
-depending on the processor it is run on. If you are looking for the AVX-512 or
-AVX2 specific implementations, please see
-[README](https://github.com/intel/x86-simd-sort/blob/main/src/README.md) file under
-`src/` directory. The following routines are currently supported:
+built-in integers and floats (16-bit, 32-bit and 64-bit data types) and custom
+defined C++ objects. The sorting routines are accelerated using AVX-512/AVX2
+when available. The library auto picks the best version depending on the
+processor it is run on. If you are looking for the AVX-512 or AVX2 specific
+implementations, please see
+[README](https://github.com/intel/x86-simd-sort/blob/main/src/README.md) file
+under `src/` directory. The following routines are currently supported:
 
+## Sort an array of custom defined class objects (uses `O(N)` space)
+``` cpp
+template <typename T, typename Func>
+void x86simdsort::object_qsort(T *arr, uint32_t arrsize, Func key_func)
+```
+`T` is any user defined struct or class and `arr` is a pointer to the first
+element in the array of objects of type `T`. `Func` is a lambda function that
+computes the `key` value for each object which is the metric used to sort the
+objects. `Func` needs to have the following signature:
 
-### Sort routines on arrays
 ```cpp
-x86simdsort::qsort(T* arr, size_t size, bool hasnan);
-x86simdsort::qselect(T* arr, size_t k, size_t size, bool hasnan);
-x86simdsort::partial_qsort(T* arr, size_t k, size_t size, bool hasnan);
+[] (T obj) -> key_t { key_t key; /* compute key for obj */ return key; }
+```
+
+Note that the return type of the key `key_t` needs to be one of the following
+: `[float, uint32_t, int32_t, double, uint64_t, int64_t]`. `object_qsort` has a
+space complexity of `O(N)`. Specifically, it requires `arrsize *
+sizeof(key_t)` bytes to store a vector with all the keys and an additional
+`arrsize * sizeof(uint32_t)` bytes to store the indexes of the object array.
+For performance reasons, we support `object_qsort` only when the array size is
+less than or equal to `UINT32_MAX`.  An example usage of `object_qsort` is
+provided in the [examples](#Sort-an-array-of-Points-using-object_qsort)
+section.  Refer to [section](#Performance-of-object_qsort) to get a sense of
+how fast this is relative to `std::sort`.
+
+## Sort an array of built-in integers and floats
+```cpp
+void x86simdsort::qsort(T* arr, size_t size, bool hasnan);
+void x86simdsort::qselect(T* arr, size_t k, size_t size, bool hasnan);
+void x86simdsort::partial_qsort(T* arr, size_t k, size_t size, bool hasnan);
 ```
 Supported datatypes: `T` $\in$ `[_Float16, uint16_t, int16_t, float, uint32_t,
 int32_t, double, uint64_t, int64_t]`
 
-### Key-value sort routines on pairs of arrays
+## Key-value sort routines on pairs of arrays
 ```cpp
-x86simdsort::keyvalue_qsort(T1* key, T2* val, size_t size, bool hasnan);
+void x86simdsort::keyvalue_qsort(T1* key, T2* val, size_t size, bool hasnan);
 ```
 Supported datatypes: `T1`, `T2` $\in$ `[float, uint32_t, int32_t, double,
 uint64_t, int64_t]` Note that keyvalue sort is not yet supported for 16-bit
 data types.
 
-### Arg sort routines on arrays
+## Arg sort routines on arrays
 ```cpp
 std::vector<size_t> arg = x86simdsort::argsort(T* arr, size_t size, bool hasnan);
 std::vector<size_t> arg = x86simdsort::argselect(T* arr, size_t k, size_t size, bool hasnan);
@@ -55,16 +80,38 @@ can configure meson to build them both by using `-Dbuild_tests=true` and
 
 ## Example usage
 
+#### Sort an array of floats
+
 ```cpp
 #include "x86simdsort.h"
 
 int main() {
     std::vector<float> arr{1000};
-    x86simdsort::qsort(arr, 1000, true);
+    x86simdsort::qsort(arr.data(), 1000, true);
     return 0;
 }
 ```
 
+#### Sort an array of Points using object_qsort
+```cpp
+#include "x86simdsort.h"
+#include <cmath>
+
+struct Point {
+    double x, y, z;
+};
+
+int main() {
+    std::vector<Point> arr{1000};
+    // Sort an array of Points by its x value:
+    x86simdsort::object_qsort(arr.data(), 1000, [](Point p) { return p.x; });
+    // Sort an array of Points by its distance from origin:
+    x86simdsort::object_qsort(arr.data(), 1000, [](Point p) {
+        return sqrt(p.x*p.x+p.y*p.y+p.z*p.z);
+        });
+    return 0;
+}
+```
 
 ## Details
 
@@ -94,6 +141,33 @@ the input are not preserved. Also note that the arg methods (argsort and
 argselect) will not use the SIMD based algorithms if they detect NAN's in the
 array. You can read details of all the implementations
 [here](https://github.com/intel/x86-simd-sort/blob/main/src/README.md).
+
+## Performance comparison on AVX-512: `object_qsort` v/s `std::sort`
+Performance of `object_qsort` can vary significantly depending on the defintion
+of the custom class and we highly recommend benchmarking before using it. For
+the sake of illustration, we provide a few examples in
+[./benchmarks/bench-objsort.hpp](./benchmarks/bench-objsort.hpp) which measures
+performance of `object_qsort` relative to `std::sort` when sorting an array of
+3D points represented by the class: `struct Point {double x, y, z;}` and
+`struct Point {float x, y, x;}`. We sort these points based on several
+different metrics:
+
++ sort by coordinate `x`
++ sort by manhanttan distance (relative to origin): `abs(x) + abx(y) + abs(z)`
++ sort by Euclidean distance (relative to origin): `sqrt(x*x + y*y + z*z)`
++ sort by Chebyshev distance (relative to origin): `max(abs(x), abs(y), abs(z))`
+
+The performance data (shown in the plot below) can be collected by building the
+benchmarks suite and running `./builddir/benchexe --benchmark_filter==*obj*`.
+The data plot shown below was collected on a processor with AVX-512 because
+`object_qsort` is currently accelerated only on AVX-512 (we plan to add the
+AVX2 version soon). For the simplest of cases where we want to sort an array of
+struct by one of its members, `object_qsort` can be up-to 5x faster for 32-bit
+data type and about 4x for 64-bit data type.  It tends to do even better when
+the metric to sort by gets more complicated. Sorting by Euclidean distance can
+be up-to 10x faster.
+
+![alt text](./misc/object_qsort-perf.jpg?raw=true)
 
 ## Downstream projects using x86-simd-sort
 
