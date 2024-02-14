@@ -1,5 +1,5 @@
 CXX ?= g++-12
-CFLAGS = -I../src -std=c++17 -O3 $if( $(CXXFLAGS),$(CXXFLAGS),)
+CFLAGS = -I../src -std=c++17 -O3 $(if $(CXXFLAGS),$(CXXFLAGS),)
 EXE = qsort32avx2 argsort kvsort qsortfp16 qsort16 qsort32 qsort64
 
 default: all
