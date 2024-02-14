@@ -2,6 +2,7 @@
 
 ## Set up environment
 if ! command -v python3 &> /dev/null
+then
     /opt/python/cp39-cp39/bin/python -mvenv venv
 else
     python3 -mvenv venv
