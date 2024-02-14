@@ -12,6 +12,10 @@ else
 fi
 python3 -m pip install meson ninja
 export CXX=$1
+if [$# -eq 2]
+then
+    export CXXFLAGS=$2
+fi
 
 ## Install google test from source
 git clone https://github.com/google/googletest.git -b v1.14.0

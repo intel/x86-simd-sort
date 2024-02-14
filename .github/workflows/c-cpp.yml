@@ -187,8 +187,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Build and test using the Intel C++ compiler
+    - name: Build and test using the Intel LLVM C++ compiler
       run: |
         docker run -v $(pwd):/xss intel/oneapi-basekit \
-        /bin/bash -xc "source /xss/.github/workflows/build-test-on-docker.sh icx"
+        /bin/bash -xc "source /xss/.github/workflows/build-test-on-docker.sh icx -fp-model=precise"
 
