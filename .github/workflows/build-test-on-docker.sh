@@ -1,7 +1,11 @@
 #!/bin/bash
 
 ## Set up environment
-/opt/python/cp39-cp39/bin/python -mvenv venv
+if ! command -v python3 &> /dev/null
+    /opt/python/cp39-cp39/bin/python -mvenv venv
+else
+    python3 -mvenv venv
+fi
 source venv/bin/activate
 python3 -m pip install meson ninja
 export CXX=$1
