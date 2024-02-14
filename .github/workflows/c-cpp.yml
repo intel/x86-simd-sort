@@ -223,4 +223,6 @@ jobs:
         ninja
 
     - name: Run test suite on SPR
-      run: sde -spr -- ./builddir/testexe
+      run: |
+        source /opt/intel/oneapi/setvars.sh
+        sde -spr -- ./builddir/testexe
