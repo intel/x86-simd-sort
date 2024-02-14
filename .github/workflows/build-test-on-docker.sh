@@ -4,10 +4,10 @@
 if ! command -v python3 &> /dev/null
 then
     /opt/python/cp39-cp39/bin/python -mvenv venv
+    source venv/bin/activate
 else
-    python3 -mvenv venv
+    apt-get install python3-pip -y
 fi
-source venv/bin/activate
 python3 -m pip install meson ninja
 export CXX=$1
 
