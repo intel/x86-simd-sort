@@ -178,17 +178,43 @@ jobs:
     - name: Build and test on 32-bit manylinux2014
       run: |
         docker run -v $(pwd):/xss quay.io/pypa/manylinux2014_i686 \
-        /bin/bash -xc "source /xss/.github/workflows/build-test-on-docker.sh g++"
+        /bin/bash -xc "source /xss/.github/workflows/build-test-on-32bit.sh"
 
-  icpx:
+  SPR-icpx:
 
     runs-on: intel-ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Build and test using the Intel LLVM C++ compiler
+    - name: Install dependencies
       run: |
-        docker run -v $(pwd):/xss intel/oneapi-basekit:latest \
-        /bin/bash -xc "source /xss/.github/workflows/build-test-on-docker.sh icpx -fp-model=precise"
+        sudo apt update
+        sudo apt -y install intel-dpcpp-cpp-compiler libgtest-dev meson curl git
 
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Build examples
+      env:
+        CXX: icpx
+        CXXFLAGS: -fp-model=precise
+      run: |
+        cd examples
+        make all
+
+    - name: Build
+      env:
+        CXX: icpx
+        CXXFLAGS: -fp-model=precise
+      run: |
+        make clean
+        meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir
+        cd builddir
+        ninja
+
+    - name: Run test suite on SPR
+      run: sde -spr -- ./builddir/testexe
