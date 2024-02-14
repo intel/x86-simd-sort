@@ -189,6 +189,6 @@ jobs:
 
     - name: Build and test using the Intel LLVM C++ compiler
       run: |
-        docker run -v $(pwd):/xss intel/oneapi-basekit \
+        docker run -v $(pwd):/xss intel/oneapi-basekit:latest \
         /bin/bash -xc "source /xss/.github/workflows/build-test-on-docker.sh icpx -fp-model=precise"
 
