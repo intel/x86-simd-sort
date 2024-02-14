@@ -66,7 +66,7 @@
 #endif
 
 #if __GNUC__ >= 8 and !defined(__SANITIZE_ADDRESS__)
-#if defined(__INTEL_COMPILER)
+#if defined(__INTEL_COMPILER) or defined(__INTEL_LLVM_COMPILER)
 #define X86_SIMD_SORT_UNROLL_LOOP(num) PRAGMA(unroll(num))
 #else
 #define X86_SIMD_SORT_UNROLL_LOOP(num) PRAGMA(GCC unroll num)
