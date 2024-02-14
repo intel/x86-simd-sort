@@ -190,7 +190,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo add-apt-repository -y "deb https://apt.repos.intel.com/oneapi all main"
-        sudo apt update
+        sudo apt update --allow-insecure-repositories
         sudo apt -y install intel-dpcpp-cpp-compiler libgtest-dev meson curl git
 
     - name: Install Intel SDE
