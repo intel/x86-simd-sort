@@ -193,6 +193,7 @@ jobs:
         sudo add-apt-repository -y "deb https://apt.repos.intel.com/oneapi all main"
         sudo apt update --allow-insecure-repositories
         sudo apt --allow-unauthenticated -y install intel-oneapi-compiler-dpcpp-cpp libgtest-dev meson curl git
+        source /opt/intel/oneapi/setvars.sh
  
     - name: Install Intel SDE
       run: |
