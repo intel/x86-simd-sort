@@ -28,7 +28,8 @@ make install
 ## Install Intel SDE
 curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
 mkdir /tmp/sde && tar -xf /tmp/sde.tar.xz -C /tmp/sde/
-mv /tmp/sde/* /opt/sde
+ls /tmp/sde
+
 
 ## Build x86-simd-sort
 cd /xss
@@ -37,5 +38,5 @@ cd builddir
 ninja
 
 ## Run tests
-/opt/sde/sde -tgl -- ./testexe
-/opt/sde/sde -skl -- ./testexe
+/tmp/sde/sde -tgl -- ./testexe
+/tmp/sde/sde -skl -- ./testexe
