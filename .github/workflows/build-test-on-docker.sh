@@ -17,8 +17,6 @@ then
     export CXXFLAGS=$2
 fi
 
-echo $CXXFLAGS
-
 ## Install google test from source
 git clone https://github.com/google/googletest.git -b v1.14.0
 cd googletest
