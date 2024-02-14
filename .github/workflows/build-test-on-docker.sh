@@ -12,7 +12,7 @@ else
 fi
 python3 -m pip install meson ninja
 export CXX=$1
-if [$# -gt 1]
+if [[ $# -gt 1 ]]
 then
     export CXXFLAGS=$2
 fi
