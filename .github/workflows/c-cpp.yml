@@ -7,6 +7,22 @@ on:
     branches: [ "main" ]
 
 jobs:
+  clang-format:
+
+    runs-on: intel-ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install clang-format
+
+    - name: Linting
+      run: |
+        find . -type | grep -P ".*\.(c|cpp|h|hpp)" | xargs clang-format -style=file --dry-run
+
   SKL-gcc9:
 
     runs-on: intel-ubuntu-latest
