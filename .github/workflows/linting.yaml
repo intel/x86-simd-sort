@@ -1,0 +1,24 @@
+name: Lint
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  clang-format:
+
+    runs-on: intel-ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install clang-format
+
+    - name: Lint
+      run: |
+        find . -type f | grep -P ".*\.(c|cpp|h|hpp)\b" | xargs clang-format -style=file --dry-run -Werror
