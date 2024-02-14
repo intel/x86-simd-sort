@@ -178,4 +178,17 @@ jobs:
     - name: Build and test on 32-bit manylinux2014
       run: |
         docker run -v $(pwd):/xss quay.io/pypa/manylinux2014_i686 \
-        /bin/bash -xc "source /xss/.github/workflows/build-test-on-32bit.sh"
+        /bin/bash -xc "source /xss/.github/workflows/build-test-on-docker.sh g++"
+
+  icx:
+
+    runs-on: intel-ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build and test using the Intel C++ compiler
+      run: |
+        docker run -v $(pwd):/xss intel/oneapi-basekit \
+        /bin/bash -xc "source /xss/.github/workflows/build-test-on-docker.sh icx"
+

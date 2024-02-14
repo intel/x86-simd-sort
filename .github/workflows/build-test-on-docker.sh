@@ -4,7 +4,7 @@
 /opt/python/cp39-cp39/bin/python -mvenv venv
 source venv/bin/activate
 python3 -m pip install meson ninja
-export CXX=g++
+export CXX=$1
 
 ## Install google test from source
 git clone https://github.com/google/googletest.git -b v1.14.0
