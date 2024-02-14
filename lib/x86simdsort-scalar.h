@@ -4,25 +4,24 @@
 
 namespace xss {
 namespace utils {
-/* O(1) permute array in place: stolen from
+    /* O(1) permute array in place: stolen from
  * http://www.davidespataro.it/apply-a-permutation-to-a-vector */
-template<typename T>
-void apply_permutation_in_place(T* arr, std::vector<size_t> arg)
-{
-    for(size_t i = 0 ; i < arg.size() ; i++) {
-        size_t curr = i;
-        size_t next = arg[curr];
-        while(next != i)
-        {
-            std::swap(arr[curr], arr[next]);
+    template <typename T>
+    void apply_permutation_in_place(T *arr, std::vector<size_t> arg)
+    {
+        for (size_t i = 0; i < arg.size(); i++) {
+            size_t curr = i;
+            size_t next = arg[curr];
+            while (next != i) {
+                std::swap(arr[curr], arr[next]);
+                arg[curr] = curr;
+                curr = next;
+                next = arg[next];
+            }
             arg[curr] = curr;
-            curr = next;
-            next = arg[next];
         }
-        arg[curr] = curr;
     }
-}
-} // utils
+} // namespace utils
 
 namespace scalar {
     template <typename T>
@@ -79,7 +78,7 @@ namespace scalar {
         return arg;
     }
     template <typename T1, typename T2>
-    void keyvalue_qsort(T1 *key, T2* val, size_t arrsize, bool hasnan)
+    void keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan)
     {
         std::vector<size_t> arg = argsort(key, arrsize, hasnan);
         utils::apply_permutation_in_place(key, arg);

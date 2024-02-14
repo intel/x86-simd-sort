@@ -502,9 +502,10 @@ replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr, arrsize_t arrsize)
 {
     arrsize_t nan_count = 0;
     __mmask16 loadmask = 0xFFFF;
-    for (arrsize_t ii = 0; ii < arrsize; ii = ii + zmm_vector<float16>::numlanes / 2) {
+    for (arrsize_t ii = 0; ii < arrsize;
+         ii = ii + zmm_vector<float16>::numlanes / 2) {
         if (arrsize - ii < 16) {
-            loadmask = (0x0001 << (arrsize-ii)) - 0x0001;
+            loadmask = (0x0001 << (arrsize - ii)) - 0x0001;
         }
         __m256i in_zmm = _mm256_maskz_loadu_epi16(loadmask, arr);
         __m512 in_zmm_asfloat = _mm512_cvtph_ps(in_zmm);

@@ -1,6 +1,7 @@
 #include "avx512fp16-16bit-qsort.hpp"
 
-int main() {
+int main()
+{
     const int size = 1000;
     _Float16 arr[size];
     avx512_qsort(arr, size);

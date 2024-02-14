@@ -39,7 +39,7 @@ argselect(T *arr, size_t k, size_t arrsize, bool hasnan = false);
 // keyvalue sort
 template <typename T1, typename T2>
 XSS_EXPORT_SYMBOL void
-keyvalue_qsort(T1 *key, T2* val, size_t arrsize, bool hasnan = false);
+keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false);
 
 // sort an object
 template <typename T, typename Func>
@@ -61,17 +61,12 @@ XSS_EXPORT_SYMBOL void object_qsort(T *arr, uint32_t arrsize, Func key_func)
 
     /* (3) Permute obj array in-place */
     std::vector<bool> done(arrsize);
-    for (size_t i = 0; i < arrsize; ++i)
-    {
-        if (done[i])
-        {
-            continue;
-        }
+    for (size_t i = 0; i < arrsize; ++i) {
+        if (done[i]) { continue; }
         done[i] = true;
         size_t prev_j = i;
         size_t j = arg[i];
-        while (i != j)
-        {
+        while (i != j) {
             std::swap(arr[prev_j], arr[j]);
             done[j] = true;
             prev_j = j;

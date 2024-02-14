@@ -14,7 +14,8 @@ static void vqsort(benchmark::State &state, Args &&...args)
     std::vector<T> arr_bkp = arr;
     // benchmark
     for (auto _ : state) {
-        hwy::HWY_NAMESPACE::VQSortStatic(arr.data(), arrsize, hwy::SortAscending());
+        hwy::HWY_NAMESPACE::VQSortStatic(
+                arr.data(), arrsize, hwy::SortAscending());
         state.PauseTiming();
         arr = arr_bkp;
         state.ResumeTiming();

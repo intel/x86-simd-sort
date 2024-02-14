@@ -12,7 +12,7 @@ struct compare {
     {
         if constexpr (xss::fp::is_floating_point_v<T>) {
             T inf = xss::fp::infinity<T>();
-            T one = (T) 1.0;
+            T one = (T)1.0;
             if (!xss::fp::isunordered(a, b)) { return op(a, b); }
             else if ((xss::fp::isnan(a)) && (!xss::fp::isnan(b))) {
                 return b == inf ? op(inf, one) : op(inf, b);
@@ -32,7 +32,7 @@ struct compare {
 
 template <typename T, typename Comparator>
 struct compare_arg {
-    compare_arg(const T* arr)
+    compare_arg(const T *arr)
     {
         this->arr = arr;
     }
@@ -40,5 +40,5 @@ struct compare_arg {
     {
         return compare<T, Comparator>()(arr[a], arr[b]);
     }
-    const T* arr;
+    const T *arr;
 };

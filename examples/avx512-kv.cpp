@@ -1,6 +1,7 @@
 #include "avx512-64bit-keyvaluesort.hpp"
 
-int main() {
+int main()
+{
     const int size = 1000;
     int64_t arr1[size];
     uint64_t arr2[size];

@@ -20,7 +20,7 @@
     void partial_qsort(type *arr, size_t k, size_t arrsize, bool hasnan) \
     { \
         avx2_partial_qsort(arr, k, arrsize, hasnan); \
-    }\
+    } \
     template <> \
     std::vector<size_t> argsort(type *arr, size_t arrsize, bool hasnan) \
     { \
