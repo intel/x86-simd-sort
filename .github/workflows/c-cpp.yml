@@ -214,7 +214,6 @@ jobs:
         CXX: icpx
         CXXFLAGS: -fp-model=precise
       run: |
-        source /opt/intel/oneapi/setvars.sh
         make clean
         meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir
         cd builddir
