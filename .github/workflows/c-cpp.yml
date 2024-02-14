@@ -189,6 +189,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo add-apt-repository -y "dev https://apt.repos.intel.com/oneapi all main"
         sudo apt update
         sudo apt -y install intel-dpcpp-cpp-compiler libgtest-dev meson curl git
 
