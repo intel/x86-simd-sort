@@ -6,6 +6,8 @@ then
     /opt/python/cp39-cp39/bin/python -mvenv venv
     source venv/bin/activate
 else
+    apt-add-repository universe
+    apt-get update
     apt-get install python3-pip -y
 fi
 python3 -m pip install meson ninja
