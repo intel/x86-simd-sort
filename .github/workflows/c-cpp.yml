@@ -21,7 +21,8 @@ jobs:
 
     - name: Linting
       run: |
-        find . -type f | grep -P ".*\.(c|cpp|h|hpp)" | xargs clang-format -style=file --dry-run
+        pwd
+        find . -type f | grep -P ".*\.(c|cpp|h|hpp)" | xargs clang-format -style=file --dry-run -Werror
 
   SKL-gcc9:
 
