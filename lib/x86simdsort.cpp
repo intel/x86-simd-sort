@@ -10,7 +10,7 @@ static int check_cpu_feature_support(std::string_view cpufeature)
     const char *disable_avx512 = std::getenv("XSS_DISABLE_AVX512");
 
     if ((cpufeature == "avx512_spr") && (!disable_avx512))
-#ifdef __FLT16_MAX__
+#if defined(__FLT16_MAX__) && !defined(__INTEL_LLVM_COMPILER)
         return __builtin_cpu_supports("avx512f")
                 && __builtin_cpu_supports("avx512fp16")
                 && __builtin_cpu_supports("avx512vbmi2");
