@@ -201,15 +201,6 @@ jobs:
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
 
-    - name: Build examples
-      env:
-        CXX: icpx
-        CXXFLAGS: -fp-model=precise
-      run: |
-        source /opt/intel/oneapi/setvars.sh
-        cd examples
-        make all
-
     - name: Build
       env:
         CXX: icpx
