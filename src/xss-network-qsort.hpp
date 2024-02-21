@@ -144,7 +144,8 @@ X86_SIMD_SORT_FINLINE void merge_n_vec(reg_t *regs)
 }
 
 template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_FINLINE void sort_vectors(reg_t * vecs){
+X86_SIMD_SORT_FINLINE void sort_vectors(reg_t *vecs)
+{
     /* Run the initial sorting network to sort the columns of the [numVecs x
      * num_lanes] matrix
      */
@@ -188,7 +189,7 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
         vecs[i] = vtype::mask_loadu(
                 vtype::zmm_max(), ioMasks[j], arr + i * vtype::numlanes);
     }
-    
+
     sort_vectors<vtype, numVecs>(vecs);
 
     // Unmasked part of the store

@@ -441,9 +441,8 @@ bitonic_fullmerge_n_vec(typename keyType::reg_t *keys,
 }
 
 template <typename keyType, typename indexType, int numVecs>
-X86_SIMD_SORT_INLINE void argsort_n_vec(typename keyType::type_t *keys,
-                                        arrsize_t *indices,
-                                        int N)
+X86_SIMD_SORT_INLINE void
+argsort_n_vec(typename keyType::type_t *keys, arrsize_t *indices, int N)
 {
     using kreg_t = typename keyType::reg_t;
     using ireg_t = typename indexType::reg_t;
@@ -586,9 +585,8 @@ X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys,
 }
 
 template <typename keyType, typename indexType, int maxN>
-X86_SIMD_SORT_INLINE void argsort_n(typename keyType::type_t *keys,
-                                    arrsize_t *indices,
-                                    int N)
+X86_SIMD_SORT_INLINE void
+argsort_n(typename keyType::type_t *keys, arrsize_t *indices, int N)
 {
     static_assert(keyType::numlanes == indexType::numlanes,
                   "invalid pairing of value/index types");
