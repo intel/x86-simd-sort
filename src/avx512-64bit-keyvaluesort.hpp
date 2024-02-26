@@ -388,7 +388,10 @@ X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
         return;
     }
 
-    type1_t pivot = get_pivot_blocks<vtype1>(keys, left, right);
+    type1_t pivot;
+    auto pivot_result = get_pivot_smart<vtype1, type1_t>(keys, left, right);
+    pivot = pivot_result.pivot;
+
     type1_t smallest = vtype1::type_max();
     type1_t biggest = vtype1::type_min();
     arrsize_t pivot_index = partition_avx512_unrolled<vtype1, vtype2, 4>(
