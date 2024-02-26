@@ -454,12 +454,10 @@ struct avx2_vector<double> {
     template <int type>
     static opmask_t fpclass(reg_t x)
     {
-        if constexpr (type == (0x01 | 0x80)) {
-            return _mm256_castpd_si256(_mm256_cmp_pd(x, x, _CMP_UNORD_Q));
-        }
-        else {
+        if constexpr (type != (0x01 | 0x80)) {
             static_assert(type == (0x01 | 0x80), "should not reach here");
         }
+        return _mm256_castpd_si256(_mm256_cmp_pd(x, x, _CMP_UNORD_Q));
     }
     static ymmi_t seti(int64_t v1, int64_t v2, int64_t v3, int64_t v4)
     {
