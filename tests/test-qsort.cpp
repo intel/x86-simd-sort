@@ -94,7 +94,8 @@ TYPED_TEST_P(simdsort, test_argselect)
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::less<TypeParam>>());
-            auto arg = x86simdsort::argselect(arr.data(), k, arr.size(), hasnan);
+            auto arg
+                    = x86simdsort::argselect(arr.data(), k, arr.size(), hasnan);
             IS_ARG_PARTITIONED(arr, arg, sortedarr[k], k, type);
             arr.clear();
             sortedarr.clear();

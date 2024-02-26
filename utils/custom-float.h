@@ -2,8 +2,7 @@
 #define UTILS_FLOAT
 #include <cstdint>
 namespace xss {
-namespace fp
-{
+namespace fp {
     template <typename T>
     inline constexpr bool is_floating_point_v = std::is_floating_point_v<T>;
 
@@ -86,6 +85,6 @@ namespace fp
     }
 #endif
 
-} // namespace float
+} // namespace fp
 } // namespace xss
 #endif

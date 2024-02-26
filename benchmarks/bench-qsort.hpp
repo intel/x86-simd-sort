@@ -36,10 +36,9 @@ static void simdsort(benchmark::State &state, Args &&...args)
     }
 }
 
-
 #define BENCH_BOTH_QSORT(type) \
     BENCH_SORT(simdsort, type) \
-    BENCH_SORT(scalarsort, type) \
+    BENCH_SORT(scalarsort, type)
 
 BENCH_BOTH_QSORT(uint64_t)
 BENCH_BOTH_QSORT(int64_t)

@@ -63,13 +63,16 @@ static void ippargsort(benchmark::State &state, Args &&...args)
     // benchmark
     for (auto _ : state) {
         if constexpr (std::is_same_v<T, float>) {
-            ippsSortRadixIndexAscend_32f(arr.data(), 4, arg.data(), arrsize, temp);
+            ippsSortRadixIndexAscend_32f(
+                    arr.data(), 4, arg.data(), arrsize, temp);
         }
         else if constexpr (std::is_same_v<T, double>) {
-            ippsSortRadixIndexAscend_64f(arr.data(), 8, arg.data(), arrsize, temp);
+            ippsSortRadixIndexAscend_64f(
+                    arr.data(), 8, arg.data(), arrsize, temp);
         }
         else if constexpr (std::is_same_v<T, int32_t>) {
-            ippsSortRadixIndexAscend_32s(arr.data(), 4, arg.data(), arrsize, temp);
+            ippsSortRadixIndexAscend_32s(
+                    arr.data(), 4, arg.data(), arrsize, temp);
         }
         state.PauseTiming();
         arr = arr_bkp;

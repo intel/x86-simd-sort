@@ -1,6 +1,7 @@
 #include "avx512-32bit-qsort.hpp"
 
-int main() {
+int main()
+{
     const int size = 1000;
     float arr[size];
     avx512_qsort(arr, size);

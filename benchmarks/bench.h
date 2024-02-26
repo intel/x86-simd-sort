@@ -12,14 +12,10 @@
                             })))
 
 #define BENCH_SORT(func, type) \
-    MY_BENCHMARK_CAPTURE( \
-            func, type, random_128, 128, std::string("random")); \
-    MY_BENCHMARK_CAPTURE( \
-            func, type, random_256, 256, std::string("random")); \
-    MY_BENCHMARK_CAPTURE( \
-            func, type, random_512, 512, std::string("random")); \
-    MY_BENCHMARK_CAPTURE( \
-            func, type, random_1k, 1024, std::string("random")); \
+    MY_BENCHMARK_CAPTURE(func, type, random_128, 128, std::string("random")); \
+    MY_BENCHMARK_CAPTURE(func, type, random_256, 256, std::string("random")); \
+    MY_BENCHMARK_CAPTURE(func, type, random_512, 512, std::string("random")); \
+    MY_BENCHMARK_CAPTURE(func, type, random_1k, 1024, std::string("random")); \
     MY_BENCHMARK_CAPTURE(func, type, random_5k, 5000, std::string("random")); \
     MY_BENCHMARK_CAPTURE( \
             func, type, random_100k, 100000, std::string("random")); \
@@ -37,7 +33,8 @@
             func, type, smallrange_512, 512, std::string("smallrange")); \
     MY_BENCHMARK_CAPTURE( \
             func, type, smallrange_1k, 1024, std::string("smallrange")); \
-    MY_BENCHMARK_CAPTURE(func, type, smallrange_5k, 5000, std::string("smallrange")); \
+    MY_BENCHMARK_CAPTURE( \
+            func, type, smallrange_5k, 5000, std::string("smallrange")); \
     MY_BENCHMARK_CAPTURE( \
             func, type, smallrange_100k, 100000, std::string("smallrange")); \
     MY_BENCHMARK_CAPTURE( \

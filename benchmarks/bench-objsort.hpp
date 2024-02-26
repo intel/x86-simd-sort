@@ -5,7 +5,7 @@ static constexpr char euclidean[] = "euclidean";
 static constexpr char taxicab[] = "taxicab";
 static constexpr char chebyshev[] = "chebyshev";
 
-template <typename T, const char* val>
+template <typename T, const char *val>
 struct Point3D {
     T x;
     T y;
@@ -19,9 +19,7 @@ struct Point3D {
     }
     T distance()
     {
-        if constexpr (name == "x") {
-            return x;
-        }
+        if constexpr (name == "x") { return x; }
         else if constexpr (name == "euclidean") {
             return std::sqrt(x * x + y * y + z * z);
         }
@@ -77,9 +75,8 @@ static void simdobjsort(benchmark::State &state)
     std::vector<T> arr_bkp = arr;
     // benchmark
     for (auto _ : state) {
-        x86simdsort::object_qsort(arr.data(), arr.size(), [](T p) {
-            return p.distance();
-        });
+        x86simdsort::object_qsort(
+                arr.data(), arr.size(), [](T p) { return p.distance(); });
         state.PauseTiming();
         if (!std::is_sorted(arr.begin(), arr.end(), less_than_key<T>())) {
             std::cout << "sorting failed \n";
@@ -90,7 +87,7 @@ static void simdobjsort(benchmark::State &state)
 }
 
 #define BENCHMARK_OBJSORT(func, T, type, dist) \
-    BENCHMARK_TEMPLATE(func, T<type,dist>) \
+    BENCHMARK_TEMPLATE(func, T<type, dist>) \
             ->Arg(10e1) \
             ->Arg(10e2) \
             ->Arg(10e3) \
@@ -101,12 +98,12 @@ static void simdobjsort(benchmark::State &state)
 #define BENCH_ALL(dtype) \
     BENCHMARK_OBJSORT(simdobjsort, Point3D, dtype, x) \
     BENCHMARK_OBJSORT(scalarobjsort, Point3D, dtype, x) \
-    BENCHMARK_OBJSORT(simdobjsort, Point3D, dtype, taxicab ) \
+    BENCHMARK_OBJSORT(simdobjsort, Point3D, dtype, taxicab) \
     BENCHMARK_OBJSORT(scalarobjsort, Point3D, dtype, taxicab) \
     BENCHMARK_OBJSORT(simdobjsort, Point3D, dtype, euclidean) \
     BENCHMARK_OBJSORT(scalarobjsort, Point3D, dtype, euclidean) \
     BENCHMARK_OBJSORT(simdobjsort, Point3D, dtype, chebyshev) \
-    BENCHMARK_OBJSORT(scalarobjsort, Point3D, dtype, chebyshev) \
+    BENCHMARK_OBJSORT(scalarobjsort, Point3D, dtype, chebyshev)
 
 BENCH_ALL(double)
 BENCH_ALL(float)
