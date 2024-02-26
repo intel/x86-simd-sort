@@ -20,6 +20,7 @@ public:
                    "reverse",
                    "smallrange",
                    "max_at_the_end",
+                   "random_5d",
                    "rand_max"};
     }
     std::vector<std::string> arrtype;

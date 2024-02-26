@@ -87,7 +87,8 @@ X86_SIMD_SORT_INLINE bool array_has_nan(type_t *arr, arrsize_t size)
         else {
             in = vtype::loadu(arr + ii);
         }
-        auto nanmask = vtype::convert_mask_to_int(vtype::template fpclass<0x01 | 0x80>(in));
+        auto nanmask = vtype::convert_mask_to_int(
+                vtype::template fpclass<0x01 | 0x80>(in));
         if (nanmask != 0x00) {
             found_nan = true;
             break;
@@ -136,7 +137,7 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr, arrsize_t size)
     return size - count - 1;
 }
 
-template <typename vtype, typename T = typename vtype::type_t>
+template <typename vtype, typename T>
 X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b)
 {
     return a < b;
@@ -499,13 +500,19 @@ qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
         return;
     }
 
-    type_t pivot = get_pivot_blocks<vtype, type_t>(arr, left, right);
+    auto pivot_result = get_pivot_smart<vtype, type_t>(arr, left, right);
+    type_t pivot = pivot_result.pivot;
+
+    if (pivot_result.result == pivot_result_t::Sorted) { return; }
+
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
 
     arrsize_t pivot_index
             = partition_avx512_unrolled<vtype, vtype::partition_unroll_factor>(
                     arr, left, right + 1, pivot, &smallest, &biggest);
+
+    if (pivot_result.result == pivot_result_t::Only2Values) { return; }
 
     if (pivot != smallest)
         qsort_<vtype>(arr, left, pivot_index - 1, max_iters - 1);

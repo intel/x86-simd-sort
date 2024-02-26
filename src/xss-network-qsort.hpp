@@ -4,6 +4,9 @@
 #include "xss-optimal-networks.hpp"
 #include "xss-common-qsort.h"
 
+template <typename vtype, typename mm_t>
+X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b);
+
 template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void bitonic_sort_n_vec(reg_t *regs)
 {
@@ -141,6 +144,18 @@ X86_SIMD_SORT_FINLINE void merge_n_vec(reg_t *regs)
 }
 
 template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
+X86_SIMD_SORT_FINLINE void sort_vectors(reg_t *vecs)
+{
+    /* Run the initial sorting network to sort the columns of the [numVecs x
+     * num_lanes] matrix
+     */
+    bitonic_sort_n_vec<vtype, numVecs>(vecs);
+
+    // Merge the vectors using bitonic merging networks
+    merge_n_vec<vtype, numVecs>(vecs);
+}
+
+template <typename vtype, int numVecs, typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
 {
     static_assert(numVecs > 0, "numVecs should be > 0");
@@ -175,13 +190,7 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
                 vtype::zmm_max(), ioMasks[j], arr + i * vtype::numlanes);
     }
 
-    /* Run the initial sorting network to sort the columns of the [numVecs x
-     * num_lanes] matrix
-     */
-    bitonic_sort_n_vec<vtype, numVecs>(vecs);
-
-    // Merge the vectors using bitonic merging networks
-    merge_n_vec<vtype, numVecs>(vecs);
+    sort_vectors<vtype, numVecs>(vecs);
 
     // Unmasked part of the store
     X86_SIMD_SORT_UNROLL_LOOP(64)

@@ -55,6 +55,10 @@ struct zmm_vector<_Float16> {
     {
         return _mm512_cmp_ph_mask(x, y, _CMP_GE_OQ);
     }
+    static opmask_t eq(reg_t x, reg_t y)
+    {
+        return _mm512_cmp_ph_mask(x, y, _CMP_EQ_OQ);
+    }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
         return ((0x1ull << num_to_read) - 0x1ull);
@@ -149,6 +153,9 @@ struct zmm_vector<_Float16> {
     static __m512i cast_to(reg_t v)
     {
         return _mm512_castph_si512(v);
+    }
+    static bool all_false(opmask_t k){
+        return k == 0;
     }
     static int double_compressstore(type_t *left_addr,
                                     type_t *right_addr,

@@ -17,6 +17,7 @@ public:
                    "reverse",
                    "smallrange",
                    "max_at_the_end",
+                   "random_5d",
                    "rand_max",
                    "rand_with_nan"};
     }

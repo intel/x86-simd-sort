@@ -86,6 +86,11 @@ struct avx2_vector<int32_t> {
     {
         return _mm256_set1_epi32(type_max());
     } // TODO: this should broadcast bits as is?
+    static opmask_t knot_opmask(opmask_t x)
+    {
+        auto allOnes = seti(-1, -1, -1, -1, -1, -1, -1, -1);
+        return _mm256_xor_si256(x, allOnes);
+    }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
         auto mask = ((0x1ull << num_to_read) - 0x1ull);
@@ -204,6 +209,9 @@ struct avx2_vector<int32_t> {
     {
         return v;
     }
+    static bool all_false(opmask_t k){
+        return _mm256_movemask_ps(_mm256_castsi256_ps(k)) == 0;
+    }
     static int double_compressstore(type_t *left_addr,
                                     type_t *right_addr,
                                     opmask_t k,
@@ -241,6 +249,11 @@ struct avx2_vector<uint32_t> {
     static reg_t zmm_max()
     {
         return _mm256_set1_epi32(type_max());
+    }
+    static opmask_t knot_opmask(opmask_t x)
+    {
+        auto allOnes = seti(-1, -1, -1, -1, -1, -1, -1, -1);
+        return _mm256_xor_si256(x, allOnes);
     }
     static opmask_t get_partial_loadmask(uint64_t num_to_read)
     {
@@ -349,6 +362,9 @@ struct avx2_vector<uint32_t> {
     {
         return v;
     }
+    static bool all_false(opmask_t k){
+        return _mm256_movemask_ps(_mm256_castsi256_ps(k)) == 0;
+    }
     static int double_compressstore(type_t *left_addr,
                                     type_t *right_addr,
                                     opmask_t k,
@@ -387,7 +403,11 @@ struct avx2_vector<float> {
     {
         return _mm256_set1_ps(type_max());
     }
-
+    static opmask_t knot_opmask(opmask_t x)
+    {
+        auto allOnes = seti(-1, -1, -1, -1, -1, -1, -1, -1);
+        return _mm256_xor_si256(x, allOnes);
+    }
     static ymmi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
     {
@@ -513,6 +533,9 @@ struct avx2_vector<float> {
     static __m256i cast_to(reg_t v)
     {
         return _mm256_castps_si256(v);
+    }
+    static bool all_false(opmask_t k){
+        return _mm256_movemask_ps(_mm256_castsi256_ps(k)) == 0;
     }
     static int double_compressstore(type_t *left_addr,
                                     type_t *right_addr,
