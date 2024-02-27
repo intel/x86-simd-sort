@@ -732,7 +732,8 @@ struct zmm_vector<int64_t> {
     {
         return v;
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return k == 0;
     }
     static int double_compressstore(type_t *left_addr,
@@ -906,7 +907,8 @@ struct zmm_vector<uint64_t> {
     {
         return v;
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return k == 0;
     }
     static int double_compressstore(type_t *left_addr,
@@ -1099,7 +1101,8 @@ struct zmm_vector<double> {
     {
         return _mm512_castpd_si512(v);
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return k == 0;
     }
     static int double_compressstore(type_t *left_addr,
