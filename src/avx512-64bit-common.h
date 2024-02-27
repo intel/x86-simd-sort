@@ -210,7 +210,8 @@ struct ymm_vector<float> {
     {
         return _mm256_castps_si256(v);
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return k == 0;
     }
     static reg_t reverse(reg_t ymm)
@@ -388,7 +389,8 @@ struct ymm_vector<uint32_t> {
     {
         return v;
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return k == 0;
     }
     static reg_t reverse(reg_t ymm)
@@ -566,7 +568,8 @@ struct ymm_vector<int32_t> {
     {
         return v;
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return k == 0;
     }
     static reg_t reverse(reg_t ymm)
