@@ -8,6 +8,8 @@ on:
   schedule:
   - cron: '0 5 * * *'
 
+permissions: read-all
+
 jobs:
   np-multiarray-tgl:
 
