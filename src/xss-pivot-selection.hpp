@@ -157,12 +157,7 @@ get_pivot_smart(type_t *arr, const arrsize_t left, const arrsize_t right)
         // Thus, median probably is a fine pivot, since it will move all of this common value into its own partition
         return pivot_results<type_t>(median);
     }
-    else {
-        // Should be unreachable
-        return pivot_results<type_t>(median);
-    }
 
-    // Should be unreachable
     return pivot_results<type_t>(median);
 }
 
