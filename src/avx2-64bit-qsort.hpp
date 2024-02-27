@@ -214,7 +214,8 @@ struct avx2_vector<int64_t> {
     {
         return v;
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return _mm256_movemask_pd(_mm256_castsi256_pd(k)) == 0;
     }
 };
@@ -391,7 +392,8 @@ struct avx2_vector<uint64_t> {
     {
         return v;
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return _mm256_movemask_pd(_mm256_castsi256_pd(k)) == 0;
     }
 };
@@ -590,7 +592,8 @@ struct avx2_vector<double> {
     {
         return _mm256_castpd_si256(v);
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return _mm256_movemask_pd(_mm256_castsi256_pd(k)) == 0;
     }
 };

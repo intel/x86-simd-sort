@@ -209,7 +209,8 @@ struct avx2_vector<int32_t> {
     {
         return v;
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return _mm256_movemask_ps(_mm256_castsi256_ps(k)) == 0;
     }
     static int double_compressstore(type_t *left_addr,
@@ -362,7 +363,8 @@ struct avx2_vector<uint32_t> {
     {
         return v;
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return _mm256_movemask_ps(_mm256_castsi256_ps(k)) == 0;
     }
     static int double_compressstore(type_t *left_addr,
@@ -532,7 +534,8 @@ struct avx2_vector<float> {
     {
         return _mm256_castps_si256(v);
     }
-    static bool all_false(opmask_t k){
+    static bool all_false(opmask_t k)
+    {
         return _mm256_movemask_ps(_mm256_castsi256_ps(k)) == 0;
     }
     static int double_compressstore(type_t *left_addr,
