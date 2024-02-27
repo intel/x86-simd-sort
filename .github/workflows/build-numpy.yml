@@ -17,7 +17,7 @@ jobs:
 
     steps:
     - name: Checkout x86-simd-sort
-      uses: actions/checkout@v3
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         fetch-depth: 0
         path: x86-simd-sort
@@ -32,7 +32,7 @@ jobs:
         sudo apt -y install g++-12 gcc-12 git
 
     - name: Checkout NumPy main
-      uses: actions/checkout@v3
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         repository: numpy/numpy
         submodules: recursive
@@ -40,7 +40,7 @@ jobs:
         ref: main
         path: numpy
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
 
@@ -82,7 +82,7 @@ jobs:
 
     steps:
     - name: Checkout x86-simd-sort
-      uses: actions/checkout@v3
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         fetch-depth: 0
         path: x86-simd-sort
@@ -103,7 +103,7 @@ jobs:
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
 
     - name: Checkout NumPy main
-      uses: actions/checkout@v3
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         repository: numpy/numpy
         submodules: recursive
@@ -111,7 +111,7 @@ jobs:
         ref: main
         path: numpy
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.11'
 
