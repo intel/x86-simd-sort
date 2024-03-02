@@ -13,6 +13,7 @@ permissions: read-all
 jobs:
   np-multiarray-tgl:
 
+    if: github.repository == 'intel/x86-simd-sort'
     runs-on: intel-ubuntu-latest
 
     steps:
@@ -78,6 +79,7 @@ jobs:
 
   np-multiarray-spr:
 
+    if: github.repository == 'intel/x86-simd-sort'
     runs-on: intel-ubuntu-latest
 
     steps:
