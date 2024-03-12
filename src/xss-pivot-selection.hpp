@@ -129,7 +129,8 @@ get_pivot_smart(type_t *arr, const arrsize_t left, const arrsize_t right)
     if (smallest == largest) {
         // We have a very unlucky sample, or the array is constant / near constant
         // Run a special function meant to deal with this situation
-        return get_pivot_near_constant<vtype, comparator, type_t>(arr, median, left, right);
+        return get_pivot_near_constant<vtype, comparator, type_t>(
+                arr, median, left, right);
     }
     else if (median != smallest && median != largest) {
         // We have a normal sample; use it's median
@@ -138,12 +139,14 @@ get_pivot_smart(type_t *arr, const arrsize_t left, const arrsize_t right)
     else if (median == smallest) {
         // We will either return the median or the next value larger than the median,
         // depending on the comparator (see xss-common-comparators.hpp for more details)
-        return pivot_results<type_t>(comparator::choosePivotMedianIsSmallest(median));
+        return pivot_results<type_t>(
+                comparator::choosePivotMedianIsSmallest(median));
     }
     else if (median == largest) {
         // We will either return the median or the next value smaller than the median,
         // depending on the comparator (see xss-common-comparators.hpp for more details)
-        return pivot_results<type_t>(comparator::choosePivotMedianIsLargest(median));
+        return pivot_results<type_t>(
+                comparator::choosePivotMedianIsLargest(median));
     }
     else {
         // Should be unreachable
@@ -219,7 +222,8 @@ get_pivot_near_constant(type_t *arr,
         // (note that larger is determined using the provided comparator, so it might actually be the smaller one)
         // We can also skip recursing, as it is guaranteed both partitions are constant after partitioning with the chosen value
         // TODO this logic now assumes we use greater than or equal to specifically when partitioning, might be worth noting that somewhere
-        type_t pivot = std::max(value1, commonValue, comparator::STDSortComparator);
+        type_t pivot
+                = std::max(value1, commonValue, comparator::STDSortComparator);
         return pivot_results<type_t>(pivot, pivot_result_t::Only2Values);
     }
 

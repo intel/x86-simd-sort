@@ -1,7 +1,9 @@
 // All of these sources files are generated from the optimal networks described in
 // https://bertdobbelaere.github.io/sorting_networks.html
 
-template <typename vtype, typename comparator, typename reg_t = typename vtype::reg_t>
+template <typename vtype,
+          typename comparator,
+          typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void optimal_sort_4(reg_t *vecs)
 {
     comparator::COEX(vecs[0], vecs[2]);
@@ -13,7 +15,9 @@ X86_SIMD_SORT_FINLINE void optimal_sort_4(reg_t *vecs)
     comparator::COEX(vecs[1], vecs[2]);
 }
 
-template <typename vtype, typename comparator, typename reg_t = typename vtype::reg_t>
+template <typename vtype,
+          typename comparator,
+          typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void optimal_sort_8(reg_t *vecs)
 {
     comparator::COEX(vecs[0], vecs[2]);
@@ -42,7 +46,9 @@ X86_SIMD_SORT_FINLINE void optimal_sort_8(reg_t *vecs)
     comparator::COEX(vecs[5], vecs[6]);
 }
 
-template <typename vtype, typename comparator, typename reg_t = typename vtype::reg_t>
+template <typename vtype,
+          typename comparator,
+          typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void optimal_sort_16(reg_t *vecs)
 {
     comparator::COEX(vecs[0], vecs[13]);
@@ -116,9 +122,11 @@ X86_SIMD_SORT_FINLINE void optimal_sort_16(reg_t *vecs)
     comparator::COEX(vecs[8], vecs[9]);
 }
 
-template <typename vtype, typename comparator, typename reg_t = typename vtype::reg_t>
+template <typename vtype,
+          typename comparator,
+          typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void optimal_sort_32(reg_t *vecs)
-{   
+{
     comparator::COEX(vecs[0], vecs[1]);
     comparator::COEX(vecs[2], vecs[3]);
     comparator::COEX(vecs[4], vecs[5]);

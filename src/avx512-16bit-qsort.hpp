@@ -560,22 +560,24 @@ X86_SIMD_SORT_INLINE_ONLY bool is_a_nan<uint16_t>(uint16_t elem)
     return ((elem & 0x7c00u) == 0x7c00u) && ((elem & 0x03ffu) != 0);
 }
 
-X86_SIMD_SORT_INLINE void
-avx512_qsort_fp16(uint16_t *arr, arrsize_t arrsize, bool hasnan = false, bool descending = false)
+X86_SIMD_SORT_INLINE void avx512_qsort_fp16(uint16_t *arr,
+                                            arrsize_t arrsize,
+                                            bool hasnan = false,
+                                            bool descending = false)
 {
     using vtype = zmm_vector<float16>;
-    
+
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
         if (UNLIKELY(hasnan)) {
             nan_count = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(
                     arr, arrsize);
         }
-        if (descending){
+        if (descending) {
             qsort_<vtype, DescendingComparator<vtype>, uint16_t>(
                     arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-
-        }else{
+        }
+        else {
             qsort_<vtype, AscendingComparator<vtype>, uint16_t>(
                     arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         }
@@ -590,18 +592,27 @@ X86_SIMD_SORT_INLINE void avx512_qselect_fp16(uint16_t *arr,
                                               bool descending = false)
 {
     using vtype = zmm_vector<float16>;
-    
+
     arrsize_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
         indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     }
     if (indx_last_elem >= k) {
-        if (descending){
+        if (descending) {
             qselect_<vtype, DescendingComparator<vtype>, uint16_t>(
-                    arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
-        }else{
+                    arr,
+                    k,
+                    0,
+                    indx_last_elem,
+                    2 * (arrsize_t)log2(indx_last_elem));
+        }
+        else {
             qselect_<vtype, AscendingComparator<vtype>, uint16_t>(
-                    arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
+                    arr,
+                    k,
+                    0,
+                    indx_last_elem,
+                    2 * (arrsize_t)log2(indx_last_elem));
         }
     }
 }

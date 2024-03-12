@@ -7,7 +7,10 @@
 template <typename vtype, typename mm_t>
 X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b);
 
-template <typename vtype, typename comparator, int numVecs, typename reg_t = typename vtype::reg_t>
+template <typename vtype,
+          typename comparator,
+          int numVecs,
+          typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void bitonic_sort_n_vec(reg_t *regs)
 {
     if constexpr (numVecs == 1) {
@@ -53,7 +56,11 @@ X86_SIMD_SORT_FINLINE void bitonic_sort_n_vec(reg_t *regs)
  * merge_n<8>   = [a,a,a,a,b,b,b,b]
  */
 
-template <typename vtype, typename comparator, int numVecs, int scale, bool first = true>
+template <typename vtype,
+          typename comparator,
+          int numVecs,
+          int scale,
+          bool first = true>
 X86_SIMD_SORT_FINLINE void internal_merge_n_vec(typename vtype::reg_t *reg)
 {
     using reg_t = typename vtype::reg_t;
@@ -112,7 +119,8 @@ X86_SIMD_SORT_FINLINE void merge_substep_n_vec(reg_t *regs)
     }
 
     merge_substep_n_vec<vtype, comparator, numVecs / 2, scale>(regs);
-    merge_substep_n_vec<vtype, comparator, numVecs / 2, scale>(regs + numVecs / 2);
+    merge_substep_n_vec<vtype, comparator, numVecs / 2, scale>(regs
+                                                               + numVecs / 2);
 }
 
 template <typename vtype,
@@ -146,7 +154,10 @@ X86_SIMD_SORT_FINLINE void merge_n_vec(reg_t *regs)
     }
 }
 
-template <typename vtype, typename comparator, int numVecs, typename reg_t = typename vtype::reg_t>
+template <typename vtype,
+          typename comparator,
+          int numVecs,
+          typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void sort_vectors(reg_t *vecs)
 {
     /* Run the initial sorting network to sort the columns of the [numVecs x
@@ -158,7 +169,10 @@ X86_SIMD_SORT_FINLINE void sort_vectors(reg_t *vecs)
     merge_n_vec<vtype, comparator, numVecs>(vecs);
 }
 
-template <typename vtype, typename comparator, int numVecs, typename reg_t = typename vtype::reg_t>
+template <typename vtype,
+          typename comparator,
+          int numVecs,
+          typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
 {
     static_assert(numVecs > 0, "numVecs should be > 0");
@@ -189,8 +203,9 @@ X86_SIMD_SORT_INLINE void sort_n_vec(typename vtype::type_t *arr, int N)
     // Masked part of the load
     X86_SIMD_SORT_UNROLL_LOOP(64)
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
-        vecs[i] = vtype::mask_loadu(
-                comparator::rightmostPossibleVec(), ioMasks[j], arr + i * vtype::numlanes);
+        vecs[i] = vtype::mask_loadu(comparator::rightmostPossibleVec(),
+                                    ioMasks[j],
+                                    arr + i * vtype::numlanes);
     }
 
     sort_vectors<vtype, comparator, numVecs>(vecs);
