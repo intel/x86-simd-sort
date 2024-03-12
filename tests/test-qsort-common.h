@@ -46,31 +46,62 @@ template <typename T>
 void IS_ARR_PARTITIONED(std::vector<T> arr,
                         size_t k,
                         T true_kth,
-                        std::string type)
+                        std::string type,
+                        bool descending = false)
 {
-    auto cmp_eq = compare<T, std::equal_to<T>>();
-    auto cmp_less = compare<T, std::less<T>>();
-    auto cmp_leq = compare<T, std::less_equal<T>>();
-    auto cmp_geq = compare<T, std::greater_equal<T>>();
+    if (!descending){
+        auto cmp_eq = compare<T, std::equal_to<T>>();
+        auto cmp_less = compare<T, std::less<T>>();
+        
+        auto cmp_leq = compare<T, std::less_equal<T>>();
+        auto cmp_geq = compare<T, std::greater_equal<T>>();
 
-    // 1) arr[k] == sorted[k]; use memcmp to handle nan
-    if (!cmp_eq(arr[k], true_kth)) {
-        REPORT_FAIL("kth element is incorrect", arr.size(), type, k);
-    }
-    // ( 2) Elements to the left of k should be atmost arr[k]
-    if (k >= 1) {
-        T max_left
-                = *std::max_element(arr.begin(), arr.begin() + k - 1, cmp_less);
-        if (!cmp_geq(arr[k], max_left)) {
-            REPORT_FAIL("incorrect left partition", arr.size(), type, k);
+        // 1) arr[k] == sorted[k]; use memcmp to handle nan
+        if (!cmp_eq(arr[k], true_kth)) {
+            REPORT_FAIL("kth element is incorrect", arr.size(), type, k);
         }
-    }
-    // 3) Elements to the right of k should be atleast arr[k]
-    if (k != (size_t)(arr.size() - 1)) {
-        T min_right
-                = *std::min_element(arr.begin() + k + 1, arr.end(), cmp_less);
-        if (!cmp_leq(arr[k], min_right)) {
-            REPORT_FAIL("incorrect right partition", arr.size(), type, k);
+        // ( 2) Elements to the left of k should be atmost arr[k]
+        if (k >= 1) {
+            T max_left
+                    = *std::max_element(arr.begin(), arr.begin() + k - 1, cmp_less);
+            if (!cmp_geq(arr[k], max_left)) {
+                REPORT_FAIL("incorrect left partition", arr.size(), type, k);
+            }
+        }
+        // 3) Elements to the right of k should be atleast arr[k]
+        if (k != (size_t)(arr.size() - 1)) {
+            T min_right
+                    = *std::min_element(arr.begin() + k + 1, arr.end(), cmp_less);
+            if (!cmp_leq(arr[k], min_right)) {
+                REPORT_FAIL("incorrect right partition", arr.size(), type, k);
+            }
+        }
+    }else{
+        auto cmp_eq = compare<T, std::equal_to<T>>();
+        auto cmp_less = compare<T, std::greater<T>>();
+        
+        auto cmp_leq = compare<T, std::greater_equal<T>>();
+        auto cmp_geq = compare<T, std::less_equal<T>>();
+
+        // 1) arr[k] == sorted[k]; use memcmp to handle nan
+        if (!cmp_eq(arr[k], true_kth)) {
+            REPORT_FAIL("kth element is incorrect", arr.size(), type, k);
+        }
+        // ( 2) Elements to the left of k should be atleast arr[k]
+        if (k >= 1) {
+            T max_left
+                    = *std::max_element(arr.begin(), arr.begin() + k - 1, cmp_less);
+            if (!cmp_geq(arr[k], max_left)) {
+                REPORT_FAIL("incorrect left partition", arr.size(), type, k);
+            }
+        }
+        // 3) Elements to the right of k should be atmost arr[k]
+        if (k != (size_t)(arr.size() - 1)) {
+            T min_right
+                    = *std::min_element(arr.begin() + k + 1, arr.end(), cmp_less);
+            if (!cmp_leq(arr[k], min_right)) {
+                REPORT_FAIL("incorrect right partition", arr.size(), type, k);
+            }
         }
     }
 }

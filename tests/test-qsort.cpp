@@ -32,13 +32,26 @@ TYPED_TEST_P(simdsort, test_qsort)
     for (auto type : this->arrtype) {
         bool hasnan = (type == "rand_with_nan") ? true : false;
         for (auto size : this->arrsize) {
-            std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
+            std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
+            
+            // Ascending order
+            std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::less<TypeParam>>());
             x86simdsort::qsort(arr.data(), arr.size(), hasnan);
             IS_SORTED(sortedarr, arr, type);
+            
+            // Descending order
+            arr = basearr;
+            sortedarr = arr;
+            std::sort(sortedarr.begin(),
+                      sortedarr.end(),
+                      compare<TypeParam, std::greater<TypeParam>>());
+            x86simdsort::qsort(arr.data(), arr.size(), hasnan, true);
+            IS_SORTED(sortedarr, arr, type);
+            
             arr.clear();
             sortedarr.clear();
         }
@@ -69,7 +82,10 @@ TYPED_TEST_P(simdsort, test_qselect)
         bool hasnan = (type == "rand_with_nan") ? true : false;
         for (auto size : this->arrsize) {
             size_t k = rand() % size;
-            std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
+            std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
+            
+            // Ascending order
+            std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
             std::nth_element(sortedarr.begin(),
                              sortedarr.begin() + k,
@@ -77,6 +93,17 @@ TYPED_TEST_P(simdsort, test_qselect)
                              compare<TypeParam, std::less<TypeParam>>());
             x86simdsort::qselect(arr.data(), k, arr.size(), hasnan);
             IS_ARR_PARTITIONED(arr, k, sortedarr[k], type);
+            
+            // Descending order
+            arr = basearr;
+            sortedarr = arr;
+            std::nth_element(sortedarr.begin(),
+                             sortedarr.begin() + k,
+                             sortedarr.end(),
+                             compare<TypeParam, std::greater<TypeParam>>());
+            x86simdsort::qselect(arr.data(), k, arr.size(), hasnan, true);
+            IS_ARR_PARTITIONED(arr, k, sortedarr[k], type, true);
+            
             arr.clear();
             sortedarr.clear();
         }
@@ -110,13 +137,26 @@ TYPED_TEST_P(simdsort, test_partial_qsort)
         for (auto size : this->arrsize) {
             // k should be at least 1
             size_t k = std::max((size_t)1, rand() % size);
-            std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
+            std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
+            
+            // Ascending order
+            std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::less<TypeParam>>());
             x86simdsort::partial_qsort(arr.data(), k, arr.size(), hasnan);
             IS_ARR_PARTIALSORTED(arr, k, sortedarr, type);
+            
+            // Descending order
+            arr = basearr;
+            sortedarr = arr;
+            std::sort(sortedarr.begin(),
+                      sortedarr.end(),
+                      compare<TypeParam, std::greater<TypeParam>>());
+            x86simdsort::partial_qsort(arr.data(), k, arr.size(), hasnan, true);
+            IS_ARR_PARTIALSORTED(arr, k, sortedarr, type);
+            
             arr.clear();
             sortedarr.clear();
         }
