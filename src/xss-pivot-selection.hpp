@@ -2,6 +2,7 @@
 #define XSS_PIVOT_SELECTION
 
 #include "xss-network-qsort.hpp"
+#include "xss-common-comparators.hpp"
 
 enum class pivot_result_t : int { Normal, Sorted, Only2Values };
 
@@ -18,21 +19,6 @@ struct pivot_results {
         result = _result;
     }
 };
-
-template <typename type_t>
-type_t next_value(type_t value)
-{
-    // TODO this probably handles non-native float16 wrong
-    if constexpr (std::is_floating_point<type_t>::value) {
-        return std::nextafter(value, std::numeric_limits<type_t>::infinity());
-    }
-    else {
-        if (value < std::numeric_limits<type_t>::max()) { return value + 1; }
-        else {
-            return value;
-        }
-    }
-}
 
 template <typename vtype, typename mm_t>
 X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b);
@@ -98,14 +84,14 @@ X86_SIMD_SORT_INLINE type_t get_pivot_blocks(type_t *arr,
     return data[vtype::numlanes / 2];
 }
 
-template <typename vtype, typename type_t>
+template <typename vtype, typename comparator, typename type_t>
 X86_SIMD_SORT_INLINE pivot_results<type_t>
 get_pivot_near_constant(type_t *arr,
                         type_t commonValue,
                         const arrsize_t left,
                         const arrsize_t right);
 
-template <typename vtype, typename type_t>
+template <typename vtype, typename comparator, typename type_t>
 X86_SIMD_SORT_INLINE pivot_results<type_t>
 get_pivot_smart(type_t *arr, const arrsize_t left, const arrsize_t right)
 {
@@ -127,7 +113,9 @@ get_pivot_smart(type_t *arr, const arrsize_t left, const arrsize_t right)
     }
 
     // Sort the samples
-    sort_vectors<vtype, numVecs>(vecs);
+    // Note that this intentionally uses the AscendingComparator
+    // instead of the provided comparator
+    sort_vectors<vtype, AscendingComparator<vtype>, numVecs>(vecs);
 
     type_t samples[N];
     for (int i = 0; i < numVecs; i++) {
@@ -141,21 +129,21 @@ get_pivot_smart(type_t *arr, const arrsize_t left, const arrsize_t right)
     if (smallest == largest) {
         // We have a very unlucky sample, or the array is constant / near constant
         // Run a special function meant to deal with this situation
-        return get_pivot_near_constant<vtype, type_t>(arr, median, left, right);
+        return get_pivot_near_constant<vtype, comparator, type_t>(arr, median, left, right);
     }
     else if (median != smallest && median != largest) {
         // We have a normal sample; use it's median
         return pivot_results<type_t>(median);
     }
     else if (median == smallest) {
-        // If median == smallest, that implies approximately half the array is equal to smallest, unless we were very unlucky with our sample
-        // Try just doing the next largest value greater than this seemingly very common value to seperate them out
-        return pivot_results<type_t>(next_value<type_t>(median));
+        // We will either return the median or the next value larger than the median,
+        // depending on the comparator (see xss-common-comparators.hpp for more details)
+        return pivot_results<type_t>(comparator::choosePivotMedianIsSmallest(median));
     }
     else if (median == largest) {
-        // If median == largest, that implies approximately half the array is equal to largest, unless we were very unlucky with our sample
-        // Thus, median probably is a fine pivot, since it will move all of this common value into its own partition
-        return pivot_results<type_t>(median);
+        // We will either return the median or the next value smaller than the median,
+        // depending on the comparator (see xss-common-comparators.hpp for more details)
+        return pivot_results<type_t>(comparator::choosePivotMedianIsLargest(median));
     }
     else {
         // Should be unreachable
@@ -167,7 +155,7 @@ get_pivot_smart(type_t *arr, const arrsize_t left, const arrsize_t right)
 }
 
 // Handles the case where we seem to have a near-constant array, since our sample of the array was constant
-template <typename vtype, typename type_t>
+template <typename vtype, typename comparator, typename type_t>
 X86_SIMD_SORT_INLINE pivot_results<type_t>
 get_pivot_near_constant(type_t *arr,
                         type_t commonValue,
@@ -228,9 +216,10 @@ get_pivot_near_constant(type_t *arr,
     if (index == right + 1) {
         // The array contains only 2 values
         // We must pick the larger one, else the right partition is empty
-        // We can also skip recursing, as it is guaranteed both partitions are constant after partitioning with the larger value
+        // (note that larger is determined using the provided comparator, so it might actually be the smaller one)
+        // We can also skip recursing, as it is guaranteed both partitions are constant after partitioning with the chosen value
         // TODO this logic now assumes we use greater than or equal to specifically when partitioning, might be worth noting that somewhere
-        type_t pivot = std::max(value1, commonValue, comparison_func<vtype>);
+        type_t pivot = std::max(value1, commonValue, comparator::STDSortComparator);
         return pivot_results<type_t>(pivot, pivot_result_t::Only2Values);
     }
 

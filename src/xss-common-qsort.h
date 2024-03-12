@@ -37,6 +37,7 @@
 #include "xss-common-includes.h"
 #include "xss-pivot-selection.hpp"
 #include "xss-network-qsort.hpp"
+#include "xss-common-comparators.hpp"
 
 template <typename T>
 bool is_a_nan(T elem)
@@ -99,16 +100,28 @@ X86_SIMD_SORT_INLINE bool array_has_nan(type_t *arr, arrsize_t size)
 
 template <typename type_t>
 X86_SIMD_SORT_INLINE void
-replace_inf_with_nan(type_t *arr, arrsize_t size, arrsize_t nan_count)
+replace_inf_with_nan(type_t *arr, arrsize_t size, arrsize_t nan_count, bool descending = false)
 {
-    for (arrsize_t ii = size - 1; nan_count > 0; --ii) {
-        if constexpr (std::is_floating_point_v<type_t>) {
-            arr[ii] = std::numeric_limits<type_t>::quiet_NaN();
+    if (descending){
+        for (arrsize_t ii = 0; nan_count > 0; ++ii) {
+            if constexpr (std::is_floating_point_v<type_t>) {
+                arr[ii] = std::numeric_limits<type_t>::quiet_NaN();
+            }
+            else {
+                arr[ii] = 0xFFFF;
+            }
+            nan_count -= 1;
         }
-        else {
-            arr[ii] = 0xFFFF;
+    }else{
+        for (arrsize_t ii = size - 1; nan_count > 0; --ii) {
+            if constexpr (std::is_floating_point_v<type_t>) {
+                arr[ii] = std::numeric_limits<type_t>::quiet_NaN();
+            }
+            else {
+                arr[ii] = 0xFFFF;
+            }
+            nan_count -= 1;
         }
-        nan_count -= 1;
     }
 }
 
@@ -135,6 +148,25 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T *arr, arrsize_t size)
     /* Haven't checked for nan when ii == jj */
     if (is_a_nan(arr[ii])) { count++; }
     return size - count - 1;
+}
+
+/*
+ * Sort all the NAN's to start of the array and return the index of the first elem
+ * in the array which is not a nan
+ */
+template <typename T>
+X86_SIMD_SORT_INLINE arrsize_t move_nans_to_start_of_array(T *arr, arrsize_t size)
+{
+    arrsize_t count = 0;
+    
+    for(arrsize_t i = 0; i < size; i++){
+        if (is_a_nan(arr[i])){
+            std::swap(arr[count], arr[i]);
+            count++;
+        }
+    }
+    
+    return count;
 }
 
 template <typename vtype, typename T>
@@ -181,6 +213,7 @@ int avx512_double_compressstore(type_t *left_addr,
 
 // Generic function dispatches to AVX2 or AVX512 code
 template <typename vtype,
+          typename comparator,
           typename type_t,
           typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
@@ -190,10 +223,11 @@ X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
                                              reg_t &smallest_vec,
                                              reg_t &biggest_vec)
 {
-    typename vtype::opmask_t ge_mask = vtype::ge(curr_vec, pivot_vec);
+    typename vtype::opmask_t right_mask
+            = comparator::PartitionComparator(curr_vec, pivot_vec);
 
     int amount_ge_pivot
-            = vtype::double_compressstore(l_store, r_store, ge_mask, curr_vec);
+            = vtype::double_compressstore(l_store, r_store, right_mask, curr_vec);
 
     smallest_vec = vtype::min(curr_vec, smallest_vec);
     biggest_vec = vtype::max(curr_vec, biggest_vec);
@@ -205,7 +239,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
  * Parition an array based on the pivot and returns the index of the
  * first element that is greater than or equal to the pivot.
  */
-template <typename vtype, typename type_t>
+template <typename vtype, typename comparator, typename type_t>
 X86_SIMD_SORT_INLINE arrsize_t partition(type_t *arr,
                                          arrsize_t left,
                                          arrsize_t right,
@@ -217,7 +251,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition(type_t *arr,
     for (int32_t i = (right - left) % vtype::numlanes; i > 0; --i) {
         *smallest = std::min(*smallest, arr[left], comparison_func<vtype>);
         *biggest = std::max(*biggest, arr[left], comparison_func<vtype>);
-        if (!comparison_func<vtype>(arr[left], pivot)) {
+        if (!comparator::STDSortComparator(arr[left], pivot)) {
             std::swap(arr[left], arr[--right]);
         }
         else {
@@ -239,7 +273,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition(type_t *arr,
         arrsize_t l_store = left;
 
         arrsize_t amount_ge_pivot
-                = partition_vec<vtype>(arr + l_store,
+                = partition_vec<vtype, comparator>(arr + l_store,
                                        arr + l_store + unpartitioned,
                                        vec,
                                        pivot_vec,
@@ -278,7 +312,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition(type_t *arr,
         }
         // partition the current vector and save it on both sides of the array
         arrsize_t amount_ge_pivot
-                = partition_vec<vtype>(arr + l_store,
+                = partition_vec<vtype, comparator>(arr + l_store,
                                        arr + l_store + unpartitioned,
                                        curr_vec,
                                        pivot_vec,
@@ -290,7 +324,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition(type_t *arr,
 
     /* partition and save vec_left and vec_right */
     arrsize_t amount_ge_pivot
-            = partition_vec<vtype>(arr + l_store,
+            = partition_vec<vtype, comparator>(arr + l_store,
                                    arr + l_store + unpartitioned,
                                    vec_left,
                                    pivot_vec,
@@ -299,7 +333,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition(type_t *arr,
     l_store += (vtype::numlanes - amount_ge_pivot);
     unpartitioned -= vtype::numlanes;
 
-    amount_ge_pivot = partition_vec<vtype>(arr + l_store,
+    amount_ge_pivot = partition_vec<vtype, comparator>(arr + l_store,
                                            arr + l_store + unpartitioned,
                                            vec_right,
                                            pivot_vec,
@@ -314,6 +348,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition(type_t *arr,
 }
 
 template <typename vtype,
+          typename comparator,
           int num_unroll,
           typename type_t = typename vtype::type_t>
 X86_SIMD_SORT_INLINE arrsize_t partition_unrolled(type_t *arr,
@@ -324,19 +359,19 @@ X86_SIMD_SORT_INLINE arrsize_t partition_unrolled(type_t *arr,
                                                   type_t *biggest)
 {
     if constexpr (num_unroll == 0) {
-        return partition<vtype>(arr, left, right, pivot, smallest, biggest);
+        return partition<vtype, comparator>(arr, left, right, pivot, smallest, biggest);
     }
 
     /* Use regular partition for smaller arrays */
     if (right - left < 3 * num_unroll * vtype::numlanes) {
-        return partition<vtype>(arr, left, right, pivot, smallest, biggest);
+        return partition<vtype, comparator>(arr, left, right, pivot, smallest, biggest);
     }
 
     /* make array length divisible by vtype::numlanes, shortening the array */
     for (int32_t i = ((right - left) % (vtype::numlanes)); i > 0; --i) {
         *smallest = std::min(*smallest, arr[left], comparison_func<vtype>);
         *biggest = std::max(*biggest, arr[left], comparison_func<vtype>);
-        if (!comparison_func<vtype>(arr[left], pivot)) {
+        if (!comparator::STDSortComparator(arr[left], pivot)) {
             std::swap(arr[left], arr[--right]);
         }
         else {
@@ -419,7 +454,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_unrolled(type_t *arr,
         X86_SIMD_SORT_UNROLL_LOOP(8)
         for (int ii = 0; ii < num_unroll; ++ii) {
             arrsize_t amount_ge_pivot
-                    = partition_vec<vtype>(arr + l_store,
+                    = partition_vec<vtype, comparator>(arr + l_store,
                                            arr + l_store + unpartitioned,
                                            curr_vec[ii],
                                            pivot_vec,
@@ -434,7 +469,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_unrolled(type_t *arr,
     X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         arrsize_t amount_ge_pivot
-                = partition_vec<vtype>(arr + l_store,
+                = partition_vec<vtype, comparator>(arr + l_store,
                                        arr + l_store + unpartitioned,
                                        vec_left[ii],
                                        pivot_vec,
@@ -446,7 +481,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_unrolled(type_t *arr,
     X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < num_unroll; ++ii) {
         arrsize_t amount_ge_pivot
-                = partition_vec<vtype>(arr + l_store,
+                = partition_vec<vtype, comparator>(arr + l_store,
                                        arr + l_store + unpartitioned,
                                        vec_right[ii],
                                        pivot_vec,
@@ -460,7 +495,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_unrolled(type_t *arr,
     X86_SIMD_SORT_UNROLL_LOOP(8)
     for (int ii = 0; ii < vecsToPartition; ++ii) {
         arrsize_t amount_ge_pivot
-                = partition_vec<vtype>(arr + l_store,
+                = partition_vec<vtype, comparator>(arr + l_store,
                                        arr + l_store + unpartitioned,
                                        vec_align[ii],
                                        pivot_vec,
@@ -478,7 +513,7 @@ X86_SIMD_SORT_INLINE arrsize_t partition_unrolled(type_t *arr,
 template <typename vtype, int maxN>
 void sort_n(typename vtype::type_t *arr, int N);
 
-template <typename vtype, typename type_t>
+template <typename vtype, typename comparator, typename type_t>
 static void
 qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
 {
@@ -486,19 +521,19 @@ qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
      * Resort to std::sort if quicksort isnt making any progress
      */
     if (max_iters <= 0) {
-        std::sort(arr + left, arr + right + 1, comparison_func<vtype>);
+        std::sort(arr + left, arr + right + 1, comparator::STDSortComparator);
         return;
     }
     /*
      * Base case: use bitonic networks to sort arrays <= vtype::network_sort_threshold
      */
     if (right + 1 - left <= vtype::network_sort_threshold) {
-        sort_n<vtype, vtype::network_sort_threshold>(
+        sort_n<vtype, comparator, vtype::network_sort_threshold>(
                 arr + left, (int32_t)(right + 1 - left));
         return;
     }
 
-    auto pivot_result = get_pivot_smart<vtype, type_t>(arr, left, right);
+    auto pivot_result = get_pivot_smart<vtype, comparator, type_t>(arr, left, right);
     type_t pivot = pivot_result.pivot;
 
     if (pivot_result.result == pivot_result_t::Sorted) { return; }
@@ -507,17 +542,21 @@ qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
     type_t biggest = vtype::type_min();
 
     arrsize_t pivot_index
-            = partition_unrolled<vtype, vtype::partition_unroll_factor>(
+            = partition_unrolled<vtype, comparator, vtype::partition_unroll_factor>(
                     arr, left, right + 1, pivot, &smallest, &biggest);
 
     if (pivot_result.result == pivot_result_t::Only2Values) { return; }
+    
+    type_t leftmostValue = comparator::leftmost(smallest, biggest);
+    type_t rightmostValue = comparator::rightmost(smallest, biggest);
 
-    if (pivot != smallest)
-        qsort_<vtype>(arr, left, pivot_index - 1, max_iters - 1);
-    if (pivot != biggest) qsort_<vtype>(arr, pivot_index, right, max_iters - 1);
+    if (pivot != leftmostValue)
+        qsort_<vtype, comparator>(arr, left, pivot_index - 1, max_iters - 1);
+    if (pivot != rightmostValue)
+        qsort_<vtype, comparator>(arr, pivot_index, right, max_iters - 1);
 }
 
-template <typename vtype, typename type_t>
+template <typename vtype, typename comparator, typename type_t>
 X86_SIMD_SORT_INLINE void qselect_(type_t *arr,
                                    arrsize_t pos,
                                    arrsize_t left,
@@ -528,35 +567,44 @@ X86_SIMD_SORT_INLINE void qselect_(type_t *arr,
      * Resort to std::sort if quicksort isnt making any progress
      */
     if (max_iters <= 0) {
-        std::sort(arr + left, arr + right + 1, comparison_func<vtype>);
+        std::sort(arr + left, arr + right + 1, comparator::STDSortComparator);
         return;
     }
     /*
      * Base case: use bitonic networks to sort arrays <= vtype::network_sort_threshold
      */
     if (right + 1 - left <= vtype::network_sort_threshold) {
-        sort_n<vtype, vtype::network_sort_threshold>(
+        sort_n<vtype, comparator, vtype::network_sort_threshold>(
                 arr + left, (int32_t)(right + 1 - left));
         return;
     }
 
-    type_t pivot = get_pivot<vtype, type_t>(arr, left, right);
+    auto pivot_result = get_pivot_smart<vtype, comparator, type_t>(arr, left, right);
+    type_t pivot = pivot_result.pivot;
+
+    if (pivot_result.result == pivot_result_t::Sorted) { return; }
+
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
 
     arrsize_t pivot_index
-            = partition_unrolled<vtype, vtype::partition_unroll_factor>(
+            = partition_unrolled<vtype, comparator, vtype::partition_unroll_factor>(
                     arr, left, right + 1, pivot, &smallest, &biggest);
 
-    if ((pivot != smallest) && (pos < pivot_index))
-        qselect_<vtype>(arr, pos, left, pivot_index - 1, max_iters - 1);
-    else if ((pivot != biggest) && (pos >= pivot_index))
-        qselect_<vtype>(arr, pos, pivot_index, right, max_iters - 1);
+    if (pivot_result.result == pivot_result_t::Only2Values) { return; }
+    
+    type_t leftmostValue = comparator::leftmost(smallest, biggest);
+    type_t rightmostValue = comparator::rightmost(smallest, biggest);
+
+    if ((pivot != leftmostValue) && (pos < pivot_index))
+        qselect_<vtype, comparator>(arr, pos, left, pivot_index - 1, max_iters - 1);
+    else if ((pivot != rightmostValue) && (pos >= pivot_index))
+        qselect_<vtype, comparator>(arr, pos, pivot_index, right, max_iters - 1);
 }
 
 // Quicksort routines:
 template <typename vtype, typename T>
-X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
+X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan, bool descending)
 {
     if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
@@ -564,12 +612,20 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
             if (UNLIKELY(hasnan)) {
                 nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
             }
-            qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-            replace_inf_with_nan(arr, arrsize, nan_count);
+            if (descending){
+                qsort_<vtype, DescendingComparator<vtype>, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+            }else{
+                qsort_<vtype, AscendingComparator<vtype>, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+            }
+            replace_inf_with_nan(arr, arrsize, nan_count, descending);
         }
         else {
             UNUSED(hasnan);
-            qsort_<vtype, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+            if (descending){
+                qsort_<vtype, DescendingComparator<vtype>, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+            }else{
+                qsort_<vtype, AscendingComparator<vtype>, T>(arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+            }
         }
     }
 }
@@ -577,48 +633,65 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
 // Quick select methods
 template <typename vtype, typename T>
 X86_SIMD_SORT_INLINE void
-xss_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
+xss_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan, bool descending)
 {
-    arrsize_t indx_last_elem = arrsize - 1;
-    if constexpr (std::is_floating_point_v<T>) {
-        if (UNLIKELY(hasnan)) {
-            indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+    if (descending){
+        arrsize_t index_first_elem = 0;
+        if constexpr (std::is_floating_point_v<T>) {
+            if (UNLIKELY(hasnan)) {
+                index_first_elem = move_nans_to_start_of_array(arr, arrsize);
+            }
         }
-    }
-    UNUSED(hasnan);
-    if (indx_last_elem >= k) {
-        qselect_<vtype, T>(
-                arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
+        
+        arrsize_t size_without_nans = arrsize - index_first_elem;
+        
+        UNUSED(hasnan);
+        if (index_first_elem <= k) {
+            qselect_<vtype, DescendingComparator<vtype>, T>(
+                    arr, k, index_first_elem, arrsize - 1, 2 * (arrsize_t)log2(size_without_nans));
+        }
+    }else{
+        arrsize_t indx_last_elem = arrsize - 1;
+        if constexpr (std::is_floating_point_v<T>) {
+            if (UNLIKELY(hasnan)) {
+                indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+            }
+        }
+        UNUSED(hasnan);
+        if (indx_last_elem >= k) {
+            qselect_<vtype, AscendingComparator<vtype>, T>(
+                    arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
+        }
     }
 }
 
 // Partial sort methods:
 template <typename vtype, typename T>
 X86_SIMD_SORT_INLINE void
-xss_partial_qsort(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
+xss_partial_qsort(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan, bool descending)
 {
-    xss_qselect<vtype, T>(arr, k - 1, arrsize, hasnan);
-    xss_qsort<vtype, T>(arr, k - 1, hasnan);
+    xss_qselect<vtype, T>(arr, k - 1, arrsize, hasnan, descending);
+    xss_qsort<vtype, T>(arr, k - 1, hasnan, descending);
 }
 
 #define DEFINE_METHODS(ISA, VTYPE) \
     template <typename T> \
     X86_SIMD_SORT_INLINE void ISA##_qsort( \
-            T *arr, arrsize_t size, bool hasnan = false) \
+            T *arr, arrsize_t size, bool hasnan = false, bool descending = false) \
     { \
-        xss_qsort<VTYPE, T>(arr, size, hasnan); \
+        xss_qsort<VTYPE, T>(arr, size, hasnan, descending); \
     } \
     template <typename T> \
     X86_SIMD_SORT_INLINE void ISA##_qselect( \
-            T *arr, arrsize_t k, arrsize_t size, bool hasnan = false) \
+            T *arr, arrsize_t k, arrsize_t size, bool hasnan = false, bool descending = false) \
     { \
-        xss_qselect<VTYPE, T>(arr, k, size, hasnan); \
+        xss_qselect<VTYPE, T>(arr, k, size, hasnan, descending); \
     } \
     template <typename T> \
     X86_SIMD_SORT_INLINE void ISA##_partial_qsort( \
-            T *arr, arrsize_t k, arrsize_t size, bool hasnan = false) \
+            T *arr, arrsize_t k, arrsize_t size, bool hasnan = false, bool descending = false) \
     { \
-        xss_partial_qsort<VTYPE, T>(arr, k, size, hasnan); \
+        xss_partial_qsort<VTYPE, T>(arr, k, size, hasnan, descending); \
     }
 
 DEFINE_METHODS(avx512, zmm_vector<T>)

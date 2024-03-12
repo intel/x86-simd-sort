@@ -47,6 +47,10 @@ struct zmm_vector<_Float16> {
     {
         return _mm512_set1_ph(type_max());
     }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_ph(type_min());
+    }
     static opmask_t knot_opmask(opmask_t x)
     {
         return _knot_mask32(x);
