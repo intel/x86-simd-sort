@@ -579,10 +579,7 @@ X86_SIMD_SORT_INLINE void qselect_(type_t *arr,
         return;
     }
 
-    auto pivot_result = get_pivot_smart<vtype, comparator, type_t>(arr, left, right);
-    type_t pivot = pivot_result.pivot;
-
-    if (pivot_result.result == pivot_result_t::Sorted) { return; }
+    type_t pivot = get_pivot<vtype, type_t>(arr, left, right);
 
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
@@ -590,8 +587,6 @@ X86_SIMD_SORT_INLINE void qselect_(type_t *arr,
     arrsize_t pivot_index
             = partition_unrolled<vtype, comparator, vtype::partition_unroll_factor>(
                     arr, left, right + 1, pivot, &smallest, &biggest);
-
-    if (pivot_result.result == pivot_result_t::Only2Values) { return; }
     
     type_t leftmostValue = comparator::leftmost(smallest, biggest);
     type_t rightmostValue = comparator::rightmost(smallest, biggest);
