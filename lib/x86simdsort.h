@@ -48,8 +48,7 @@ XSS_EXPORT_SYMBOL void object_qsort(T *arr, uint32_t arrsize, Func key_func)
     /* (1) Create a vector a keys */
     using return_type_of =
             typename decltype(std::function {key_func})::result_type;
-    std::vector<return_type_of> keys;
-    keys.reserve(arrsize);
+    std::vector<return_type_of> keys(arrsize);
     for (size_t ii = 0; ii < arrsize; ++ii) {
         keys[ii] = key_func(arr[ii]);
     }
