@@ -1,5 +1,5 @@
 project('x86-simd-sort', 'cpp',
-        version : '4.0.0',
+        version : '5.0.0',
         license : 'BSD 3-clause',
         default_options : ['cpp_std=c++17'])
 fs = import('fs')
