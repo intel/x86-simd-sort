@@ -12,12 +12,14 @@
         avx512_qsort(arr, arrsize, hasnan, descending); \
     } \
     template <> \
-    void qselect(type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void qselect( \
+            type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
         avx512_qselect(arr, k, arrsize, hasnan, descending); \
     } \
     template <> \
-    void partial_qsort(type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void partial_qsort( \
+            type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
         avx512_partial_qsort(arr, k, arrsize, hasnan, descending); \
     } \

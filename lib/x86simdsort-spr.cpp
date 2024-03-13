@@ -10,12 +10,20 @@ namespace avx512 {
         avx512_qsort(arr, size, hasnan, descending);
     }
     template <>
-    void qselect(_Float16 *arr, size_t k, size_t arrsize, bool hasnan, bool descending)
+    void qselect(_Float16 *arr,
+                 size_t k,
+                 size_t arrsize,
+                 bool hasnan,
+                 bool descending)
     {
         avx512_qselect(arr, k, arrsize, hasnan, descending);
     }
     template <>
-    void partial_qsort(_Float16 *arr, size_t k, size_t arrsize, bool hasnan, bool descending)
+    void partial_qsort(_Float16 *arr,
+                       size_t k,
+                       size_t arrsize,
+                       bool hasnan,
+                       bool descending)
     {
         avx512_partial_qsort(arr, k, arrsize, hasnan, descending);
     }

@@ -14,17 +14,24 @@ namespace x86simdsort {
 
 // quicksort
 template <typename T>
-XSS_EXPORT_SYMBOL void qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
+XSS_EXPORT_SYMBOL void
+qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
 
 // quickselect
 template <typename T>
-XSS_EXPORT_SYMBOL void
-qselect(T *arr, size_t k, size_t arrsize, bool hasnan = false, bool descending = false);
+XSS_EXPORT_SYMBOL void qselect(T *arr,
+                               size_t k,
+                               size_t arrsize,
+                               bool hasnan = false,
+                               bool descending = false);
 
 // partial sort
 template <typename T>
-XSS_EXPORT_SYMBOL void
-partial_qsort(T *arr, size_t k, size_t arrsize, bool hasnan = false, bool descending = false);
+XSS_EXPORT_SYMBOL void partial_qsort(T *arr,
+                                     size_t k,
+                                     size_t arrsize,
+                                     bool hasnan = false,
+                                     bool descending = false);
 
 // argsort
 template <typename T>

@@ -28,16 +28,16 @@ namespace scalar {
     void qsort(T *arr, size_t arrsize, bool hasnan, bool reversed)
     {
         if (hasnan) {
-            if (reversed){
+            if (reversed) {
                 std::sort(arr, arr + arrsize, compare<T, std::greater<T>>());
-            }else{
+            }
+            else {
                 std::sort(arr, arr + arrsize, compare<T, std::less<T>>());
             }
         }
         else {
-            if (reversed){
-                std::sort(arr, arr + arrsize, std::greater<T>());
-            }else{
+            if (reversed) { std::sort(arr, arr + arrsize, std::greater<T>()); }
+            else {
                 std::sort(arr, arr + arrsize, std::less<T>());
             }
         }
@@ -46,43 +46,54 @@ namespace scalar {
     void qselect(T *arr, size_t k, size_t arrsize, bool hasnan, bool reversed)
     {
         if (hasnan) {
-            if (reversed){
-                std::nth_element(
-                        arr, arr + k, arr + arrsize, compare<T, std::greater<T>>());
-            }else{
-                std::nth_element(
-                        arr, arr + k, arr + arrsize, compare<T, std::less<T>>());
+            if (reversed) {
+                std::nth_element(arr,
+                                 arr + k,
+                                 arr + arrsize,
+                                 compare<T, std::greater<T>>());
+            }
+            else {
+                std::nth_element(arr,
+                                 arr + k,
+                                 arr + arrsize,
+                                 compare<T, std::less<T>>());
             }
         }
         else {
-            if (reversed){
+            if (reversed) {
                 std::nth_element(
                         arr, arr + k, arr + arrsize, std::greater<T>());
-            }else{
-                std::nth_element(
-                        arr, arr + k, arr + arrsize, std::less<T>());
+            }
+            else {
+                std::nth_element(arr, arr + k, arr + arrsize, std::less<T>());
             }
         }
     }
     template <typename T>
-    void partial_qsort(T *arr, size_t k, size_t arrsize, bool hasnan, bool reversed)
+    void
+    partial_qsort(T *arr, size_t k, size_t arrsize, bool hasnan, bool reversed)
     {
         if (hasnan) {
-            if (reversed){
-                std::partial_sort(
-                        arr, arr + k, arr + arrsize, compare<T, std::greater<T>>());
-            }else{
-                std::partial_sort(
-                        arr, arr + k, arr + arrsize, compare<T, std::less<T>>());
+            if (reversed) {
+                std::partial_sort(arr,
+                                  arr + k,
+                                  arr + arrsize,
+                                  compare<T, std::greater<T>>());
+            }
+            else {
+                std::partial_sort(arr,
+                                  arr + k,
+                                  arr + arrsize,
+                                  compare<T, std::less<T>>());
             }
         }
         else {
-            if (reversed){
+            if (reversed) {
                 std::partial_sort(
                         arr, arr + k, arr + arrsize, std::greater<T>());
-            }else{
-                std::partial_sort(
-                        arr, arr + k, arr + arrsize, std::less<T>());
+            }
+            else {
+                std::partial_sort(arr, arr + k, arr + arrsize, std::less<T>());
             }
         }
     }

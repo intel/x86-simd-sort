@@ -68,16 +68,19 @@ namespace x86simdsort {
     static void (*internal_qselect##TYPE)(TYPE *, size_t, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void qselect(TYPE *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void qselect( \
+            TYPE *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
         (*internal_qselect##TYPE)(arr, k, arrsize, hasnan, descending); \
     }
 
 #define DECLARE_INTERNAL_partial_qsort(TYPE) \
-    static void (*internal_partial_qsort##TYPE)(TYPE *, size_t, size_t, bool, bool) \
+    static void (*internal_partial_qsort##TYPE)( \
+            TYPE *, size_t, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void partial_qsort(TYPE *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void partial_qsort( \
+            TYPE *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
         (*internal_partial_qsort##TYPE)(arr, k, arrsize, hasnan, descending); \
     }
