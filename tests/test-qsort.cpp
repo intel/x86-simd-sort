@@ -27,7 +27,7 @@ public:
 
 TYPED_TEST_SUITE_P(simdsort);
 
-TYPED_TEST_P(simdsort, test_qsort)
+TYPED_TEST_P(simdsort, test_qsort_ascending)
 {
     for (auto type : this->arrtype) {
         bool hasnan = (type == "rand_with_nan") ? true : false;
@@ -43,9 +43,22 @@ TYPED_TEST_P(simdsort, test_qsort)
             x86simdsort::qsort(arr.data(), arr.size(), hasnan);
             IS_SORTED(sortedarr, arr, type);
 
+            arr.clear();
+            sortedarr.clear();
+        }
+    }
+}
+
+TYPED_TEST_P(simdsort, test_qsort_descending)
+{
+    for (auto type : this->arrtype) {
+        bool hasnan = (type == "rand_with_nan") ? true : false;
+        for (auto size : this->arrsize) {
+            std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
+            
             // Descending order
-            arr = basearr;
-            sortedarr = arr;
+            std::vector<TypeParam> arr = basearr;
+            std::vector<TypeParam> sortedarr = arr;
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::greater<TypeParam>>());
@@ -76,7 +89,7 @@ TYPED_TEST_P(simdsort, test_argsort)
     }
 }
 
-TYPED_TEST_P(simdsort, test_qselect)
+TYPED_TEST_P(simdsort, test_qselect_ascending)
 {
     for (auto type : this->arrtype) {
         bool hasnan = (type == "rand_with_nan") ? true : false;
@@ -94,9 +107,23 @@ TYPED_TEST_P(simdsort, test_qselect)
             x86simdsort::qselect(arr.data(), k, arr.size(), hasnan);
             IS_ARR_PARTITIONED(arr, k, sortedarr[k], type);
 
+            arr.clear();
+            sortedarr.clear();
+        }
+    }
+}
+
+TYPED_TEST_P(simdsort, test_qselect_descending)
+{
+    for (auto type : this->arrtype) {
+        bool hasnan = (type == "rand_with_nan") ? true : false;
+        for (auto size : this->arrsize) {
+            size_t k = rand() % size;
+            std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
+
             // Descending order
-            arr = basearr;
-            sortedarr = arr;
+            std::vector<TypeParam> arr = basearr;
+            std::vector<TypeParam> sortedarr = arr;
             std::nth_element(sortedarr.begin(),
                              sortedarr.begin() + k,
                              sortedarr.end(),
@@ -130,7 +157,7 @@ TYPED_TEST_P(simdsort, test_argselect)
     }
 }
 
-TYPED_TEST_P(simdsort, test_partial_qsort)
+TYPED_TEST_P(simdsort, test_partial_qsort_ascending)
 {
     for (auto type : this->arrtype) {
         bool hasnan = (type == "rand_with_nan") ? true : false;
@@ -148,9 +175,24 @@ TYPED_TEST_P(simdsort, test_partial_qsort)
             x86simdsort::partial_qsort(arr.data(), k, arr.size(), hasnan);
             IS_ARR_PARTIALSORTED(arr, k, sortedarr, type);
 
+            arr.clear();
+            sortedarr.clear();
+        }
+    }
+}
+
+TYPED_TEST_P(simdsort, test_partial_qsort_descending)
+{
+    for (auto type : this->arrtype) {
+        bool hasnan = (type == "rand_with_nan") ? true : false;
+        for (auto size : this->arrsize) {
+            // k should be at least 1
+            size_t k = std::max((size_t)1, rand() % size);
+            std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
+
             // Descending order
-            arr = basearr;
-            sortedarr = arr;
+            std::vector<TypeParam> arr = basearr;
+            std::vector<TypeParam> sortedarr = arr;
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::greater<TypeParam>>());
@@ -197,11 +239,14 @@ TYPED_TEST_P(simdsort, test_comparator)
 }
 
 REGISTER_TYPED_TEST_SUITE_P(simdsort,
-                            test_qsort,
+                            test_qsort_ascending,
+                            test_qsort_descending,
                             test_argsort,
                             test_argselect,
-                            test_qselect,
-                            test_partial_qsort,
+                            test_qselect_ascending,
+                            test_qselect_descending,
+                            test_partial_qsort_ascending,
+                            test_partial_qsort_descending,
                             test_comparator);
 
 using QSortTestTypes = testing::Types<uint16_t,
