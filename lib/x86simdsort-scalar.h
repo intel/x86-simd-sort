@@ -4,8 +4,10 @@
 
 namespace xss {
 namespace utils {
-    /* O(1) permute array in place: stolen from
- * http://www.davidespataro.it/apply-a-permutation-to-a-vector */
+    /*
+     * O(1) permute array in place: stolen from
+     * http://www.davidespataro.it/apply-a-permutation-to-a-vector
+     */
     template <typename T>
     void apply_permutation_in_place(T *arr, std::vector<size_t> arg)
     {
@@ -21,81 +23,51 @@ namespace utils {
             arg[curr] = curr;
         }
     }
+    template <typename T>
+    decltype(auto) get_cmp_func(bool hasnan, bool reverse)
+    {
+        std::function<bool(T, T)> cmp;
+        if (hasnan) {
+            if (reverse == true) { cmp = compare<T, std::greater<T>>(); }
+            else {
+                cmp = compare<T, std::less<T>>();
+            }
+        }
+        else {
+            if (reverse == true) { cmp = std::greater<T>(); }
+            else {
+                cmp = std::less<T>();
+            }
+        }
+        return cmp;
+    }
 } // namespace utils
 
 namespace scalar {
     template <typename T>
     void qsort(T *arr, size_t arrsize, bool hasnan, bool reversed)
     {
-        if (hasnan) {
-            if (reversed) {
-                std::sort(arr, arr + arrsize, compare<T, std::greater<T>>());
-            }
-            else {
-                std::sort(arr, arr + arrsize, compare<T, std::less<T>>());
-            }
-        }
-        else {
-            if (reversed) { std::sort(arr, arr + arrsize, std::greater<T>()); }
-            else {
-                std::sort(arr, arr + arrsize, std::less<T>());
-            }
-        }
+        std::sort(arr,
+                  arr + arrsize,
+                  xss::utils::get_cmp_func<T>(hasnan, reversed));
     }
+
     template <typename T>
     void qselect(T *arr, size_t k, size_t arrsize, bool hasnan, bool reversed)
     {
-        if (hasnan) {
-            if (reversed) {
-                std::nth_element(arr,
-                                 arr + k,
-                                 arr + arrsize,
-                                 compare<T, std::greater<T>>());
-            }
-            else {
-                std::nth_element(arr,
-                                 arr + k,
-                                 arr + arrsize,
-                                 compare<T, std::less<T>>());
-            }
-        }
-        else {
-            if (reversed) {
-                std::nth_element(
-                        arr, arr + k, arr + arrsize, std::greater<T>());
-            }
-            else {
-                std::nth_element(arr, arr + k, arr + arrsize, std::less<T>());
-            }
-        }
+        std::nth_element(arr,
+                         arr + k,
+                         arr + arrsize,
+                         xss::utils::get_cmp_func<T>(hasnan, reversed));
     }
     template <typename T>
     void
     partial_qsort(T *arr, size_t k, size_t arrsize, bool hasnan, bool reversed)
     {
-        if (hasnan) {
-            if (reversed) {
-                std::partial_sort(arr,
-                                  arr + k,
-                                  arr + arrsize,
-                                  compare<T, std::greater<T>>());
-            }
-            else {
-                std::partial_sort(arr,
-                                  arr + k,
-                                  arr + arrsize,
-                                  compare<T, std::less<T>>());
-            }
-        }
-        else {
-            if (reversed) {
-                std::partial_sort(
-                        arr, arr + k, arr + arrsize, std::greater<T>());
-            }
-            else {
-                std::partial_sort(arr, arr + k, arr + arrsize, std::less<T>());
-            }
-        }
+        std::partial_sort(arr,
+                          arr + k,
+                          arr + arrsize,
+                          xss::utils::get_cmp_func<T>(hasnan, reversed));
     }
     template <typename T>
     std::vector<size_t> argsort(T *arr, size_t arrsize, bool hasnan)
