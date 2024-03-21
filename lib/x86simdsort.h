@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <functional>
 #include <numeric>
+#include "x86simdsort-orders.h"
 
 #define XSS_EXPORT_SYMBOL __attribute__((visibility("default")))
 #define XSS_HIDE_SYMBOL __attribute__((visibility("hidden")))
@@ -14,8 +15,11 @@ namespace x86simdsort {
 
 // quicksort
 template <typename T>
-XSS_EXPORT_SYMBOL void
-qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
+XSS_EXPORT_SYMBOL void qsort(T *arr,
+                             size_t arrsize,
+                             bool hasnan = false,
+                             x86simdsort::sort_order order
+                             = x86simdsort::sort_order::sort_ascending);
 
 // quickselect
 template <typename T>
@@ -23,7 +27,8 @@ XSS_EXPORT_SYMBOL void qselect(T *arr,
                                size_t k,
                                size_t arrsize,
                                bool hasnan = false,
-                               bool descending = false);
+                               x86simdsort::sort_order order
+                               = x86simdsort::sort_order::sort_ascending);
 
 // partial sort
 template <typename T>
@@ -31,7 +36,8 @@ XSS_EXPORT_SYMBOL void partial_qsort(T *arr,
                                      size_t k,
                                      size_t arrsize,
                                      bool hasnan = false,
-                                     bool descending = false);
+                                     x86simdsort::sort_order order
+                                     = x86simdsort::sort_order::sort_ascending);
 
 // argsort
 template <typename T>

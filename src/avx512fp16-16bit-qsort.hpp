@@ -203,7 +203,7 @@ X86_SIMD_SORT_INLINE_ONLY void replace_inf_with_nan(_Float16 *arr,
 /* Specialized template function for _Float16 qsort_*/
 template <>
 X86_SIMD_SORT_INLINE_ONLY void
-avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan, bool descending)
+avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan, sort_order order)
 {
     using vtype = zmm_vector<_Float16>;
 
@@ -212,7 +212,7 @@ avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan, bool descending)
         if (UNLIKELY(hasnan)) {
             nan_count = replace_nan_with_inf<vtype, _Float16>(arr, arrsize);
         }
-        if (descending) {
+        if (order == sort_order::sort_descending) {
             qsort_<vtype, DescendingComparator<vtype>, _Float16>(
                     arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         }
@@ -220,7 +220,8 @@ avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan, bool descending)
             qsort_<vtype, AscendingComparator<vtype>, _Float16>(
                     arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         }
-        replace_inf_with_nan(arr, arrsize, nan_count, descending);
+        replace_inf_with_nan(
+                arr, arrsize, nan_count, order == sort_order::sort_descending);
     }
 }
 
@@ -229,11 +230,11 @@ X86_SIMD_SORT_INLINE_ONLY void avx512_qselect(_Float16 *arr,
                                               arrsize_t k,
                                               arrsize_t arrsize,
                                               bool hasnan,
-                                              bool descending)
+                                              sort_order order)
 {
     using vtype = zmm_vector<_Float16>;
 
-    if (descending) {
+    if (order == sort_order::sort_descending) {
         arrsize_t index_first_elem = 0;
         if (UNLIKELY(hasnan)) {
             index_first_elem = move_nans_to_start_of_array(arr, arrsize);
@@ -271,9 +272,9 @@ X86_SIMD_SORT_INLINE_ONLY void avx512_partial_qsort(_Float16 *arr,
                                                     arrsize_t k,
                                                     arrsize_t arrsize,
                                                     bool hasnan,
-                                                    bool descending)
+                                                    sort_order order)
 {
-    avx512_qselect(arr, k - 1, arrsize, hasnan, descending);
-    avx512_qsort(arr, k - 1, hasnan, descending);
+    avx512_qselect(arr, k - 1, arrsize, hasnan, order);
+    avx512_qsort(arr, k - 1, hasnan, order);
 }
 #endif // AVX512FP16_QSORT_16BIT

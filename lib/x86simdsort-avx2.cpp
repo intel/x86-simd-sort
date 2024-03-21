@@ -5,23 +5,31 @@
 #include "xss-common-argsort.h"
 #include "x86simdsort-internal.h"
 
+using x86simdsort::sort_order;
+
 #define DEFINE_ALL_METHODS(type) \
     template <> \
-    void qsort(type *arr, size_t arrsize, bool hasnan, bool descending) \
+    void qsort(type *arr, size_t arrsize, bool hasnan, sort_order order) \
     { \
-        avx2_qsort(arr, arrsize, hasnan, descending); \
+        avx2_qsort(arr, arrsize, hasnan, order); \
     } \
     template <> \
-    void qselect( \
-            type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void qselect(type *arr, \
+                 size_t k, \
+                 size_t arrsize, \
+                 bool hasnan, \
+                 sort_order order) \
     { \
-        avx2_qselect(arr, k, arrsize, hasnan, descending); \
+        avx2_qselect(arr, k, arrsize, hasnan, order); \
     } \
     template <> \
-    void partial_qsort( \
-            type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void partial_qsort(type *arr, \
+                       size_t k, \
+                       size_t arrsize, \
+                       bool hasnan, \
+                       sort_order order) \
     { \
-        avx2_partial_qsort(arr, k, arrsize, hasnan, descending); \
+        avx2_partial_qsort(arr, k, arrsize, hasnan, order); \
     } \
     template <> \
     std::vector<size_t> argsort(type *arr, size_t arrsize, bool hasnan) \

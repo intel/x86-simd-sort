@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 
+using x86simdsort::sort_order;
+
 static int check_cpu_feature_support(std::string_view cpufeature)
 {
     const char *disable_avx512 = std::getenv("XSS_DISABLE_AVX512");
@@ -57,32 +59,40 @@ namespace x86simdsort {
 #define CAT(a, b) CAT_(a, b)
 
 #define DECLARE_INTERNAL_qsort(TYPE) \
-    static void (*internal_qsort##TYPE)(TYPE *, size_t, bool, bool) = NULL; \
+    static void (*internal_qsort##TYPE)(TYPE *, size_t, bool, sort_order) \
+            = NULL; \
     template <> \
-    void qsort(TYPE *arr, size_t arrsize, bool hasnan, bool descending) \
+    void qsort(TYPE *arr, size_t arrsize, bool hasnan, sort_order order) \
     { \
-        (*internal_qsort##TYPE)(arr, arrsize, hasnan, descending); \
+        (*internal_qsort##TYPE)(arr, arrsize, hasnan, order); \
     }
 
 #define DECLARE_INTERNAL_qselect(TYPE) \
-    static void (*internal_qselect##TYPE)(TYPE *, size_t, size_t, bool, bool) \
+    static void (*internal_qselect##TYPE)( \
+            TYPE *, size_t, size_t, bool, sort_order) \
             = NULL; \
     template <> \
-    void qselect( \
-            TYPE *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void qselect(TYPE *arr, \
+                 size_t k, \
+                 size_t arrsize, \
+                 bool hasnan, \
+                 sort_order order) \
     { \
-        (*internal_qselect##TYPE)(arr, k, arrsize, hasnan, descending); \
+        (*internal_qselect##TYPE)(arr, k, arrsize, hasnan, order); \
     }
 
 #define DECLARE_INTERNAL_partial_qsort(TYPE) \
     static void (*internal_partial_qsort##TYPE)( \
-            TYPE *, size_t, size_t, bool, bool) \
+            TYPE *, size_t, size_t, bool, sort_order) \
             = NULL; \
     template <> \
-    void partial_qsort( \
-            TYPE *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void partial_qsort(TYPE *arr, \
+                       size_t k, \
+                       size_t arrsize, \
+                       bool hasnan, \
+                       sort_order order) \
     { \
-        (*internal_partial_qsort##TYPE)(arr, k, arrsize, hasnan, descending); \
+        (*internal_partial_qsort##TYPE)(arr, k, arrsize, hasnan, order); \
     }
 
 #define DECLARE_INTERNAL_argsort(TYPE) \
