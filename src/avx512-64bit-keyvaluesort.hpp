@@ -422,8 +422,7 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
         if constexpr (std::is_floating_point_v<T1>) {
             arrsize_t nan_count = 0;
             if (UNLIKELY(hasnan)) {
-                nan_count = replace_nan_with_inf<zmm_vector<double>>(keys,
-                                                                     arrsize);
+                nan_count = replace_nan_with_inf<zmm_vector<T1>>(keys, arrsize);
             }
             qsort_64bit_<keytype, valtype>(keys,
                                            indexes,
