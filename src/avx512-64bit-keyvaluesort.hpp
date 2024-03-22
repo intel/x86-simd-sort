@@ -57,13 +57,13 @@ template <typename vtype1,
           typename type_t2 = typename vtype2::type_t,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t1 *keys,
-                                                type_t2 *indexes,
-                                                arrsize_t left,
-                                                arrsize_t right,
-                                                type_t1 pivot,
-                                                type_t1 *smallest,
-                                                type_t1 *biggest)
+X86_SIMD_SORT_INLINE arrsize_t kvpartition(type_t1 *keys,
+                                           type_t2 *indexes,
+                                           arrsize_t left,
+                                           arrsize_t right,
+                                           type_t1 pivot,
+                                           type_t1 *smallest,
+                                           type_t1 *biggest)
 {
     /* make array length divisible by vtype1::numlanes , shortening the array */
     for (int32_t i = (right - left) % vtype1::numlanes; i > 0; --i) {
@@ -189,16 +189,16 @@ template <typename vtype1,
           typename type_t2 = typename vtype2::type_t,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t1 *keys,
-                                                         type_t2 *indexes,
-                                                         arrsize_t left,
-                                                         arrsize_t right,
-                                                         type_t1 pivot,
-                                                         type_t1 *smallest,
-                                                         type_t1 *biggest)
+X86_SIMD_SORT_INLINE arrsize_t kvpartition_unrolled(type_t1 *keys,
+                                                    type_t2 *indexes,
+                                                    arrsize_t left,
+                                                    arrsize_t right,
+                                                    type_t1 pivot,
+                                                    type_t1 *smallest,
+                                                    type_t1 *biggest)
 {
     if (right - left <= 8 * num_unroll * vtype1::numlanes) {
-        return partition_avx512<vtype1, vtype2>(
+        return kvpartition<vtype1, vtype2>(
                 keys, indexes, left, right, pivot, smallest, biggest);
     }
     /* make array length divisible by vtype1::numlanes , shortening the array */
@@ -391,7 +391,7 @@ X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
     type1_t pivot = get_pivot_blocks<vtype1>(keys, left, right);
     type1_t smallest = vtype1::type_max();
     type1_t biggest = vtype1::type_min();
-    arrsize_t pivot_index = partition_avx512_unrolled<vtype1, vtype2, 4>(
+    arrsize_t pivot_index = kvpartition_unrolled<vtype1, vtype2, 4>(
             keys, indexes, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest) {
         qsort_64bit_<vtype1, vtype2>(
@@ -422,8 +422,7 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
         if constexpr (std::is_floating_point_v<T1>) {
             arrsize_t nan_count = 0;
             if (UNLIKELY(hasnan)) {
-                nan_count = replace_nan_with_inf<zmm_vector<double>>(keys,
-                                                                     arrsize);
+                nan_count = replace_nan_with_inf<zmm_vector<T1>>(keys, arrsize);
             }
             qsort_64bit_<keytype, valtype>(keys,
                                            indexes,
