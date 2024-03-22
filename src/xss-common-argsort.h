@@ -173,13 +173,13 @@ X86_SIMD_SORT_INLINE int32_t partition_vec(type_t *arg,
  * last element that is less than equal to the pivot.
  */
 template <typename vtype, typename argtype, typename type_t>
-X86_SIMD_SORT_INLINE arrsize_t partition_avx512(type_t *arr,
-                                                arrsize_t *arg,
-                                                arrsize_t left,
-                                                arrsize_t right,
-                                                type_t pivot,
-                                                type_t *smallest,
-                                                type_t *biggest)
+X86_SIMD_SORT_INLINE arrsize_t argpartition_avx512(type_t *arr,
+                                                   arrsize_t *arg,
+                                                   arrsize_t left,
+                                                   arrsize_t right,
+                                                   type_t pivot,
+                                                   type_t *smallest,
+                                                   type_t *biggest)
 {
     /* make array length divisible by vtype::numlanes , shortening the array */
     for (int32_t i = (right - left) % vtype::numlanes; i > 0; --i) {
@@ -292,16 +292,16 @@ template <typename vtype,
           typename argtype,
           int num_unroll,
           typename type_t = typename vtype::type_t>
-X86_SIMD_SORT_INLINE arrsize_t partition_avx512_unrolled(type_t *arr,
-                                                         arrsize_t *arg,
-                                                         arrsize_t left,
-                                                         arrsize_t right,
-                                                         type_t pivot,
-                                                         type_t *smallest,
-                                                         type_t *biggest)
+X86_SIMD_SORT_INLINE arrsize_t argpartition_avx512_unrolled(type_t *arr,
+                                                            arrsize_t *arg,
+                                                            arrsize_t left,
+                                                            arrsize_t right,
+                                                            type_t pivot,
+                                                            type_t *smallest,
+                                                            type_t *biggest)
 {
     if (right - left <= 8 * num_unroll * vtype::numlanes) {
-        return partition_avx512<vtype, argtype>(
+        return argpartition_avx512<vtype, argtype>(
                 arr, arg, left, right, pivot, smallest, biggest);
     }
     /* make array length divisible by vtype::numlanes , shortening the array */
@@ -493,7 +493,7 @@ X86_SIMD_SORT_INLINE void argsort_64bit_(type_t *arr,
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
-    arrsize_t pivot_index = partition_avx512_unrolled<vtype, argtype, 4>(
+    arrsize_t pivot_index = argpartition_avx512_unrolled<vtype, argtype, 4>(
             arr, arg, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest)
         argsort_64bit_<vtype, argtype>(
@@ -529,7 +529,7 @@ X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
     type_t pivot = get_pivot_64bit<vtype>(arr, arg, left, right);
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
-    arrsize_t pivot_index = partition_avx512_unrolled<vtype, argtype, 4>(
+    arrsize_t pivot_index = argpartition_avx512_unrolled<vtype, argtype, 4>(
             arr, arg, left, right + 1, pivot, &smallest, &biggest);
     if ((pivot != smallest) && (pos < pivot_index))
         argselect_64bit_<vtype, argtype>(
