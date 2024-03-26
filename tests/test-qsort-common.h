@@ -69,16 +69,16 @@ void IS_ARR_PARTITIONED(std::vector<T> arr,
     }
     // ( 2) Elements to the left of k should be atmost arr[k]
     if (k >= 1) {
-        T max_left = *std::max_element(
-                arr.begin(), arr.begin() + k - 1, cmp_less);
+        T max_left
+                = *std::max_element(arr.begin(), arr.begin() + k - 1, cmp_less);
         if (!cmp_geq(arr[k], max_left)) {
             REPORT_FAIL("incorrect left partition", arr.size(), type, k);
         }
     }
     // 3) Elements to the right of k should be atleast arr[k]
     if (k != (size_t)(arr.size() - 1)) {
-        T min_right = *std::min_element(
-                arr.begin() + k + 1, arr.end(), cmp_less);
+        T min_right
+                = *std::min_element(arr.begin() + k + 1, arr.end(), cmp_less);
         if (!cmp_leq(arr[k], min_right)) {
             REPORT_FAIL("incorrect right partition", arr.size(), type, k);
         }

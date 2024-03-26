@@ -55,7 +55,7 @@ TYPED_TEST_P(simdsort, test_qsort_descending)
         bool hasnan = (type == "rand_with_nan") ? true : false;
         for (auto size : this->arrsize) {
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
-            
+
             // Descending order
             std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
