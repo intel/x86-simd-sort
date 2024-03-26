@@ -364,12 +364,14 @@ X86_SIMD_SORT_INLINE arrsize_t partition_unrolled(type_t *arr,
                                                   type_t *biggest)
 {
     if constexpr (num_unroll == 0) {
-        return partition<vtype, comparator>(arr, left, right, pivot, smallest, biggest);
+        return partition<vtype, comparator>(
+                arr, left, right, pivot, smallest, biggest);
     }
 
     /* Use regular partition for smaller arrays */
     if (right - left < 3 * num_unroll * vtype::numlanes) {
-        return partition<vtype, comparator>(arr, left, right, pivot, smallest, biggest);
+        return partition<vtype, comparator>(
+                arr, left, right, pivot, smallest, biggest);
     }
 
     /* make array length divisible by vtype::numlanes, shortening the array */
@@ -547,9 +549,10 @@ qsort_(type_t *arr, arrsize_t left, arrsize_t right, arrsize_t max_iters)
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
 
-    arrsize_t pivot_index
-            = partition_unrolled<vtype, comparator, vtype::partition_unroll_factor>(
-                    arr, left, right + 1, pivot, &smallest, &biggest);
+    arrsize_t pivot_index = partition_unrolled<vtype,
+                                               comparator,
+                                               vtype::partition_unroll_factor>(
+            arr, left, right + 1, pivot, &smallest, &biggest);
 
     if (pivot_result.result == pivot_result_t::Only2Values) { return; }
 
@@ -590,9 +593,10 @@ X86_SIMD_SORT_INLINE void qselect_(type_t *arr,
     type_t smallest = vtype::type_max();
     type_t biggest = vtype::type_min();
 
-    arrsize_t pivot_index
-            = partition_unrolled<vtype, comparator, vtype::partition_unroll_factor>(
-                    arr, left, right + 1, pivot, &smallest, &biggest);
+    arrsize_t pivot_index = partition_unrolled<vtype,
+                                               comparator,
+                                               vtype::partition_unroll_factor>(
+            arr, left, right + 1, pivot, &smallest, &biggest);
 
     type_t leftmostValue = comparator::leftmost(smallest, biggest);
     type_t rightmostValue = comparator::rightmost(smallest, biggest);
