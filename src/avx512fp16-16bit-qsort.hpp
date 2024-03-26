@@ -201,79 +201,64 @@ X86_SIMD_SORT_INLINE_ONLY void replace_inf_with_nan(_Float16 *arr,
     }
 }
 /* Specialized template function for _Float16 qsort_*/
-template <>
+template <bool descending = false>
 X86_SIMD_SORT_INLINE_ONLY void
-avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan, bool descending)
+avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan)
 {
     using vtype = zmm_vector<_Float16>;
+    using comparator =
+            typename std::conditional<descending,
+                                      DescendingComparator<vtype>,
+                                      AscendingComparator<vtype>>::type;
 
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
         if (UNLIKELY(hasnan)) {
-            nan_count = replace_nan_with_inf<vtype, _Float16>(arr, arrsize);
+            nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
         }
-        if (descending) {
-            qsort_<vtype, DescendingComparator<vtype>, _Float16>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-        }
-        else {
-            qsort_<vtype, AscendingComparator<vtype>, _Float16>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-        }
+
+        qsort_<vtype, comparator, _Float16>(
+                arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+
         replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }
 }
 
-template <>
-X86_SIMD_SORT_INLINE_ONLY void avx512_qselect(_Float16 *arr,
-                                              arrsize_t k,
-                                              arrsize_t arrsize,
-                                              bool hasnan,
-                                              bool descending)
+template <bool descending = false>
+X86_SIMD_SORT_INLINE_ONLY void
+avx512_qselect(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
     using vtype = zmm_vector<_Float16>;
+    using comparator =
+            typename std::conditional<descending,
+                                      DescendingComparator<vtype>,
+                                      AscendingComparator<vtype>>::type;
 
-    if (descending) {
-        arrsize_t index_first_elem = 0;
-        if (UNLIKELY(hasnan)) {
+    arrsize_t index_first_elem = 0;
+    arrsize_t index_last_elem = arrsize - 1;
+
+    if (UNLIKELY(hasnan)) {
+        if constexpr (descending) {
             index_first_elem = move_nans_to_start_of_array(arr, arrsize);
         }
-
-        arrsize_t size_without_nans = arrsize - index_first_elem;
-
-        if (index_first_elem <= k) {
-            qselect_<vtype, DescendingComparator<vtype>, _Float16>(
-                    arr,
-                    k,
-                    index_first_elem,
-                    arrsize - 1,
-                    2 * (arrsize_t)log2(size_without_nans));
+        else {
+            index_last_elem = move_nans_to_end_of_array(arr, arrsize);
         }
     }
-    else {
-        arrsize_t indx_last_elem = arrsize - 1;
-        if (UNLIKELY(hasnan)) {
-            indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
-        }
 
-        if (indx_last_elem >= k) {
-            qselect_<vtype, AscendingComparator<vtype>, _Float16>(
-                    arr,
-                    k,
-                    0,
-                    indx_last_elem,
-                    2 * (arrsize_t)log2(indx_last_elem));
-        }
+    if (index_first_elem <= k && index_last_elem >= k) {
+        qselect_<vtype, comparator, _Float16>(arr,
+                                              k,
+                                              index_first_elem,
+                                              index_last_elem,
+                                              2 * (arrsize_t)log2(arrsize));
     }
 }
-template <>
-X86_SIMD_SORT_INLINE_ONLY void avx512_partial_qsort(_Float16 *arr,
-                                                    arrsize_t k,
-                                                    arrsize_t arrsize,
-                                                    bool hasnan,
-                                                    bool descending)
+template <bool descending = false>
+X86_SIMD_SORT_INLINE_ONLY void
+avx512_partial_qsort(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
-    avx512_qselect(arr, k - 1, arrsize, hasnan, descending);
-    avx512_qsort(arr, k - 1, hasnan, descending);
+    avx512_qselect<descending>(arr, k - 1, arrsize, hasnan);
+    avx512_qsort<descending>(arr, k - 1, hasnan);
 }
 #endif // AVX512FP16_QSORT_16BIT
