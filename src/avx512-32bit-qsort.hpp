@@ -58,6 +58,10 @@ struct zmm_vector<int32_t> {
     {
         return _mm512_set1_epi32(type_max());
     }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_epi32(type_min());
+    }
 
     static opmask_t knot_opmask(opmask_t x)
     {
@@ -240,7 +244,11 @@ struct zmm_vector<uint32_t> {
     static reg_t zmm_max()
     {
         return _mm512_set1_epi32(type_max());
-    } // TODO: this should broadcast bits as is?
+    }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_epi32(type_min());
+    }
 
     template <int scale>
     static halfreg_t i64gather(__m512i index, void const *base)
@@ -423,6 +431,10 @@ struct zmm_vector<float> {
     static reg_t zmm_max()
     {
         return _mm512_set1_ps(type_max());
+    }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_ps(type_min());
     }
 
     static opmask_t knot_opmask(opmask_t x)

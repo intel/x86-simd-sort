@@ -591,7 +591,11 @@ struct zmm_vector<int64_t> {
     static reg_t zmm_max()
     {
         return _mm512_set1_epi64(type_max());
-    } // TODO: this should broadcast bits as is?
+    }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_epi64(type_min());
+    }
 
     static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)
@@ -774,6 +778,10 @@ struct zmm_vector<uint64_t> {
     static reg_t zmm_max()
     {
         return _mm512_set1_epi64(type_max());
+    }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_epi64(type_min());
     }
 
     static regi_t
@@ -962,6 +970,10 @@ struct zmm_vector<double> {
     static reg_t zmm_max()
     {
         return _mm512_set1_pd(type_max());
+    }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_pd(type_min());
     }
     static regi_t
     seti(int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8)

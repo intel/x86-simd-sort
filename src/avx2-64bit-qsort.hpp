@@ -67,7 +67,11 @@ struct avx2_vector<int64_t> {
     static reg_t zmm_max()
     {
         return _mm256_set1_epi64x(type_max());
-    } // TODO: this should broadcast bits as is?
+    }
+    static reg_t zmm_min()
+    {
+        return _mm256_set1_epi64x(type_min());
+    }
     static opmask_t knot_opmask(opmask_t x)
     {
         auto allTrue = _mm256_set1_epi64x(0xFFFF'FFFF'FFFF'FFFF);
@@ -247,6 +251,10 @@ struct avx2_vector<uint64_t> {
     static reg_t zmm_max()
     {
         return _mm256_set1_epi64x(type_max());
+    }
+    static reg_t zmm_min()
+    {
+        return _mm256_set1_epi64x(type_min());
     }
     static opmask_t knot_opmask(opmask_t x)
     {
@@ -438,6 +446,10 @@ struct avx2_vector<double> {
     static reg_t zmm_max()
     {
         return _mm256_set1_pd(type_max());
+    }
+    static reg_t zmm_min()
+    {
+        return _mm256_set1_pd(type_min());
     }
     static opmask_t knot_opmask(opmask_t x)
     {
