@@ -67,10 +67,7 @@ static void simd_revsort(benchmark::State &state, Args &&...args)
     std::vector<T> arr_bkp = arr;
     // benchmark
     for (auto _ : state) {
-        x86simdsort::qsort(arr.data(),
-                           arrsize,
-                           false,
-                           x86simdsort::sort_order::sort_descending);
+        x86simdsort::qsort(arr.data(), arrsize, false, true);
         state.PauseTiming();
         arr = arr_bkp;
         state.ResumeTiming();

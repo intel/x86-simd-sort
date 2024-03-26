@@ -5,31 +5,23 @@
 #include "avx512-64bit-qsort.hpp"
 #include "x86simdsort-internal.h"
 
-using x86simdsort::sort_order;
-
 #define DEFINE_ALL_METHODS(type) \
     template <> \
-    void qsort(type *arr, size_t arrsize, bool hasnan, sort_order order) \
+    void qsort(type *arr, size_t arrsize, bool hasnan, bool descending) \
     { \
-        avx512_qsort(arr, arrsize, hasnan, order); \
+        avx512_qsort(arr, arrsize, hasnan, descending); \
     } \
     template <> \
-    void qselect(type *arr, \
-                 size_t k, \
-                 size_t arrsize, \
-                 bool hasnan, \
-                 sort_order order) \
+    void qselect( \
+            type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
-        avx512_qselect(arr, k, arrsize, hasnan, order); \
+        avx512_qselect(arr, k, arrsize, hasnan, descending); \
     } \
     template <> \
-    void partial_qsort(type *arr, \
-                       size_t k, \
-                       size_t arrsize, \
-                       bool hasnan, \
-                       sort_order order) \
+    void partial_qsort( \
+            type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
-        avx512_partial_qsort(arr, k, arrsize, hasnan, order); \
+        avx512_partial_qsort(arr, k, arrsize, hasnan, descending); \
     } \
     template <> \
     std::vector<size_t> argsort(type *arr, size_t arrsize, bool hasnan) \

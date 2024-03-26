@@ -2,55 +2,53 @@
 #include "avx512-16bit-qsort.hpp"
 #include "x86simdsort-internal.h"
 
-using x86simdsort::sort_order;
-
 namespace xss {
 namespace avx512 {
     template <>
-    void qsort(uint16_t *arr, size_t size, bool hasnan, sort_order order)
+    void qsort(uint16_t *arr, size_t size, bool hasnan, bool descending)
     {
-        avx512_qsort(arr, size, hasnan, order);
+        avx512_qsort(arr, size, hasnan, descending);
     }
     template <>
     void qselect(uint16_t *arr,
                  size_t k,
                  size_t arrsize,
                  bool hasnan,
-                 sort_order order)
+                 bool descending)
     {
-        avx512_qselect(arr, k, arrsize, hasnan, order);
+        avx512_qselect(arr, k, arrsize, hasnan, descending);
     }
     template <>
     void partial_qsort(uint16_t *arr,
                        size_t k,
                        size_t arrsize,
                        bool hasnan,
-                       sort_order order)
+                       bool descending)
     {
-        avx512_partial_qsort(arr, k, arrsize, hasnan, order);
+        avx512_partial_qsort(arr, k, arrsize, hasnan, descending);
     }
     template <>
-    void qsort(int16_t *arr, size_t size, bool hasnan, sort_order order)
+    void qsort(int16_t *arr, size_t size, bool hasnan, bool descending)
     {
-        avx512_qsort(arr, size, hasnan, order);
+        avx512_qsort(arr, size, hasnan, descending);
     }
     template <>
     void qselect(int16_t *arr,
                  size_t k,
                  size_t arrsize,
                  bool hasnan,
-                 sort_order order)
+                 bool descending)
     {
-        avx512_qselect(arr, k, arrsize, hasnan, order);
+        avx512_qselect(arr, k, arrsize, hasnan, descending);
     }
     template <>
     void partial_qsort(int16_t *arr,
                        size_t k,
                        size_t arrsize,
                        bool hasnan,
-                       sort_order order)
+                       bool descending)
     {
-        avx512_partial_qsort(arr, k, arrsize, hasnan, order);
+        avx512_partial_qsort(arr, k, arrsize, hasnan, descending);
     }
 } // namespace avx512
 } // namespace xss

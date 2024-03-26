@@ -55,17 +55,14 @@ TYPED_TEST_P(simdsort, test_qsort_descending)
         bool hasnan = (type == "rand_with_nan") ? true : false;
         for (auto size : this->arrsize) {
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
-
+            
             // Descending order
             std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::greater<TypeParam>>());
-            x86simdsort::qsort(arr.data(),
-                               arr.size(),
-                               hasnan,
-                               x86simdsort::sort_order::sort_descending);
+            x86simdsort::qsort(arr.data(), arr.size(), hasnan, true);
             IS_SORTED(sortedarr, arr, type);
 
             arr.clear();
@@ -131,11 +128,7 @@ TYPED_TEST_P(simdsort, test_qselect_descending)
                              sortedarr.begin() + k,
                              sortedarr.end(),
                              compare<TypeParam, std::greater<TypeParam>>());
-            x86simdsort::qselect(arr.data(),
-                                 k,
-                                 arr.size(),
-                                 hasnan,
-                                 x86simdsort::sort_order::sort_descending);
+            x86simdsort::qselect(arr.data(), k, arr.size(), hasnan, true);
             IS_ARR_PARTITIONED(arr, k, sortedarr[k], type, true);
 
             arr.clear();
@@ -203,12 +196,7 @@ TYPED_TEST_P(simdsort, test_partial_qsort_descending)
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::greater<TypeParam>>());
-            x86simdsort::partial_qsort(
-                    arr.data(),
-                    k,
-                    arr.size(),
-                    hasnan,
-                    x86simdsort::sort_order::sort_descending);
+            x86simdsort::partial_qsort(arr.data(), k, arr.size(), hasnan, true);
             IS_ARR_PARTIALSORTED(arr, k, sortedarr, type);
 
             arr.clear();

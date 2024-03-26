@@ -2,8 +2,6 @@
 #include <algorithm>
 #include <numeric>
 
-using x86simdsort::sort_order;
-
 namespace xss {
 namespace utils {
     /*
@@ -26,21 +24,17 @@ namespace utils {
         }
     }
     template <typename T>
-    decltype(auto) get_cmp_func(bool hasnan, sort_order order)
+    decltype(auto) get_cmp_func(bool hasnan, bool reverse)
     {
         std::function<bool(T, T)> cmp;
         if (hasnan) {
-            if (order == sort_order::sort_descending) {
-                cmp = compare<T, std::greater<T>>();
-            }
+            if (reverse == true) { cmp = compare<T, std::greater<T>>(); }
             else {
                 cmp = compare<T, std::less<T>>();
             }
         }
         else {
-            if (order == sort_order::sort_descending) {
-                cmp = std::greater<T>();
-            }
+            if (reverse == true) { cmp = std::greater<T>(); }
             else {
                 cmp = std::less<T>();
             }
@@ -51,29 +45,29 @@ namespace utils {
 
 namespace scalar {
     template <typename T>
-    void qsort(T *arr, size_t arrsize, bool hasnan, sort_order order)
+    void qsort(T *arr, size_t arrsize, bool hasnan, bool reversed)
     {
-        std::sort(
-                arr, arr + arrsize, xss::utils::get_cmp_func<T>(hasnan, order));
+        std::sort(arr,
+                  arr + arrsize,
+                  xss::utils::get_cmp_func<T>(hasnan, reversed));
     }
 
     template <typename T>
-    void
-    qselect(T *arr, size_t k, size_t arrsize, bool hasnan, sort_order order)
+    void qselect(T *arr, size_t k, size_t arrsize, bool hasnan, bool reversed)
     {
         std::nth_element(arr,
                          arr + k,
                          arr + arrsize,
-                         xss::utils::get_cmp_func<T>(hasnan, order));
+                         xss::utils::get_cmp_func<T>(hasnan, reversed));
     }
     template <typename T>
-    void partial_qsort(
-            T *arr, size_t k, size_t arrsize, bool hasnan, sort_order order)
+    void
+    partial_qsort(T *arr, size_t k, size_t arrsize, bool hasnan, bool reversed)
     {
         std::partial_sort(arr,
                           arr + k,
                           arr + arrsize,
-                          xss::utils::get_cmp_func<T>(hasnan, order));
+                          xss::utils::get_cmp_func<T>(hasnan, reversed));
     }
     template <typename T>
     std::vector<size_t> argsort(T *arr, size_t arrsize, bool hasnan)
