@@ -615,8 +615,8 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
 {
     using comparator =
             typename std::conditional<descending,
-                                      DescendingComparator<vtype>,
-                                      AscendingComparator<vtype>>::type;
+                                      Comparator<vtype, true>,
+                                      Comparator<vtype, false>>::type;
 
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
@@ -641,8 +641,8 @@ xss_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
     using comparator =
             typename std::conditional<descending,
-                                      DescendingComparator<vtype>,
-                                      AscendingComparator<vtype>>::type;
+                                      Comparator<vtype, true>,
+                                      Comparator<vtype, false>>::type;
 
     arrsize_t index_first_elem = 0;
     arrsize_t index_last_elem = arrsize - 1;

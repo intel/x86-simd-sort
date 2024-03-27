@@ -115,7 +115,7 @@ get_pivot_smart(type_t *arr, const arrsize_t left, const arrsize_t right)
     // Sort the samples
     // Note that this intentionally uses the AscendingComparator
     // instead of the provided comparator
-    sort_vectors<vtype, AscendingComparator<vtype>, numVecs>(vecs);
+    sort_vectors<vtype, Comparator<vtype, false>, numVecs>(vecs);
 
     type_t samples[N];
     for (int i = 0; i < numVecs; i++) {

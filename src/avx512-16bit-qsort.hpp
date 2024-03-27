@@ -574,11 +574,11 @@ X86_SIMD_SORT_INLINE void avx512_qsort_fp16(uint16_t *arr,
                     arr, arrsize);
         }
         if (descending) {
-            qsort_<vtype, DescendingComparator<vtype>, uint16_t>(
+            qsort_<vtype, Comparator<vtype, true>, uint16_t>(
                     arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         }
         else {
-            qsort_<vtype, AscendingComparator<vtype>, uint16_t>(
+            qsort_<vtype, Comparator<vtype, false>, uint16_t>(
                     arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
         }
         replace_inf_with_nan(arr, arrsize, nan_count, descending);
@@ -599,7 +599,7 @@ X86_SIMD_SORT_INLINE void avx512_qselect_fp16(uint16_t *arr,
     }
     if (indx_last_elem >= k) {
         if (descending) {
-            qselect_<vtype, DescendingComparator<vtype>, uint16_t>(
+            qselect_<vtype, Comparator<vtype, true>, uint16_t>(
                     arr,
                     k,
                     0,
@@ -607,7 +607,7 @@ X86_SIMD_SORT_INLINE void avx512_qselect_fp16(uint16_t *arr,
                     2 * (arrsize_t)log2(indx_last_elem));
         }
         else {
-            qselect_<vtype, AscendingComparator<vtype>, uint16_t>(
+            qselect_<vtype, Comparator<vtype, false>, uint16_t>(
                     arr,
                     k,
                     0,

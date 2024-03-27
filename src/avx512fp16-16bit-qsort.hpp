@@ -208,8 +208,8 @@ avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan)
     using vtype = zmm_vector<_Float16>;
     using comparator =
             typename std::conditional<descending,
-                                      DescendingComparator<vtype>,
-                                      AscendingComparator<vtype>>::type;
+                                      Comparator<vtype, true>,
+                                      Comparator<vtype, false>>::type;
 
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
@@ -231,8 +231,8 @@ avx512_qselect(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
     using vtype = zmm_vector<_Float16>;
     using comparator =
             typename std::conditional<descending,
-                                      DescendingComparator<vtype>,
-                                      AscendingComparator<vtype>>::type;
+                                      Comparator<vtype, true>,
+                                      Comparator<vtype, false>>::type;
 
     arrsize_t index_first_elem = 0;
     arrsize_t index_last_elem = arrsize - 1;
