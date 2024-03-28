@@ -46,6 +46,10 @@ struct zmm_vector<float16> {
     {
         return _mm512_set1_epi16(type_max());
     }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_epi16(type_min());
+    }
     static opmask_t knot_opmask(opmask_t x)
     {
         return _knot_mask32(x);
@@ -237,6 +241,10 @@ struct zmm_vector<int16_t> {
     {
         return _mm512_set1_epi16(type_max());
     }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_epi16(type_min());
+    }
     static opmask_t knot_opmask(opmask_t x)
     {
         return _knot_mask32(x);
@@ -380,6 +388,10 @@ struct zmm_vector<uint16_t> {
     static reg_t zmm_max()
     {
         return _mm512_set1_epi16(type_max());
+    }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_epi16(type_min());
     }
 
     static opmask_t knot_opmask(opmask_t x)
@@ -548,42 +560,70 @@ X86_SIMD_SORT_INLINE_ONLY bool is_a_nan<uint16_t>(uint16_t elem)
     return ((elem & 0x7c00u) == 0x7c00u) && ((elem & 0x03ffu) != 0);
 }
 
-X86_SIMD_SORT_INLINE void
-avx512_qsort_fp16(uint16_t *arr, arrsize_t arrsize, bool hasnan = false)
+X86_SIMD_SORT_INLINE void avx512_qsort_fp16(uint16_t *arr,
+                                            arrsize_t arrsize,
+                                            bool hasnan = false,
+                                            bool descending = false)
 {
+    using vtype = zmm_vector<float16>;
+
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
         if (UNLIKELY(hasnan)) {
             nan_count = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(
                     arr, arrsize);
         }
-        qsort_<zmm_vector<float16>, uint16_t>(
-                arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-        replace_inf_with_nan(arr, arrsize, nan_count);
+        if (descending) {
+            qsort_<vtype, Comparator<vtype, true>, uint16_t>(
+                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+        }
+        else {
+            qsort_<vtype, Comparator<vtype, false>, uint16_t>(
+                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+        }
+        replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }
 }
 
 X86_SIMD_SORT_INLINE void avx512_qselect_fp16(uint16_t *arr,
                                               arrsize_t k,
                                               arrsize_t arrsize,
-                                              bool hasnan = false)
+                                              bool hasnan = false,
+                                              bool descending = false)
 {
+    using vtype = zmm_vector<float16>;
+
     arrsize_t indx_last_elem = arrsize - 1;
     if (UNLIKELY(hasnan)) {
         indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
     }
     if (indx_last_elem >= k) {
-        qselect_<zmm_vector<float16>, uint16_t>(
-                arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
+        if (descending) {
+            qselect_<vtype, Comparator<vtype, true>, uint16_t>(
+                    arr,
+                    k,
+                    0,
+                    indx_last_elem,
+                    2 * (arrsize_t)log2(indx_last_elem));
+        }
+        else {
+            qselect_<vtype, Comparator<vtype, false>, uint16_t>(
+                    arr,
+                    k,
+                    0,
+                    indx_last_elem,
+                    2 * (arrsize_t)log2(indx_last_elem));
+        }
     }
 }
 
 X86_SIMD_SORT_INLINE void avx512_partial_qsort_fp16(uint16_t *arr,
                                                     arrsize_t k,
                                                     arrsize_t arrsize,
-                                                    bool hasnan = false)
+                                                    bool hasnan = false,
+                                                    bool descending = false)
 {
-    avx512_qselect_fp16(arr, k - 1, arrsize, hasnan);
-    avx512_qsort_fp16(arr, k - 1);
+    avx512_qselect_fp16(arr, k - 1, arrsize, hasnan, descending);
+    avx512_qsort_fp16(arr, k - 1, descending);
 }
 #endif // AVX512_QSORT_16BIT

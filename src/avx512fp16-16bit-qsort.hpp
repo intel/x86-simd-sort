@@ -47,6 +47,10 @@ struct zmm_vector<_Float16> {
     {
         return _mm512_set1_ph(type_max());
     }
+    static reg_t zmm_min()
+    {
+        return _mm512_set1_ph(type_min());
+    }
     static opmask_t knot_opmask(opmask_t x)
     {
         return _knot_mask32(x);
@@ -175,51 +179,86 @@ X86_SIMD_SORT_INLINE_ONLY bool is_a_nan<_Float16>(_Float16 elem)
 }
 
 template <>
-X86_SIMD_SORT_INLINE_ONLY void
-replace_inf_with_nan(_Float16 *arr, arrsize_t size, arrsize_t nan_count)
+X86_SIMD_SORT_INLINE_ONLY void replace_inf_with_nan(_Float16 *arr,
+                                                    arrsize_t size,
+                                                    arrsize_t nan_count,
+                                                    bool descending)
 {
     Fp16Bits val;
     val.i_ = 0x7c01;
-    for (arrsize_t ii = size - 1; nan_count > 0; --ii) {
-        arr[ii] = val.f_;
-        nan_count -= 1;
+
+    if (descending) {
+        for (arrsize_t ii = 0; nan_count > 0; ++ii) {
+            arr[ii] = val.f_;
+            nan_count -= 1;
+        }
+    }
+    else {
+        for (arrsize_t ii = size - 1; nan_count > 0; --ii) {
+            arr[ii] = val.f_;
+            nan_count -= 1;
+        }
     }
 }
 /* Specialized template function for _Float16 qsort_*/
-template <>
+template <bool descending = false>
 X86_SIMD_SORT_INLINE_ONLY void
 avx512_qsort(_Float16 *arr, arrsize_t arrsize, bool hasnan)
 {
+    using vtype = zmm_vector<_Float16>;
+    using comparator =
+            typename std::conditional<descending,
+                                      Comparator<vtype, true>,
+                                      Comparator<vtype, false>>::type;
+
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
         if (UNLIKELY(hasnan)) {
-            nan_count = replace_nan_with_inf<zmm_vector<_Float16>, _Float16>(
-                    arr, arrsize);
+            nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
         }
-        qsort_<zmm_vector<_Float16>, _Float16>(
+
+        qsort_<vtype, comparator, _Float16>(
                 arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-        replace_inf_with_nan(arr, arrsize, nan_count);
+
+        replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }
 }
 
-template <>
+template <bool descending = false>
 X86_SIMD_SORT_INLINE_ONLY void
 avx512_qselect(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
-    arrsize_t indx_last_elem = arrsize - 1;
+    using vtype = zmm_vector<_Float16>;
+    using comparator =
+            typename std::conditional<descending,
+                                      Comparator<vtype, true>,
+                                      Comparator<vtype, false>>::type;
+
+    arrsize_t index_first_elem = 0;
+    arrsize_t index_last_elem = arrsize - 1;
+
     if (UNLIKELY(hasnan)) {
-        indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        if constexpr (descending) {
+            index_first_elem = move_nans_to_start_of_array(arr, arrsize);
+        }
+        else {
+            index_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        }
     }
-    if (indx_last_elem >= k) {
-        qselect_<zmm_vector<_Float16>, _Float16>(
-                arr, k, 0, indx_last_elem, 2 * (arrsize_t)log2(indx_last_elem));
+
+    if (index_first_elem <= k && index_last_elem >= k) {
+        qselect_<vtype, comparator, _Float16>(arr,
+                                              k,
+                                              index_first_elem,
+                                              index_last_elem,
+                                              2 * (arrsize_t)log2(arrsize));
     }
 }
-template <>
+template <bool descending = false>
 X86_SIMD_SORT_INLINE_ONLY void
 avx512_partial_qsort(_Float16 *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
 {
-    avx512_qselect(arr, k - 1, arrsize, hasnan);
-    avx512_qsort(arr, k - 1, hasnan);
+    avx512_qselect<descending>(arr, k - 1, arrsize, hasnan);
+    avx512_qsort<descending>(arr, k - 1, hasnan);
 }
 #endif // AVX512FP16_QSORT_16BIT

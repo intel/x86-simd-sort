@@ -57,29 +57,32 @@ namespace x86simdsort {
 #define CAT(a, b) CAT_(a, b)
 
 #define DECLARE_INTERNAL_qsort(TYPE) \
-    static void (*internal_qsort##TYPE)(TYPE *, size_t, bool) = NULL; \
+    static void (*internal_qsort##TYPE)(TYPE *, size_t, bool, bool) = NULL; \
     template <> \
-    void qsort(TYPE *arr, size_t arrsize, bool hasnan) \
+    void qsort(TYPE *arr, size_t arrsize, bool hasnan, bool descending) \
     { \
-        (*internal_qsort##TYPE)(arr, arrsize, hasnan); \
+        (*internal_qsort##TYPE)(arr, arrsize, hasnan, descending); \
     }
 
 #define DECLARE_INTERNAL_qselect(TYPE) \
-    static void (*internal_qselect##TYPE)(TYPE *, size_t, size_t, bool) \
+    static void (*internal_qselect##TYPE)(TYPE *, size_t, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void qselect(TYPE *arr, size_t k, size_t arrsize, bool hasnan) \
+    void qselect( \
+            TYPE *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
-        (*internal_qselect##TYPE)(arr, k, arrsize, hasnan); \
+        (*internal_qselect##TYPE)(arr, k, arrsize, hasnan, descending); \
     }
 
 #define DECLARE_INTERNAL_partial_qsort(TYPE) \
-    static void (*internal_partial_qsort##TYPE)(TYPE *, size_t, size_t, bool) \
+    static void (*internal_partial_qsort##TYPE)( \
+            TYPE *, size_t, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void partial_qsort(TYPE *arr, size_t k, size_t arrsize, bool hasnan) \
+    void partial_qsort( \
+            TYPE *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
-        (*internal_partial_qsort##TYPE)(arr, k, arrsize, hasnan); \
+        (*internal_partial_qsort##TYPE)(arr, k, arrsize, hasnan, descending); \
     }
 
 #define DECLARE_INTERNAL_argsort(TYPE) \

@@ -46,12 +46,22 @@ template <typename T>
 void IS_ARR_PARTITIONED(std::vector<T> arr,
                         size_t k,
                         T true_kth,
-                        std::string type)
+                        std::string type,
+                        bool descending = false)
 {
-    auto cmp_eq = compare<T, std::equal_to<T>>();
-    auto cmp_less = compare<T, std::less<T>>();
-    auto cmp_leq = compare<T, std::less_equal<T>>();
-    auto cmp_geq = compare<T, std::greater_equal<T>>();
+    std::function<bool(T, T)> cmp_eq, cmp_less, cmp_leq, cmp_geq;
+    cmp_eq = compare<T, std::equal_to<T>>();
+
+    if (!descending) {
+        cmp_less = compare<T, std::less<T>>();
+        cmp_leq = compare<T, std::less_equal<T>>();
+        cmp_geq = compare<T, std::greater_equal<T>>();
+    }
+    else {
+        cmp_less = compare<T, std::greater<T>>();
+        cmp_leq = compare<T, std::greater_equal<T>>();
+        cmp_geq = compare<T, std::less_equal<T>>();
+    }
 
     // 1) arr[k] == sorted[k]; use memcmp to handle nan
     if (!cmp_eq(arr[k], true_kth)) {
