@@ -1,8 +1,5 @@
 // AVX2 specific routines:
-#include "avx2-32bit-qsort.hpp"
-#include "avx2-64bit-qsort.hpp"
-#include "avx2-32bit-half.hpp"
-#include "xss-common-argsort.h"
+#include "x86simdsort-static-incl.h"
 #include "x86simdsort-internal.h"
 
 #define DEFINE_ALL_METHODS(type) \

@@ -1,8 +1,5 @@
 // SKX specific routines:
-#include "avx512-32bit-qsort.hpp"
-#include "avx512-64bit-keyvaluesort.hpp"
-#include "avx512-64bit-argsort.hpp"
-#include "avx512-64bit-qsort.hpp"
+#include "x86simdsort-static-incl.h"
 #include "x86simdsort-internal.h"
 
 #define DEFINE_ALL_METHODS(type) \

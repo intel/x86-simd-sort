@@ -3,7 +3,6 @@
 
 #include <array>
 #include <utility>
-#include "xss-common-qsort.h"
 
 constexpr auto avx2_mask_helper_lut32 = [] {
     std::array<std::array<int32_t, 8>, 256> lut {};

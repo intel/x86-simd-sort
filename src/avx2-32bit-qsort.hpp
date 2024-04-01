@@ -7,7 +7,6 @@
 #ifndef AVX2_QSORT_32BIT
 #define AVX2_QSORT_32BIT
 
-#include "xss-common-qsort.h"
 #include "avx2-emu-funcs.hpp"
 
 /*

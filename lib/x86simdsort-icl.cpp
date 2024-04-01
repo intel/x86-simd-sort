@@ -1,5 +1,5 @@
 // ICL specific routines:
-#include "avx512-16bit-qsort.hpp"
+#include "x86simdsort-static-incl.h"
 #include "x86simdsort-internal.h"
 
 namespace xss {

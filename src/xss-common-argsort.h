@@ -7,7 +7,6 @@
 #ifndef XSS_COMMON_ARGSORT
 #define XSS_COMMON_ARGSORT
 
-#include "xss-common-qsort.h"
 #include "xss-network-keyvaluesort.hpp"
 #include <numeric>
 

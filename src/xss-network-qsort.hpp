@@ -2,7 +2,6 @@
 #define XSS_NETWORK_QSORT
 
 #include "xss-optimal-networks.hpp"
-#include "xss-common-qsort.h"
 
 template <typename vtype, typename mm_t>
 X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b);
