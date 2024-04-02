@@ -2,6 +2,8 @@
 #define X86_SIMD_SORT_STATIC_METHODS
 #include <vector>
 #include <stdlib.h>
+#include "xss-common-includes.h"
+
 // Declare all methods:
 namespace x86simdsortStatic {
 template <typename T>
