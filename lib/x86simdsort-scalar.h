@@ -70,15 +70,20 @@ namespace scalar {
                           xss::utils::get_cmp_func<T>(hasnan, reversed));
     }
     template <typename T>
-    std::vector<size_t> argsort(T *arr, size_t arrsize, bool hasnan, bool reversed)
+    std::vector<size_t>
+    argsort(T *arr, size_t arrsize, bool hasnan, bool reversed)
     {
         UNUSED(hasnan);
         std::vector<size_t> arg(arrsize);
         std::iota(arg.begin(), arg.end(), 0);
-        if (reversed){
-            std::sort(arg.begin(), arg.end(), compare_arg<T, std::greater<T>>(arr));
-        }else{
-            std::sort(arg.begin(), arg.end(), compare_arg<T, std::less<T>>(arr));
+        if (reversed) {
+            std::sort(arg.begin(),
+                      arg.end(),
+                      compare_arg<T, std::greater<T>>(arr));
+        }
+        else {
+            std::sort(
+                    arg.begin(), arg.end(), compare_arg<T, std::less<T>>(arr));
         }
         return arg;
     }

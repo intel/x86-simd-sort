@@ -24,7 +24,8 @@
         avx2_partial_qsort(arr, k, arrsize, hasnan, descending); \
     } \
     template <> \
-    std::vector<size_t> argsort(type *arr, size_t arrsize, bool hasnan, bool descending) \
+    std::vector<size_t> argsort( \
+            type *arr, size_t arrsize, bool hasnan, bool descending) \
     { \
         return avx2_argsort(arr, arrsize, hasnan, descending); \
     } \

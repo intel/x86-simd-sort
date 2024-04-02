@@ -30,8 +30,10 @@ namespace avx512 {
                                        bool descending = false);
     // argsort
     template <typename T>
-    XSS_HIDE_SYMBOL std::vector<size_t>
-    argsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
+    XSS_HIDE_SYMBOL std::vector<size_t> argsort(T *arr,
+                                                size_t arrsize,
+                                                bool hasnan = false,
+                                                bool descending = false);
     // argselect
     template <typename T>
     XSS_HIDE_SYMBOL std::vector<size_t>
@@ -62,8 +64,10 @@ namespace avx2 {
                                        bool descending = false);
     // argsort
     template <typename T>
-    XSS_HIDE_SYMBOL std::vector<size_t>
-    argsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
+    XSS_HIDE_SYMBOL std::vector<size_t> argsort(T *arr,
+                                                size_t arrsize,
+                                                bool hasnan = false,
+                                                bool descending = false);
     // argselect
     template <typename T>
     XSS_HIDE_SYMBOL std::vector<size_t>
@@ -94,8 +98,10 @@ namespace scalar {
                                        bool descending = false);
     // argsort
     template <typename T>
-    XSS_HIDE_SYMBOL std::vector<size_t>
-    argsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
+    XSS_HIDE_SYMBOL std::vector<size_t> argsort(T *arr,
+                                                size_t arrsize,
+                                                bool hasnan = false,
+                                                bool descending = false);
     // argselect
     template <typename T>
     XSS_HIDE_SYMBOL std::vector<size_t>

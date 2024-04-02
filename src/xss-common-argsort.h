@@ -541,8 +541,11 @@ X86_SIMD_SORT_INLINE void argselect_64bit_(type_t *arr,
 
 /* argsort methods for 32-bit and 64-bit dtypes */
 template <typename T>
-X86_SIMD_SORT_INLINE void
-avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false, bool descending = false)
+X86_SIMD_SORT_INLINE void avx512_argsort(T *arr,
+                                         arrsize_t *arg,
+                                         arrsize_t arrsize,
+                                         bool hasnan = false,
+                                         bool descending = false)
 {
     /* TODO optimization: on 32-bit, use zmm_vector for 32-bit dtype */
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
@@ -558,27 +561,23 @@ avx512_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false, b
         if constexpr (std::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argsort_withnan(arr, arg, 0, arrsize);
-                
-                if (descending){
-                    std::reverse(arg, arg + arrsize);
-                }
-                
+
+                if (descending) { std::reverse(arg, arg + arrsize); }
+
                 return;
             }
         }
         UNUSED(hasnan);
         argsort_64bit_<vectype, argtype>(
                 arr, arg, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-        
-        if (descending){
-            std::reverse(arg, arg + arrsize);
-        }
+
+        if (descending) { std::reverse(arg, arg + arrsize); }
     }
 }
 
 template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t>
-avx512_argsort(T *arr, arrsize_t arrsize, bool hasnan = false, bool descending = false)
+X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx512_argsort(
+        T *arr, arrsize_t arrsize, bool hasnan = false, bool descending = false)
 {
     std::vector<arrsize_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
@@ -588,8 +587,11 @@ avx512_argsort(T *arr, arrsize_t arrsize, bool hasnan = false, bool descending =
 
 /* argsort methods for 32-bit and 64-bit dtypes */
 template <typename T>
-X86_SIMD_SORT_INLINE void
-avx2_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false, bool descending = false)
+X86_SIMD_SORT_INLINE void avx2_argsort(T *arr,
+                                       arrsize_t *arg,
+                                       arrsize_t arrsize,
+                                       bool hasnan = false,
+                                       bool descending = false)
 {
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               avx2_half_vector<T>,
@@ -603,27 +605,23 @@ avx2_argsort(T *arr, arrsize_t *arg, arrsize_t arrsize, bool hasnan = false, boo
         if constexpr (std::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argsort_withnan(arr, arg, 0, arrsize);
-                
-                if (descending){
-                    std::reverse(arg, arg + arrsize);
-                }
-                
+
+                if (descending) { std::reverse(arg, arg + arrsize); }
+
                 return;
             }
         }
         UNUSED(hasnan);
         argsort_64bit_<vectype, argtype>(
                 arr, arg, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
-        
-        if (descending){
-            std::reverse(arg, arg + arrsize);
-        }
+
+        if (descending) { std::reverse(arg, arg + arrsize); }
     }
 }
 
 template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t>
-avx2_argsort(T *arr, arrsize_t arrsize, bool hasnan = false, bool descending = false)
+X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx2_argsort(
+        T *arr, arrsize_t arrsize, bool hasnan = false, bool descending = false)
 {
     std::vector<arrsize_t> indices(arrsize);
     std::iota(indices.begin(), indices.end(), 0);
@@ -649,7 +647,7 @@ X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
                                       ymm_vector<arrsize_t>,
                                       zmm_vector<arrsize_t>>::type;
 
-    if (arrsize > 1) {    
+    if (arrsize > 1) {
         if constexpr (std::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argselect_withnan(arr, arg, k, 0, arrsize);

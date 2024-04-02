@@ -99,7 +99,8 @@ TYPED_TEST_P(simdsort, test_argsort_descending)
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::greater<TypeParam>>());
-            auto arg = x86simdsort::argsort(arr.data(), arr.size(), hasnan, true);
+            auto arg = x86simdsort::argsort(
+                    arr.data(), arr.size(), hasnan, true);
             IS_ARG_SORTED(sortedarr, arr, arg, type);
             arr.clear();
             arg.clear();
