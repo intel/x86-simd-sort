@@ -86,12 +86,12 @@ namespace x86simdsort {
     }
 
 #define DECLARE_INTERNAL_argsort(TYPE) \
-    static std::vector<size_t> (*internal_argsort##TYPE)(TYPE *, size_t, bool) \
+    static std::vector<size_t> (*internal_argsort##TYPE)(TYPE *, size_t, bool, bool) \
             = NULL; \
     template <> \
-    std::vector<size_t> argsort(TYPE *arr, size_t arrsize, bool hasnan) \
+    std::vector<size_t> argsort(TYPE *arr, size_t arrsize, bool hasnan, bool descending) \
     { \
-        return (*internal_argsort##TYPE)(arr, arrsize, hasnan); \
+        return (*internal_argsort##TYPE)(arr, arrsize, hasnan, descending); \
     }
 
 #define DECLARE_INTERNAL_argselect(TYPE) \

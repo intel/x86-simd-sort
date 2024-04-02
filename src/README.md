@@ -13,8 +13,8 @@ Equivalent to `qsort` in
 `std::sort` in [C++](https://en.cppreference.com/w/cpp/algorithm/sort).
 
 ```cpp
-void avx512_qsort<T>(T* arr, size_t arrsize, bool hasnan = false);
-void avx2_qsort<T>(T* arr, size_t arrsize, bool hasnan = false);
+void avx512_qsort<T>(T* arr, size_t arrsize, bool hasnan = false, bool descending = false);
+void avx2_qsort<T>(T* arr, size_t arrsize, bool hasnan = false, bool descending = false);
 ```
 Supported datatypes: `uint16_t`, `int16_t`, `_Float16`, `uint32_t`, `int32_t`,
 `float`, `uint64_t`, `int64_t` and `double`. AVX2 versions currently support
@@ -30,8 +30,8 @@ Equivalent to `std::nth_element` in
 
 
 ```cpp
-void avx512_qselect<T>(T* arr, size_t arrsize, bool hasnan = false);
-void avx2_qselect<T>(T* arr, size_t arrsize, bool hasnan = false);
+void avx512_qselect<T>(T* arr, size_t arrsize, bool hasnan = false, bool descending = false);
+void avx2_qselect<T>(T* arr, size_t arrsize, bool hasnan = false, bool descending = false);
 ```
 Supported datatypes: `uint16_t`, `int16_t`, `_Float16`, `uint32_t`, `int32_t`,
 `float`, `uint64_t`, `int64_t` and `double`. AVX2 versions currently support
@@ -46,8 +46,8 @@ Equivalent to `std::partial_sort` in
 
 
 ```cpp
-void avx512_partial_qsort<T>(T* arr, size_t arrsize, bool hasnan = false)
-void avx2_partial_qsort<T>(T* arr, size_t arrsize, bool hasnan = false)
+void avx512_partial_qsort<T>(T* arr, size_t arrsize, bool hasnan = false, bool descending = false)
+void avx2_partial_qsort<T>(T* arr, size_t arrsize, bool hasnan = false, bool descending = false)
 ```
 Supported datatypes: `uint16_t`, `int16_t`, `_Float16`, `uint32_t`, `int32_t`,
 `float`, `uint64_t`, `int64_t` and `double`. AVX2 versions currently support
@@ -61,8 +61,8 @@ Equivalent to `np.argsort` in
 [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.argsort.html).
 
 ```cpp
-std::vector<size_t> arg = avx512_argsort<T>(T* arr, size_t arrsize);
-void avx512_argsort<T>(T* arr, size_t *arg, size_t arrsize);
+std::vector<size_t> arg = avx512_argsort<T>(T* arr, size_t arrsize, bool hasnan = false, bool descending = false);
+void avx512_argsort<T>(T* arr, size_t *arg, size_t arrsize, bool hasnan = false, bool descending = false);
 ```
 Supported datatypes: `uint32_t`, `int32_t`, `float`, `uint64_t`, `int64_t` and
 `double`.
@@ -74,8 +74,8 @@ Equivalent to `np.argselect` in
 [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.argpartition.html).
 
 ```cpp
-std::vector<size_t> arg = avx512_argsort<T>(T* arr, size_t arrsize);
-void avx512_argsort<T>(T* arr, size_t *arg, size_t arrsize);
+std::vector<size_t> arg = avx512_argselect<T>(T* arr, size_t k, size_t arrsize);
+void avx512_argselect<T>(T* arr, size_t *arg, size_t k, size_t arrsize);
 ```
 Supported datatypes: `uint32_t`, `int32_t`, `float`, `uint64_t`, `int64_t` and
 `double`.
