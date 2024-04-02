@@ -1,7 +1,6 @@
 #ifndef XSS_KEYVALUE_NETWORKS
 #define XSS_KEYVALUE_NETWORKS
 
-
 template <typename keyType, typename valueType>
 typename valueType::opmask_t resize_mask(typename keyType::opmask_t mask)
 {
