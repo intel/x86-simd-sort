@@ -7,59 +7,92 @@
 // Declare all methods:
 namespace x86simdsortStatic {
 template <typename T>
-X86_SIMD_SORT_FINLINE void qsort(T *arr, size_t size, bool hasnan = true);
+X86_SIMD_SORT_FINLINE void
+qsort(T *arr, size_t size, bool hasnan = false, bool descending = true);
 
 template <typename T>
-X86_SIMD_SORT_FINLINE void
-qselect(T *arr, size_t k, size_t size, bool hasnan = true);
+X86_SIMD_SORT_FINLINE void qselect(T *arr,
+                                   size_t k,
+                                   size_t size,
+                                   bool hasnan = false,
+                                   bool descending = true);
 
 template <typename T>
-X86_SIMD_SORT_FINLINE void
-partial_qsort(T *arr, size_t k, size_t size, bool hasnan = true);
+X86_SIMD_SORT_FINLINE void partial_qsort(T *arr,
+                                         size_t k,
+                                         size_t size,
+                                         bool hasnan = false,
+                                         bool descending = true);
 
 template <typename T>
 X86_SIMD_SORT_FINLINE std::vector<size_t>
-argsort(T *arr, size_t size, bool hasnan = true);
+argsort(T *arr, size_t size, bool hasnan = false, bool descending = false);
 
 template <typename T>
-std::vector<size_t> X86_SIMD_SORT_FINLINE
-argselect(T *arr, size_t k, size_t size, bool hasnan = true);
+X86_SIMD_SORT_FINLINE void
+argsort(T *arr, size_t *arg, size_t size, bool hasnan = false, bool descending = false);
+
+template <typename T>
+X86_SIMD_SORT_FINLINE std::vector<size_t>
+argselect(T *arr, size_t k, size_t size, bool hasnan = false);
+
+template <typename T>
+void X86_SIMD_SORT_FINLINE
+argselect(T *arr, size_t *arg, size_t k, size_t size, bool hasnan = false);
 
 template <typename T1, typename T2>
 X86_SIMD_SORT_FINLINE void
-keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = true);
+keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
 } // namespace x86simdsortStatic
 
 #define XSS_METHODS(ISA) \
     template <typename T> \
     X86_SIMD_SORT_FINLINE void x86simdsortStatic::qsort( \
-            T *arr, size_t size, bool hasnan) \
+            T *arr, size_t size, bool hasnan, bool descending) \
     { \
-        ISA##_qsort(arr, size, hasnan); \
+        ISA##_qsort(arr, size, hasnan, descending); \
     } \
     template <typename T> \
     X86_SIMD_SORT_FINLINE void x86simdsortStatic::qselect( \
-            T *arr, size_t k, size_t size, bool hasnan) \
+            T *arr, size_t k, size_t size, bool hasnan, bool descending) \
     { \
-        ISA##_qselect(arr, k, size, hasnan); \
+        ISA##_qselect(arr, k, size, hasnan, descending); \
     } \
     template <typename T> \
     X86_SIMD_SORT_FINLINE void x86simdsortStatic::partial_qsort( \
-            T *arr, size_t k, size_t size, bool hasnan) \
+            T *arr, size_t k, size_t size, bool hasnan, bool descending) \
     { \
-        ISA##_partial_qsort(arr, k, size, hasnan); \
+        ISA##_partial_qsort(arr, k, size, hasnan, descending); \
+    } \
+    template <typename T> \
+    X86_SIMD_SORT_FINLINE void x86simdsortStatic::argsort( \
+            T *arr, size_t *arg, size_t size, bool hasnan, bool descending) \
+    { \
+        ISA##_argsort(arr, arg, size, hasnan, descending); \
     } \
     template <typename T> \
     X86_SIMD_SORT_FINLINE std::vector<size_t> x86simdsortStatic::argsort( \
-            T *arr, size_t size, bool hasnan) \
+            T *arr, size_t size, bool hasnan, bool descending) \
     { \
-        return ISA##_argsort(arr, size, hasnan); \
+        std::vector<size_t> indices(size); \
+        std::iota(indices.begin(), indices.end(), 0); \
+        x86simdsortStatic::argsort(arr, indices.data(), size, hasnan, descending); \
+        return indices; \
+    } \
+    template <typename T> \
+    X86_SIMD_SORT_FINLINE void x86simdsortStatic::argselect( \
+            T *arr, size_t *arg, size_t k, size_t size, bool hasnan) \
+    { \
+        ISA##_argselect(arr, arg, k, size, hasnan); \
     } \
     template <typename T> \
     X86_SIMD_SORT_FINLINE std::vector<size_t> x86simdsortStatic::argselect( \
             T *arr, size_t k, size_t size, bool hasnan) \
     { \
-        return ISA##_argselect(arr, k, size, hasnan); \
+        std::vector<size_t> indices(size); \
+        std::iota(indices.begin(), indices.end(), 0); \
+        x86simdsortStatic::argselect(arr, indices.data(), k, size, hasnan); \
+        return indices; \
     }
 
 /*

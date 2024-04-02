@@ -574,16 +574,6 @@ X86_SIMD_SORT_INLINE void avx512_argsort(T *arr,
     }
 }
 
-template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx512_argsort(
-        T *arr, arrsize_t arrsize, bool hasnan = false, bool descending = false)
-{
-    std::vector<arrsize_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx512_argsort<T>(arr, indices.data(), arrsize, hasnan, descending);
-    return indices;
-}
-
 /* argsort methods for 32-bit and 64-bit dtypes */
 template <typename T>
 X86_SIMD_SORT_INLINE void avx2_argsort(T *arr,
@@ -618,16 +608,6 @@ X86_SIMD_SORT_INLINE void avx2_argsort(T *arr,
     }
 }
 
-template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx2_argsort(
-        T *arr, arrsize_t arrsize, bool hasnan = false, bool descending = false)
-{
-    std::vector<arrsize_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx2_argsort<T>(arr, indices.data(), arrsize, hasnan, descending);
-    return indices;
-}
-
 /* argselect methods for 32-bit and 64-bit dtypes */
 template <typename T>
 X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
@@ -659,16 +639,6 @@ X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
     }
 }
 
-template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t>
-avx512_argselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
-{
-    std::vector<arrsize_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx512_argselect<T>(arr, indices.data(), k, arrsize, hasnan);
-    return indices;
-}
-
 /* argselect methods for 32-bit and 64-bit dtypes */
 template <typename T>
 X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
@@ -698,15 +668,4 @@ X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
                 arr, arg, k, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
 }
-
-template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t>
-avx2_argselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
-{
-    std::vector<arrsize_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx2_argselect<T>(arr, indices.data(), k, arrsize, hasnan);
-    return indices;
-}
-
 #endif // XSS_COMMON_ARGSORT
