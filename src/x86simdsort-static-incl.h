@@ -4,30 +4,31 @@
 #include <stdlib.h>
 #include "xss-common-includes.h"
 
-// Declare all methods:
+// Supported methods declared here for a quick reference:
 namespace x86simdsortStatic {
 template <typename T>
 X86_SIMD_SORT_FINLINE void
-qsort(T *arr, size_t size, bool hasnan = false, bool descending = true);
+qsort(T *arr, size_t size, bool hasnan = false, bool descending = false);
 
 template <typename T>
 X86_SIMD_SORT_FINLINE void qselect(T *arr,
                                    size_t k,
                                    size_t size,
                                    bool hasnan = false,
-                                   bool descending = true);
+                                   bool descending = false);
 
 template <typename T>
 X86_SIMD_SORT_FINLINE void partial_qsort(T *arr,
                                          size_t k,
                                          size_t size,
                                          bool hasnan = false,
-                                         bool descending = true);
+                                         bool descending = false);
 
 template <typename T>
 X86_SIMD_SORT_FINLINE std::vector<size_t>
 argsort(T *arr, size_t size, bool hasnan = false, bool descending = false);
 
+/* argsort API required by NumPy: */
 template <typename T>
 X86_SIMD_SORT_FINLINE void
 argsort(T *arr, size_t *arg, size_t size, bool hasnan = false, bool descending = false);
@@ -36,6 +37,7 @@ template <typename T>
 X86_SIMD_SORT_FINLINE std::vector<size_t>
 argselect(T *arr, size_t k, size_t size, bool hasnan = false);
 
+/* argselect API required by NumPy: */
 template <typename T>
 void X86_SIMD_SORT_FINLINE
 argselect(T *arr, size_t *arg, size_t k, size_t size, bool hasnan = false);
@@ -43,6 +45,7 @@ argselect(T *arr, size_t *arg, size_t k, size_t size, bool hasnan = false);
 template <typename T1, typename T2>
 X86_SIMD_SORT_FINLINE void
 keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
+
 } // namespace x86simdsortStatic
 
 #define XSS_METHODS(ISA) \
