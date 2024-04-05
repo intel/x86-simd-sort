@@ -71,7 +71,7 @@ TYPED_TEST_P(simdsort, test_qsort_descending)
     }
 }
 
-TYPED_TEST_P(simdsort, test_argsort)
+TYPED_TEST_P(simdsort, test_argsort_ascending)
 {
     for (auto type : this->arrtype) {
         bool hasnan = (type == "rand_with_nan") ? true : false;
@@ -82,6 +82,25 @@ TYPED_TEST_P(simdsort, test_argsort)
                       sortedarr.end(),
                       compare<TypeParam, std::less<TypeParam>>());
             auto arg = x86simdsort::argsort(arr.data(), arr.size(), hasnan);
+            IS_ARG_SORTED(sortedarr, arr, arg, type);
+            arr.clear();
+            arg.clear();
+        }
+    }
+}
+
+TYPED_TEST_P(simdsort, test_argsort_descending)
+{
+    for (auto type : this->arrtype) {
+        bool hasnan = (type == "rand_with_nan") ? true : false;
+        for (auto size : this->arrsize) {
+            std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
+            std::vector<TypeParam> sortedarr = arr;
+            std::sort(sortedarr.begin(),
+                      sortedarr.end(),
+                      compare<TypeParam, std::greater<TypeParam>>());
+            auto arg = x86simdsort::argsort(
+                    arr.data(), arr.size(), hasnan, true);
             IS_ARG_SORTED(sortedarr, arr, arg, type);
             arr.clear();
             arg.clear();
@@ -241,7 +260,8 @@ TYPED_TEST_P(simdsort, test_comparator)
 REGISTER_TYPED_TEST_SUITE_P(simdsort,
                             test_qsort_ascending,
                             test_qsort_descending,
-                            test_argsort,
+                            test_argsort_ascending,
+                            test_argsort_descending,
                             test_argselect,
                             test_qselect_ascending,
                             test_qselect_descending,

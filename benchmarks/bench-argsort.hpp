@@ -46,6 +46,22 @@ static void simdargsort(benchmark::State &state, Args &&...args)
 }
 
 template <typename T, class... Args>
+static void simd_revargsort(benchmark::State &state, Args &&...args)
+{
+    // get args
+    auto args_tuple = std::make_tuple(std::move(args)...);
+    size_t arrsize = std::get<0>(args_tuple);
+    std::string arrtype = std::get<1>(args_tuple);
+    // set up array
+    std::vector<T> arr = get_array<T>(arrtype, arrsize);
+    std::vector<size_t> inx;
+    // benchmark
+    for (auto _ : state) {
+        inx = x86simdsort::argsort(arr.data(), arrsize, false, true);
+    }
+}
+
+template <typename T, class... Args>
 static void simd_ordern_argsort(benchmark::State &state, Args &&...args)
 {
     // get args
@@ -68,6 +84,7 @@ static void simd_ordern_argsort(benchmark::State &state, Args &&...args)
 
 #define BENCH_BOTH(type) \
     BENCH_SORT(simdargsort, type) \
+    BENCH_SORT(simd_revargsort, type) \
     BENCH_SORT(simd_ordern_argsort, type) \
     BENCH_SORT(scalarargsort, type)
 
