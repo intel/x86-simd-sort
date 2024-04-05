@@ -105,8 +105,8 @@ X86_SIMD_SORT_INLINE void replace_inf_with_nan(type_t *arr,
 {
     if (descending) {
         for (arrsize_t ii = 0; nan_count > 0; ++ii) {
-            if constexpr (std::is_floating_point_v<type_t>) {
-                arr[ii] = std::numeric_limits<type_t>::quiet_NaN();
+            if constexpr (xss::fp::is_floating_point_v<type_t>) {
+                arr[ii] = xss::fp::quiet_NaN<type_t>();
             }
             else {
                 arr[ii] = 0xFFFF;
@@ -116,8 +116,8 @@ X86_SIMD_SORT_INLINE void replace_inf_with_nan(type_t *arr,
     }
     else {
         for (arrsize_t ii = size - 1; nan_count > 0; --ii) {
-            if constexpr (std::is_floating_point_v<type_t>) {
-                arr[ii] = std::numeric_limits<type_t>::quiet_NaN();
+            if constexpr (xss::fp::is_floating_point_v<type_t>) {
+                arr[ii] = xss::fp::quiet_NaN<type_t>();
             }
             else {
                 arr[ii] = 0xFFFF;
@@ -619,7 +619,7 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
 
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
-        if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (xss::fp::is_floating_point_v<T>) {
             if (UNLIKELY(hasnan)) {
                 nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
             }
@@ -646,7 +646,7 @@ xss_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
     arrsize_t index_first_elem = 0;
     arrsize_t index_last_elem = arrsize - 1;
 
-    if constexpr (std::is_floating_point_v<T>) {
+    if constexpr (xss::fp::is_floating_point_v<T>) {
         if (UNLIKELY(hasnan)) {
             if constexpr (descending) {
                 index_first_elem = move_nans_to_start_of_array(arr, arrsize);

@@ -560,10 +560,11 @@ X86_SIMD_SORT_INLINE_ONLY bool is_a_nan<uint16_t>(uint16_t elem)
     return ((elem & 0x7c00u) == 0x7c00u) && ((elem & 0x03ffu) != 0);
 }
 
-X86_SIMD_SORT_INLINE void avx512_qsort_fp16(uint16_t *arr,
-                                            arrsize_t arrsize,
-                                            bool hasnan = false,
-                                            bool descending = false)
+[[maybe_unused]] X86_SIMD_SORT_INLINE void
+avx512_qsort_fp16(uint16_t *arr,
+                  arrsize_t arrsize,
+                  bool hasnan = false,
+                  bool descending = false)
 {
     using vtype = zmm_vector<float16>;
 
@@ -585,11 +586,12 @@ X86_SIMD_SORT_INLINE void avx512_qsort_fp16(uint16_t *arr,
     }
 }
 
-X86_SIMD_SORT_INLINE void avx512_qselect_fp16(uint16_t *arr,
-                                              arrsize_t k,
-                                              arrsize_t arrsize,
-                                              bool hasnan = false,
-                                              bool descending = false)
+[[maybe_unused]] X86_SIMD_SORT_INLINE void
+avx512_qselect_fp16(uint16_t *arr,
+                    arrsize_t k,
+                    arrsize_t arrsize,
+                    bool hasnan = false,
+                    bool descending = false)
 {
     using vtype = zmm_vector<float16>;
 
@@ -617,11 +619,12 @@ X86_SIMD_SORT_INLINE void avx512_qselect_fp16(uint16_t *arr,
     }
 }
 
-X86_SIMD_SORT_INLINE void avx512_partial_qsort_fp16(uint16_t *arr,
-                                                    arrsize_t k,
-                                                    arrsize_t arrsize,
-                                                    bool hasnan = false,
-                                                    bool descending = false)
+[[maybe_unused]] X86_SIMD_SORT_INLINE void
+avx512_partial_qsort_fp16(uint16_t *arr,
+                          arrsize_t k,
+                          arrsize_t arrsize,
+                          bool hasnan = false,
+                          bool descending = false)
 {
     avx512_qselect_fp16(arr, k - 1, arrsize, hasnan, descending);
     avx512_qsort_fp16(arr, k - 1, descending);

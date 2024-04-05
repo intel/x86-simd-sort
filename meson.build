@@ -36,7 +36,7 @@ cancompilefp16 = cpp.compiles(fp16code, args:'-march=sapphirerapids')
 subdir('lib')
 libsimdsort = shared_library('x86simdsortcpp',
                              'lib/x86simdsort.cpp',
-                             include_directories : [utils, lib],
+                             include_directories : [src, utils, lib],
                              link_with : [libtargets],
                              gnu_symbol_visibility : 'inlineshidden',
                              install : true,

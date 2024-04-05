@@ -10,7 +10,7 @@
 #include <type_traits>
 #include <vector>
 #include <algorithm>
-#include "custom-float.h"
+#include "xss-custom-float.h"
 
 template <typename T>
 static std::vector<T> get_uniform_rand_array(int64_t arrsize,

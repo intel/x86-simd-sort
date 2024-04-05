@@ -1,6 +1,6 @@
 #include <limits>
 #include <cmath>
-#include "custom-float.h"
+#include "xss-custom-float.h"
 
 /*
  * Custom comparator class to handle NAN's: treats NAN  > INF

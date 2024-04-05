@@ -557,7 +557,7 @@ X86_SIMD_SORT_INLINE void avx512_argsort(T *arr,
                                       zmm_vector<arrsize_t>>::type;
 
     if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (xss::fp::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argsort_withnan(arr, arg, 0, arrsize);
 
@@ -591,7 +591,7 @@ X86_SIMD_SORT_INLINE void avx2_argsort(T *arr,
                                       avx2_half_vector<arrsize_t>,
                                       avx2_vector<arrsize_t>>::type;
     if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (xss::fp::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argsort_withnan(arr, arg, 0, arrsize);
 
@@ -627,7 +627,7 @@ X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
                                       zmm_vector<arrsize_t>>::type;
 
     if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (xss::fp::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argselect_withnan(arr, arg, k, 0, arrsize);
                 return;
@@ -657,7 +657,7 @@ X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
                                       avx2_vector<arrsize_t>>::type;
 
     if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (xss::fp::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argselect_withnan(arr, arg, k, 0, arrsize);
                 return;
