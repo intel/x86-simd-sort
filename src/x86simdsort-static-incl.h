@@ -30,8 +30,11 @@ argsort(T *arr, size_t size, bool hasnan = false, bool descending = false);
 
 /* argsort API required by NumPy: */
 template <typename T>
-X86_SIMD_SORT_FINLINE void
-argsort(T *arr, size_t *arg, size_t size, bool hasnan = false, bool descending = false);
+X86_SIMD_SORT_FINLINE void argsort(T *arr,
+                                   size_t *arg,
+                                   size_t size,
+                                   bool hasnan = false,
+                                   bool descending = false);
 
 template <typename T>
 X86_SIMD_SORT_FINLINE std::vector<size_t>
@@ -79,7 +82,8 @@ keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
     { \
         std::vector<size_t> indices(size); \
         std::iota(indices.begin(), indices.end(), 0); \
-        x86simdsortStatic::argsort(arr, indices.data(), size, hasnan, descending); \
+        x86simdsortStatic::argsort( \
+                arr, indices.data(), size, hasnan, descending); \
         return indices; \
     } \
     template <typename T> \
