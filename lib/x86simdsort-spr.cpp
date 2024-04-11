@@ -7,10 +7,7 @@ namespace avx512 {
     template <>
     void qsort(_Float16 *arr, size_t size, bool hasnan, bool descending)
     {
-        if (descending) { x86simdsortStatic::qsort(arr, size, hasnan, true); }
-        else {
-            x86simdsortStatic::qsort(arr, size, hasnan, false);
-        }
+        x86simdsortStatic::qsort(arr, size, hasnan, descending);
     }
     template <>
     void qselect(_Float16 *arr,
@@ -19,12 +16,7 @@ namespace avx512 {
                  bool hasnan,
                  bool descending)
     {
-        if (descending) {
-            x86simdsortStatic::qselect(arr, k, arrsize, hasnan, true);
-        }
-        else {
-            x86simdsortStatic::qselect(arr, k, arrsize, hasnan, false);
-        }
+        x86simdsortStatic::qselect(arr, k, arrsize, hasnan, descending);
     }
     template <>
     void partial_qsort(_Float16 *arr,
@@ -33,12 +25,7 @@ namespace avx512 {
                        bool hasnan,
                        bool descending)
     {
-        if (descending) {
-            x86simdsortStatic::partial_qsort(arr, k, arrsize, hasnan, true);
-        }
-        else {
-            x86simdsortStatic::partial_qsort(arr, k, arrsize, hasnan, false);
-        }
+        x86simdsortStatic::partial_qsort(arr, k, arrsize, hasnan, descending);
     }
 } // namespace avx512
 } // namespace xss
