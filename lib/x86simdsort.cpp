@@ -208,12 +208,12 @@ DISPATCH_ALL(argselect,
              (ISA_LIST("avx512_skx", "avx2")))
 
 #define DISPATCH_KEYVALUE_SORT_FORTYPE(type) \
-    DISPATCH_KEYVALUE_SORT(type, uint64_t, (ISA_LIST("avx512_skx"))) \
-    DISPATCH_KEYVALUE_SORT(type, int64_t, (ISA_LIST("avx512_skx"))) \
-    DISPATCH_KEYVALUE_SORT(type, double, (ISA_LIST("avx512_skx"))) \
-    DISPATCH_KEYVALUE_SORT(type, uint32_t, (ISA_LIST("avx512_skx"))) \
-    DISPATCH_KEYVALUE_SORT(type, int32_t, (ISA_LIST("avx512_skx"))) \
-    DISPATCH_KEYVALUE_SORT(type, float, (ISA_LIST("avx512_skx")))
+    DISPATCH_KEYVALUE_SORT(type, uint64_t, (ISA_LIST("avx512_skx", "avx2"))) \
+    DISPATCH_KEYVALUE_SORT(type, int64_t, (ISA_LIST("avx512_skx", "avx2"))) \
+    DISPATCH_KEYVALUE_SORT(type, double, (ISA_LIST("avx512_skx", "avx2"))) \
+    DISPATCH_KEYVALUE_SORT(type, uint32_t, (ISA_LIST("avx512_skx", "avx2"))) \
+    DISPATCH_KEYVALUE_SORT(type, int32_t, (ISA_LIST("avx512_skx", "avx2"))) \
+    DISPATCH_KEYVALUE_SORT(type, float, (ISA_LIST("avx512_skx", "avx2")))
 
 DISPATCH_KEYVALUE_SORT_FORTYPE(uint64_t)
 DISPATCH_KEYVALUE_SORT_FORTYPE(int64_t)

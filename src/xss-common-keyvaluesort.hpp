@@ -8,7 +8,8 @@
 #ifndef AVX512_QSORT_64BIT_KV
 #define AVX512_QSORT_64BIT_KV
 
-#include "avx512-64bit-common.h"
+
+#include "xss-common-qsort.h"
 #include "xss-network-keyvaluesort.hpp"
 
 /*
@@ -33,15 +34,10 @@ X86_SIMD_SORT_INLINE int32_t partition_vec(type_t1 *keys,
 {
     /* which elements are larger than the pivot */
     typename vtype1::opmask_t gt_mask = vtype1::ge(keys_vec, pivot_vec);
-    int32_t amount_gt_pivot = _mm_popcnt_u32((int32_t)gt_mask);
-    vtype1::mask_compressstoreu(
-            keys + left, vtype1::knot_opmask(gt_mask), keys_vec);
-    vtype1::mask_compressstoreu(
-            keys + right - amount_gt_pivot, gt_mask, keys_vec);
-    vtype2::mask_compressstoreu(
-            indexes + left, vtype2::knot_opmask(gt_mask), indexes_vec);
-    vtype2::mask_compressstoreu(
-            indexes + right - amount_gt_pivot, gt_mask, indexes_vec);
+    
+    int32_t amount_gt_pivot = vtype1::double_compressstore(keys + left, keys + right - vtype1::numlanes, gt_mask, keys_vec);
+    vtype2::double_compressstore(indexes + left, indexes + right - vtype2::numlanes, resize_mask<vtype1, vtype2>(gt_mask), indexes_vec);
+    
     *smallest_vec = vtype1::min(keys_vec, *smallest_vec);
     *biggest_vec = vtype1::max(keys_vec, *biggest_vec);
     return amount_gt_pivot;
@@ -439,6 +435,45 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
         }
         qsort_64bit_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
         replace_inf_with_nan(keys, arrsize, nan_count);
+    }
+}
+
+template <typename T1, typename T2>
+X86_SIMD_SORT_INLINE void
+avx2_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
+{
+    using keytype =
+            typename std::conditional<sizeof(T1) != sizeof(T2)
+                                              && sizeof(T1) == sizeof(int32_t),
+                                      avx2_half_vector<T1>,
+                                      avx2_vector<T1>>::type;
+    using valtype =
+            typename std::conditional<sizeof(T1) != sizeof(T2)
+                                              && sizeof(T2) == sizeof(int32_t),
+                                      avx2_half_vector<T2>,
+                                      avx2_vector<T2>>::type;
+
+    if (arrsize > 1) {
+        if constexpr (std::is_floating_point_v<T1>) {
+            arrsize_t nan_count = 0;
+            if (UNLIKELY(hasnan)) {
+                nan_count = replace_nan_with_inf<avx2_vector<T1>>(keys, arrsize);
+            }
+            qsort_64bit_<keytype, valtype>(keys,
+                                           indexes,
+                                           0,
+                                           arrsize - 1,
+                                           2 * (arrsize_t)log2(arrsize));
+            replace_inf_with_nan(keys, arrsize, nan_count);
+        }
+        else {
+            UNUSED(hasnan);
+            qsort_64bit_<keytype, valtype>(keys,
+                                           indexes,
+                                           0,
+                                           arrsize - 1,
+                                           2 * (arrsize_t)log2(arrsize));
+        }
     }
 }
 #endif // AVX512_QSORT_64BIT_KV
