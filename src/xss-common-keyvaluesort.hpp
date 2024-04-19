@@ -34,10 +34,14 @@ X86_SIMD_SORT_INLINE int32_t partition_vec(type_t1 *keys,
 {
     /* which elements are larger than the pivot */
     typename vtype1::opmask_t gt_mask = vtype1::ge(keys_vec, pivot_vec);
-    
-    int32_t amount_gt_pivot = vtype1::double_compressstore(keys + left, keys + right - vtype1::numlanes, gt_mask, keys_vec);
-    vtype2::double_compressstore(indexes + left, indexes + right - vtype2::numlanes, resize_mask<vtype1, vtype2>(gt_mask), indexes_vec);
-    
+
+    int32_t amount_gt_pivot = vtype1::double_compressstore(
+            keys + left, keys + right - vtype1::numlanes, gt_mask, keys_vec);
+    vtype2::double_compressstore(indexes + left,
+                                 indexes + right - vtype2::numlanes,
+                                 resize_mask<vtype1, vtype2>(gt_mask),
+                                 indexes_vec);
+
     *smallest_vec = vtype1::min(keys_vec, *smallest_vec);
     *biggest_vec = vtype1::max(keys_vec, *biggest_vec);
     return amount_gt_pivot;
@@ -457,7 +461,8 @@ avx2_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
         if constexpr (std::is_floating_point_v<T1>) {
             arrsize_t nan_count = 0;
             if (UNLIKELY(hasnan)) {
-                nan_count = replace_nan_with_inf<avx2_vector<T1>>(keys, arrsize);
+                nan_count
+                        = replace_nan_with_inf<avx2_vector<T1>>(keys, arrsize);
             }
             qsort_64bit_<keytype, valtype>(keys,
                                            indexes,

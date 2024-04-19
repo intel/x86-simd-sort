@@ -99,7 +99,8 @@ struct avx2_vector<int32_t> {
         auto mask = ((0x1ull << num_to_read) - 0x1ull);
         return convert_int_to_avx2_mask(mask);
     }
-    static opmask_t convert_int_to_mask(uint64_t intMask){
+    static opmask_t convert_int_to_mask(uint64_t intMask)
+    {
         return convert_int_to_avx2_mask(intMask);
     }
     static ymmi_t
@@ -271,7 +272,8 @@ struct avx2_vector<uint32_t> {
         auto mask = ((0x1ull << num_to_read) - 0x1ull);
         return convert_int_to_avx2_mask(mask);
     }
-    static opmask_t convert_int_to_mask(uint64_t intMask){
+    static opmask_t convert_int_to_mask(uint64_t intMask)
+    {
         return convert_int_to_avx2_mask(intMask);
     }
     static ymmi_t
@@ -450,7 +452,8 @@ struct avx2_vector<float> {
         auto mask = ((0x1ull << num_to_read) - 0x1ull);
         return convert_int_to_avx2_mask(mask);
     }
-    static opmask_t convert_int_to_mask(uint64_t intMask){
+    static opmask_t convert_int_to_mask(uint64_t intMask)
+    {
         return convert_int_to_avx2_mask(intMask);
     }
     static int32_t convert_mask_to_int(opmask_t mask)

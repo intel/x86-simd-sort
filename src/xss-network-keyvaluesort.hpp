@@ -4,13 +4,15 @@
 #include "xss-common-includes.h"
 
 template <typename vtype, typename maskType>
-typename vtype::opmask_t convert_int_to_mask(maskType mask){
-    if constexpr (vtype::vec_type == simd_type::AVX512) {
-        return mask;
-    }else if constexpr (vtype::vec_type == simd_type::AVX2){
+typename vtype::opmask_t convert_int_to_mask(maskType mask)
+{
+    if constexpr (vtype::vec_type == simd_type::AVX512) { return mask; }
+    else if constexpr (vtype::vec_type == simd_type::AVX2) {
         return vtype::convert_int_to_mask(mask);
-    }else{
-        static_assert(always_false<maskType>, "Error in func convert_int_to_mask");
+    }
+    else {
+        static_assert(always_false<maskType>,
+                      "Error in func convert_int_to_mask");
     }
 }
 
@@ -85,12 +87,12 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_16lanes(reg_t key_zmm,
 {
     using key_swizzle = typename vtype1::swizzle_ops;
     using index_swizzle = typename vtype2::swizzle_ops;
-    
+
     const auto oxAAAA = convert_int_to_mask<vtype1>(0xAAAA);
     const auto oxCCCC = convert_int_to_mask<vtype1>(0xCCCC);
     const auto oxFF00 = convert_int_to_mask<vtype1>(0xFF00);
     const auto oxF0F0 = convert_int_to_mask<vtype1>(0xF0F0);
-    
+
     key_zmm = cmp_merge<vtype1, vtype2>(
             key_zmm,
             key_swizzle::template reverse_n<vtype1, 2>(key_zmm),
@@ -164,12 +166,12 @@ X86_SIMD_SORT_INLINE reg_t bitonic_merge_reg_16lanes(reg_t key_zmm,
 {
     using key_swizzle = typename vtype1::swizzle_ops;
     using index_swizzle = typename vtype2::swizzle_ops;
-    
+
     const auto oxAAAA = convert_int_to_mask<vtype1>(0xAAAA);
     const auto oxCCCC = convert_int_to_mask<vtype1>(0xCCCC);
     const auto oxFF00 = convert_int_to_mask<vtype1>(0xFF00);
     const auto oxF0F0 = convert_int_to_mask<vtype1>(0xF0F0);
-    
+
     key_zmm = cmp_merge<vtype1, vtype2>(
             key_zmm,
             vtype1::permutexvar(vtype1::seti(NETWORK_32BIT_7), key_zmm),
@@ -202,14 +204,14 @@ template <typename vtype1,
           typename reg_t = typename vtype1::reg_t,
           typename index_type = typename vtype2::reg_t>
 X86_SIMD_SORT_INLINE reg_t sort_reg_8lanes(reg_t key_zmm, index_type &index_zmm)
-{   
+{
     using key_swizzle = typename vtype1::swizzle_ops;
     using index_swizzle = typename vtype2::swizzle_ops;
 
     const auto oxAA = convert_int_to_mask<vtype1>(0xAA);
     const auto oxCC = convert_int_to_mask<vtype1>(0xCC);
     const auto oxF0 = convert_int_to_mask<vtype1>(0xF0);
-    
+
     key_zmm = cmp_merge<vtype1, vtype2>(
             key_zmm,
             key_swizzle::template swap_n<vtype1, 2>(key_zmm),
@@ -228,12 +230,11 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_8lanes(reg_t key_zmm, index_type &index_zmm)
             index_zmm,
             index_swizzle::template swap_n<vtype2, 2>(index_zmm),
             oxAA);
-    key_zmm = cmp_merge<vtype1, vtype2>(
-            key_zmm,
-            vtype1::reverse(key_zmm),
-            index_zmm,
-            vtype2::reverse(index_zmm),
-            oxF0);
+    key_zmm = cmp_merge<vtype1, vtype2>(key_zmm,
+                                        vtype1::reverse(key_zmm),
+                                        index_zmm,
+                                        vtype2::reverse(index_zmm),
+                                        oxF0);
     key_zmm = cmp_merge<vtype1, vtype2>(
             key_zmm,
             vtype1::permutexvar(vtype1::seti(NETWORK_64BIT_3), key_zmm),
@@ -291,7 +292,7 @@ X86_SIMD_SORT_INLINE reg_t bitonic_merge_reg_8lanes(reg_t key_zmm,
 {
     using key_swizzle = typename vtype1::swizzle_ops;
     using index_swizzle = typename vtype2::swizzle_ops;
-    
+
     const auto oxAA = convert_int_to_mask<vtype1>(0xAA);
     const auto oxCC = convert_int_to_mask<vtype1>(0xCC);
     const auto oxF0 = convert_int_to_mask<vtype1>(0xF0);
@@ -592,9 +593,10 @@ X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys,
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         keyVecs[i] = keyType::mask_loadu(
                 keyType::zmm_max(), ioMasks[j], keys + i * keyType::numlanes);
-        valueVecs[i] = valueType::mask_loadu(valueType::zmm_max(),
-                                             resize_mask<keyType, valueType>(ioMasks[j]),
-                                             values + i * valueType::numlanes);
+        valueVecs[i] = valueType::mask_loadu(
+                valueType::zmm_max(),
+                resize_mask<keyType, valueType>(ioMasks[j]),
+                values + i * valueType::numlanes);
     }
 
     // Sort each loaded vector
@@ -617,8 +619,9 @@ X86_SIMD_SORT_INLINE void kvsort_n_vec(typename keyType::type_t *keys,
     for (int i = numVecs / 2, j = 0; i < numVecs; i++, j++) {
         keyType::mask_storeu(
                 keys + i * keyType::numlanes, ioMasks[j], keyVecs[i]);
-        valueType::mask_storeu(
-                values + i * valueType::numlanes, resize_mask<keyType, valueType>(ioMasks[j]), valueVecs[i]);
+        valueType::mask_storeu(values + i * valueType::numlanes,
+                               resize_mask<keyType, valueType>(ioMasks[j]),
+                               valueVecs[i]);
     }
 }
 
