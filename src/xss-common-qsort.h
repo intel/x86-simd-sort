@@ -189,9 +189,6 @@ X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b)
     b = vtype::max(temp, b);
 }
 
-template <typename maskType, typename vtype>
-typename vtype::opmask_t convert_int_to_mask(maskType mask);
-
 template <typename vtype,
           typename reg_t = typename vtype::reg_t,
           typename opmask_t = typename vtype::opmask_t>

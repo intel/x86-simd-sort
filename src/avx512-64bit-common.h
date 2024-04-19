@@ -34,7 +34,7 @@ struct ymm_vector<float> {
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
     static constexpr simd_type vec_type = simd_type::AVX512;
-    
+
     using swizzle_ops = avx512_ymm_64bit_swizzle_ops;
 
     static type_t type_max()
@@ -232,7 +232,7 @@ struct ymm_vector<uint32_t> {
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
     static constexpr simd_type vec_type = simd_type::AVX512;
-    
+
     using swizzle_ops = avx512_ymm_64bit_swizzle_ops;
 
     static type_t type_max()
@@ -416,7 +416,7 @@ struct ymm_vector<int32_t> {
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
     static constexpr simd_type vec_type = simd_type::AVX512;
-    
+
     using swizzle_ops = avx512_ymm_64bit_swizzle_ops;
 
     static type_t type_max()

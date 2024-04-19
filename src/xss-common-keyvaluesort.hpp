@@ -363,11 +363,11 @@ template <typename vtype1,
           typename vtype2,
           typename type1_t = typename vtype1::type_t,
           typename type2_t = typename vtype2::type_t>
-X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
-                                       type2_t *indexes,
-                                       arrsize_t left,
-                                       arrsize_t right,
-                                       int max_iters)
+X86_SIMD_SORT_INLINE void kvsort_(type1_t *keys,
+                                  type2_t *indexes,
+                                  arrsize_t left,
+                                  arrsize_t right,
+                                  int max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -393,32 +393,35 @@ X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
     arrsize_t pivot_index = kvpartition_unrolled<vtype1, vtype2, 4>(
             keys, indexes, left, right + 1, pivot, &smallest, &biggest);
     if (pivot != smallest) {
-        qsort_64bit_<vtype1, vtype2>(
+        kvsort_<vtype1, vtype2>(
                 keys, indexes, left, pivot_index - 1, max_iters - 1);
     }
     if (pivot != biggest) {
-        qsort_64bit_<vtype1, vtype2>(
+        kvsort_<vtype1, vtype2>(
                 keys, indexes, pivot_index, right, max_iters - 1);
     }
 }
 
-template <typename T1, typename T2>
+template <typename T1,
+          typename T2,
+          template <typename...>
+          typename full_vector,
+          template <typename...>
+          typename half_vector>
 X86_SIMD_SORT_INLINE void
-avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
+xss_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan)
 {
     using keytype =
             typename std::conditional<sizeof(T1) != sizeof(T2)
                                               && sizeof(T1) == sizeof(int32_t),
-                                      ymm_vector<T1>,
-                                      zmm_vector<T1>>::type;
+                                      half_vector<T1>,
+                                      full_vector<T1>>::type;
     using valtype =
             typename std::conditional<sizeof(T1) != sizeof(T2)
                                               && sizeof(T2) == sizeof(int32_t),
-                                      ymm_vector<T2>,
-                                      zmm_vector<T2>>::type;
-/*
- * Enable testing the heapsort key-value sort in the CI:
- */
+                                      half_vector<T2>,
+                                      full_vector<T2>>::type;
+
 #ifdef XSS_TEST_KEYVALUE_BASE_CASE
     int maxiters = -1;
     bool minarrsize = true;
@@ -428,57 +431,43 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
 #endif // XSS_TEST_KEYVALUE_BASE_CASE
 
     if (minarrsize) {
-        arrsize_t nan_count = 0;
-        if constexpr (xss::fp::is_floating_point_v<T1>) {
+        if constexpr (std::is_floating_point_v<T1>) {
+            arrsize_t nan_count = 0;
             if (UNLIKELY(hasnan)) {
-                nan_count = replace_nan_with_inf<zmm_vector<T1>>(keys, arrsize);
+                nan_count
+                        = replace_nan_with_inf<full_vector<T1>>(keys, arrsize);
             }
+            kvsort_<keytype, valtype>(keys,
+                                      indexes,
+                                      0,
+                                      arrsize - 1,
+                                      2 * (arrsize_t)log2(arrsize));
+            replace_inf_with_nan(keys, arrsize, nan_count);
         }
         else {
             UNUSED(hasnan);
+            kvsort_<keytype, valtype>(keys,
+                                      indexes,
+                                      0,
+                                      arrsize - 1,
+                                      2 * (arrsize_t)log2(arrsize));
         }
-        qsort_64bit_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
-        replace_inf_with_nan(keys, arrsize, nan_count);
     }
+}
+
+template <typename T1, typename T2>
+X86_SIMD_SORT_INLINE void
+avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
+{
+    xss_qsort_kv<T1, T2, zmm_vector, ymm_vector>(
+            keys, indexes, arrsize, hasnan);
 }
 
 template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
 avx2_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
 {
-    using keytype =
-            typename std::conditional<sizeof(T1) != sizeof(T2)
-                                              && sizeof(T1) == sizeof(int32_t),
-                                      avx2_half_vector<T1>,
-                                      avx2_vector<T1>>::type;
-    using valtype =
-            typename std::conditional<sizeof(T1) != sizeof(T2)
-                                              && sizeof(T2) == sizeof(int32_t),
-                                      avx2_half_vector<T2>,
-                                      avx2_vector<T2>>::type;
-
-    if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T1>) {
-            arrsize_t nan_count = 0;
-            if (UNLIKELY(hasnan)) {
-                nan_count
-                        = replace_nan_with_inf<avx2_vector<T1>>(keys, arrsize);
-            }
-            qsort_64bit_<keytype, valtype>(keys,
-                                           indexes,
-                                           0,
-                                           arrsize - 1,
-                                           2 * (arrsize_t)log2(arrsize));
-            replace_inf_with_nan(keys, arrsize, nan_count);
-        }
-        else {
-            UNUSED(hasnan);
-            qsort_64bit_<keytype, valtype>(keys,
-                                           indexes,
-                                           0,
-                                           arrsize - 1,
-                                           2 * (arrsize_t)log2(arrsize));
-        }
-    }
+    xss_qsort_kv<T1, T2, avx2_vector, avx2_half_vector>(
+            keys, indexes, arrsize, hasnan);
 }
 #endif // AVX512_QSORT_64BIT_KV
