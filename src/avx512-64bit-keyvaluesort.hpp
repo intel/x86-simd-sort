@@ -347,6 +347,7 @@ template <typename vtype1,
 X86_SIMD_SORT_INLINE void
 heap_sort(type1_t *keys, type2_t *indexes, arrsize_t size)
 {
+    if (size <= 1) return;
     for (arrsize_t i = size / 2 - 1;; i--) {
         heapify<vtype1, vtype2>(keys, indexes, i, size);
         if (i == 0) { break; }
