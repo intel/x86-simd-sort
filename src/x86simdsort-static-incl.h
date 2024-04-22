@@ -134,6 +134,9 @@ x86simdsortStatic::keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan)
     avx512_qsort_kv(key, val, size, hasnan);
 }
 
+#elif defined(__AVX512F__)
+#error "x86simdsort requires AVX512DQ and AVX512VL to be enabled in addition to AVX512F to use AVX512"
+
 #elif defined(__AVX2__) && !defined(__AVX512F__)
 /* 32-bit and 64-bit dtypes vector definitions on AVX2 */
 #include "avx2-32bit-half.hpp"
