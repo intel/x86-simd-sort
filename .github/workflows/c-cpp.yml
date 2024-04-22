@@ -135,7 +135,7 @@ jobs:
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe
 
-  SPR-gcc13-min-networksort:
+  SPR-gcc13-special-cases:
 
     runs-on: intel-ubuntu-latest
 
@@ -156,7 +156,7 @@ jobs:
     - name: Build
       env:
         CXX: g++-13
-        CXXFLAGS: -DXSS_MINIMAL_NETWORK_SORT
+        CXXFLAGS: "-DXSS_MINIMAL_NETWORK_SORT -DXSS_TEST_KEYVALUE_BASE_CASE"
       run: |
         make clean
         meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir

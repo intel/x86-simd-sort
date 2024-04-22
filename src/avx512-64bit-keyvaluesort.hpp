@@ -371,12 +371,15 @@ X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
     /*
      * Resort to std::sort if quicksort isnt making any progress
      */
+#ifndef XSS_TEST_KEYVALUE_BASE_CASE
     if (max_iters <= 0) {
-        //std::sort(keys+left,keys+right+1);
+#endif // XSS_TEST_KEYVALUE_BASE_CASE
         heap_sort<vtype1, vtype2>(
                 keys + left, indexes + left, right - left + 1);
         return;
+#ifndef XSS_TEST_KEYVALUE_BASE_CASE
     }
+#endif // XSS_TEST_KEYVALUE_BASE_CASE
     /*
      * Base case: use bitonic networks to sort arrays <= 128
      */
@@ -417,7 +420,9 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
                                       ymm_vector<T2>,
                                       zmm_vector<T2>>::type;
 
+#ifndef XSS_TEST_KEYVALUE_BASE_CASE
     if (arrsize > 1) {
+#endif // XSS_TEST_KEYVALUE_BASE_CASE
         if constexpr (xss::fp::is_floating_point_v<T1>) {
             arrsize_t nan_count = 0;
             if (UNLIKELY(hasnan)) {
@@ -438,6 +443,8 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
                                            arrsize - 1,
                                            2 * (arrsize_t)log2(arrsize));
         }
+#ifndef XSS_TEST_KEYVALUE_BASE_CASE
     }
+#endif // XSS_TEST_KEYVALUE_BASE_CASE
 }
 #endif // AVX512_QSORT_64BIT_KV
