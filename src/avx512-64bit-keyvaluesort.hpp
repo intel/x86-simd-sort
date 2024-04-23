@@ -434,6 +434,9 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
                 nan_count = replace_nan_with_inf<zmm_vector<T1>>(keys, arrsize);
             }
         }
+        else {
+            UNUSED(hasnan);
+        }
         qsort_64bit_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
         replace_inf_with_nan(keys, arrsize, nan_count);
     }
