@@ -367,20 +367,16 @@ X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
                                        type2_t *indexes,
                                        arrsize_t left,
                                        arrsize_t right,
-                                       arrsize_t max_iters)
+                                       int max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
      */
-#ifndef XSS_TEST_KEYVALUE_BASE_CASE
     if (max_iters <= 0) {
-#endif // XSS_TEST_KEYVALUE_BASE_CASE
         heap_sort<vtype1, vtype2>(
                 keys + left, indexes + left, right - left + 1);
         return;
-#ifndef XSS_TEST_KEYVALUE_BASE_CASE
     }
-#endif // XSS_TEST_KEYVALUE_BASE_CASE
     /*
      * Base case: use bitonic networks to sort arrays <= 128
      */
@@ -420,32 +416,30 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
                                               && sizeof(T2) == sizeof(int32_t),
                                       ymm_vector<T2>,
                                       zmm_vector<T2>>::type;
-
-#ifndef XSS_TEST_KEYVALUE_BASE_CASE
-    if (arrsize > 1) {
+/*
+ * Enable testing the heapsort key-value sort in the CI:
+ */
+#ifdef XSS_TEST_KEYVALUE_BASE_CASE
+    int maxiters = -1;
+    bool minarrsize = true;
+#else
+    int maxiters = 2 * log2(arrsize);
+    bool minarrsize = arrsize > 1 ? true : false;
 #endif // XSS_TEST_KEYVALUE_BASE_CASE
+
+    if (minarrsize) {
+        arrsize_t nan_count = 0;
         if constexpr (xss::fp::is_floating_point_v<T1>) {
-            arrsize_t nan_count = 0;
             if (UNLIKELY(hasnan)) {
                 nan_count = replace_nan_with_inf<zmm_vector<T1>>(keys, arrsize);
             }
-            qsort_64bit_<keytype, valtype>(keys,
-                                           indexes,
-                                           0,
-                                           arrsize - 1,
-                                           2 * (arrsize_t)log2(arrsize));
-            replace_inf_with_nan(keys, arrsize, nan_count);
         }
-        else {
-            UNUSED(hasnan);
-            qsort_64bit_<keytype, valtype>(keys,
-                                           indexes,
-                                           0,
-                                           arrsize - 1,
-                                           2 * (arrsize_t)log2(arrsize));
-        }
-#ifndef XSS_TEST_KEYVALUE_BASE_CASE
+        qsort_64bit_<keytype, valtype>(keys,
+                                       indexes,
+                                       0,
+                                       arrsize - 1,
+                                       maxiters);
+        replace_inf_with_nan(keys, arrsize, nan_count);
     }
-#endif // XSS_TEST_KEYVALUE_BASE_CASE
 }
 #endif // AVX512_QSORT_64BIT_KV
