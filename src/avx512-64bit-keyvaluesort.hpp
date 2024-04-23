@@ -347,6 +347,7 @@ template <typename vtype1,
 X86_SIMD_SORT_INLINE void
 heap_sort(type1_t *keys, type2_t *indexes, arrsize_t size)
 {
+    if (size <= 1) return;
     for (arrsize_t i = size / 2 - 1;; i--) {
         heapify<vtype1, vtype2>(keys, indexes, i, size);
         if (i == 0) { break; }
@@ -366,13 +367,12 @@ X86_SIMD_SORT_INLINE void qsort_64bit_(type1_t *keys,
                                        type2_t *indexes,
                                        arrsize_t left,
                                        arrsize_t right,
-                                       arrsize_t max_iters)
+                                       int max_iters)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
      */
     if (max_iters <= 0) {
-        //std::sort(keys+left,keys+right+1);
         heap_sort<vtype1, vtype2>(
                 keys + left, indexes + left, right - left + 1);
         return;
@@ -416,28 +416,29 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
                                               && sizeof(T2) == sizeof(int32_t),
                                       ymm_vector<T2>,
                                       zmm_vector<T2>>::type;
+/*
+ * Enable testing the heapsort key-value sort in the CI:
+ */
+#ifdef XSS_TEST_KEYVALUE_BASE_CASE
+    int maxiters = -1;
+    bool minarrsize = true;
+#else
+    int maxiters = 2 * log2(arrsize);
+    bool minarrsize = arrsize > 1 ? true : false;
+#endif // XSS_TEST_KEYVALUE_BASE_CASE
 
-    if (arrsize > 1) {
+    if (minarrsize) {
+        arrsize_t nan_count = 0;
         if constexpr (xss::fp::is_floating_point_v<T1>) {
-            arrsize_t nan_count = 0;
             if (UNLIKELY(hasnan)) {
                 nan_count = replace_nan_with_inf<zmm_vector<T1>>(keys, arrsize);
             }
-            qsort_64bit_<keytype, valtype>(keys,
-                                           indexes,
-                                           0,
-                                           arrsize - 1,
-                                           2 * (arrsize_t)log2(arrsize));
-            replace_inf_with_nan(keys, arrsize, nan_count);
         }
         else {
             UNUSED(hasnan);
-            qsort_64bit_<keytype, valtype>(keys,
-                                           indexes,
-                                           0,
-                                           arrsize - 1,
-                                           2 * (arrsize_t)log2(arrsize));
         }
+        qsort_64bit_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
+        replace_inf_with_nan(keys, arrsize, nan_count);
     }
 }
 #endif // AVX512_QSORT_64BIT_KV
