@@ -8,7 +8,6 @@
 #ifndef AVX512_QSORT_64BIT_KV
 #define AVX512_QSORT_64BIT_KV
 
-
 #include "xss-common-qsort.h"
 #include "xss-network-keyvaluesort.hpp"
 
@@ -437,20 +436,12 @@ xss_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan)
                 nan_count
                         = replace_nan_with_inf<full_vector<T1>>(keys, arrsize);
             }
-            kvsort_<keytype, valtype>(keys,
-                                      indexes,
-                                      0,
-                                      arrsize - 1,
-                                      2 * (arrsize_t)log2(arrsize));
+            kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
             replace_inf_with_nan(keys, arrsize, nan_count);
         }
         else {
             UNUSED(hasnan);
-            kvsort_<keytype, valtype>(keys,
-                                      indexes,
-                                      0,
-                                      arrsize - 1,
-                                      2 * (arrsize_t)log2(arrsize));
+            kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
         }
     }
 }

@@ -100,6 +100,12 @@ keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
         std::iota(indices.begin(), indices.end(), 0); \
         x86simdsortStatic::argselect(arr, indices.data(), k, size, hasnan); \
         return indices; \
+    } \
+    template <typename T1, typename T2> \
+    X86_SIMD_SORT_FINLINE void x86simdsortStatic::keyvalue_qsort( \
+            T1 *key, T2 *val, size_t size, bool hasnan) \
+    { \
+        ISA##_qsort_kv(key, val, size, hasnan); \
     }
 
 /*
@@ -107,13 +113,13 @@ keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
  */
 #include "xss-common-qsort.h"
 #include "xss-common-argsort.h"
+#include "xss-common-keyvaluesort.hpp"
 
 #if defined(__AVX512DQ__) && defined(__AVX512VL__)
 /* 32-bit and 64-bit dtypes vector definitions on SKX */
 #include "avx512-32bit-qsort.hpp"
 #include "avx512-64bit-qsort.hpp"
 #include "avx512-64bit-argsort.hpp"
-#include "avx512-64bit-keyvaluesort.hpp"
 
 /* 16-bit dtypes vector definitions on ICL */
 #if defined(__AVX512BW__) && defined(__AVX512VBMI2__)
@@ -125,14 +131,6 @@ keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
 #endif // __AVX512VBMI2__
 
 XSS_METHODS(avx512)
-
-// key-value currently only on avx512
-template <typename T1, typename T2>
-X86_SIMD_SORT_FINLINE void
-x86simdsortStatic::keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan)
-{
-    avx512_qsort_kv(key, val, size, hasnan);
-}
 
 #elif defined(__AVX512F__)
 #error "x86simdsort requires AVX512DQ and AVX512VL to be enabled in addition to AVX512F to use AVX512"

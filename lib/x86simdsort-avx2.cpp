@@ -38,32 +38,32 @@
     template <> \
     void keyvalue_qsort(type *key, uint64_t *val, size_t arrsize, bool hasnan) \
     { \
-        avx2_qsort_kv(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
     } \
     template <> \
     void keyvalue_qsort(type *key, int64_t *val, size_t arrsize, bool hasnan) \
     { \
-        avx2_qsort_kv(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
     } \
     template <> \
     void keyvalue_qsort(type *key, double *val, size_t arrsize, bool hasnan) \
     { \
-        avx2_qsort_kv(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
     } \
     template <> \
     void keyvalue_qsort(type *key, uint32_t *val, size_t arrsize, bool hasnan) \
     { \
-        avx2_qsort_kv(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
     } \
     template <> \
     void keyvalue_qsort(type *key, int32_t *val, size_t arrsize, bool hasnan) \
     { \
-        avx2_qsort_kv(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
     } \
     template <> \
     void keyvalue_qsort(type *key, float *val, size_t arrsize, bool hasnan) \
     { \
-        avx2_qsort_kv(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
     }
 
 namespace xss {
