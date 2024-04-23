@@ -7,7 +7,6 @@
 #ifndef XSS_COMMON_ARGSORT
 #define XSS_COMMON_ARGSORT
 
-#include "xss-common-qsort.h"
 #include "xss-network-keyvaluesort.hpp"
 #include <numeric>
 
@@ -558,7 +557,7 @@ X86_SIMD_SORT_INLINE void avx512_argsort(T *arr,
                                       zmm_vector<arrsize_t>>::type;
 
     if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (xss::fp::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argsort_withnan(arr, arg, 0, arrsize);
 
@@ -573,16 +572,6 @@ X86_SIMD_SORT_INLINE void avx512_argsort(T *arr,
 
         if (descending) { std::reverse(arg, arg + arrsize); }
     }
-}
-
-template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx512_argsort(
-        T *arr, arrsize_t arrsize, bool hasnan = false, bool descending = false)
-{
-    std::vector<arrsize_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx512_argsort<T>(arr, indices.data(), arrsize, hasnan, descending);
-    return indices;
 }
 
 /* argsort methods for 32-bit and 64-bit dtypes */
@@ -602,7 +591,7 @@ X86_SIMD_SORT_INLINE void avx2_argsort(T *arr,
                                       avx2_half_vector<arrsize_t>,
                                       avx2_vector<arrsize_t>>::type;
     if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (xss::fp::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argsort_withnan(arr, arg, 0, arrsize);
 
@@ -617,16 +606,6 @@ X86_SIMD_SORT_INLINE void avx2_argsort(T *arr,
 
         if (descending) { std::reverse(arg, arg + arrsize); }
     }
-}
-
-template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t> avx2_argsort(
-        T *arr, arrsize_t arrsize, bool hasnan = false, bool descending = false)
-{
-    std::vector<arrsize_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx2_argsort<T>(arr, indices.data(), arrsize, hasnan, descending);
-    return indices;
 }
 
 /* argselect methods for 32-bit and 64-bit dtypes */
@@ -648,7 +627,7 @@ X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
                                       zmm_vector<arrsize_t>>::type;
 
     if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (xss::fp::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argselect_withnan(arr, arg, k, 0, arrsize);
                 return;
@@ -658,16 +637,6 @@ X86_SIMD_SORT_INLINE void avx512_argselect(T *arr,
         argselect_64bit_<vectype, argtype>(
                 arr, arg, k, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
-}
-
-template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t>
-avx512_argselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
-{
-    std::vector<arrsize_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx512_argselect<T>(arr, indices.data(), k, arrsize, hasnan);
-    return indices;
 }
 
 /* argselect methods for 32-bit and 64-bit dtypes */
@@ -688,7 +657,7 @@ X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
                                       avx2_vector<arrsize_t>>::type;
 
     if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (xss::fp::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argselect_withnan(arr, arg, k, 0, arrsize);
                 return;
@@ -699,15 +668,4 @@ X86_SIMD_SORT_INLINE void avx2_argselect(T *arr,
                 arr, arg, k, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
 }
-
-template <typename T>
-X86_SIMD_SORT_INLINE std::vector<arrsize_t>
-avx2_argselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
-{
-    std::vector<arrsize_t> indices(arrsize);
-    std::iota(indices.begin(), indices.end(), 0);
-    avx2_argselect<T>(arr, indices.data(), k, arrsize, hasnan);
-    return indices;
-}
-
 #endif // XSS_COMMON_ARGSORT

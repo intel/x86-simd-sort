@@ -7,7 +7,6 @@
 #ifndef AVX2_HALF_32BIT
 #define AVX2_HALF_32BIT
 
-#include "xss-common-includes.h"
 #include "avx2-emu-funcs.hpp"
 
 /*

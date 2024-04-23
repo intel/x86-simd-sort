@@ -1,5 +1,5 @@
 // SPR specific routines:
-#include "avx512fp16-16bit-qsort.hpp"
+#include "x86simdsort-static-incl.h"
 #include "x86simdsort-internal.h"
 
 namespace xss {
@@ -7,10 +7,7 @@ namespace avx512 {
     template <>
     void qsort(_Float16 *arr, size_t size, bool hasnan, bool descending)
     {
-        if (descending) { avx512_qsort<true>(arr, size, hasnan); }
-        else {
-            avx512_qsort<false>(arr, size, hasnan);
-        }
+        x86simdsortStatic::qsort(arr, size, hasnan, descending);
     }
     template <>
     void qselect(_Float16 *arr,
@@ -19,10 +16,7 @@ namespace avx512 {
                  bool hasnan,
                  bool descending)
     {
-        if (descending) { avx512_qselect<true>(arr, k, arrsize, hasnan); }
-        else {
-            avx512_qselect<false>(arr, k, arrsize, hasnan);
-        }
+        x86simdsortStatic::qselect(arr, k, arrsize, hasnan, descending);
     }
     template <>
     void partial_qsort(_Float16 *arr,
@@ -31,10 +25,7 @@ namespace avx512 {
                        bool hasnan,
                        bool descending)
     {
-        if (descending) { avx512_partial_qsort<true>(arr, k, arrsize, hasnan); }
-        else {
-            avx512_partial_qsort<false>(arr, k, arrsize, hasnan);
-        }
+        x86simdsortStatic::partial_qsort(arr, k, arrsize, hasnan, descending);
     }
 } // namespace avx512
 } // namespace xss

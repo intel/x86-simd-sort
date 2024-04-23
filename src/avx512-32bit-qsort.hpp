@@ -8,8 +8,6 @@
 #ifndef AVX512_QSORT_32BIT
 #define AVX512_QSORT_32BIT
 
-#include "xss-common-qsort.h"
-
 /*
  * Constants used in sorting 16 elements in a ZMM registers. Based on Bitonic
  * sorting network (see

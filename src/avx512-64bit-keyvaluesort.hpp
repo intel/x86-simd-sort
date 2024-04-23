@@ -8,7 +8,6 @@
 #ifndef AVX512_QSORT_64BIT_KV
 #define AVX512_QSORT_64BIT_KV
 
-#include "xss-common-qsort.h"
 #include "avx512-64bit-common.h"
 #include "xss-network-keyvaluesort.hpp"
 
@@ -419,7 +418,7 @@ avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
                                       zmm_vector<T2>>::type;
 
     if (arrsize > 1) {
-        if constexpr (std::is_floating_point_v<T1>) {
+        if constexpr (xss::fp::is_floating_point_v<T1>) {
             arrsize_t nan_count = 0;
             if (UNLIKELY(hasnan)) {
                 nan_count = replace_nan_with_inf<zmm_vector<T1>>(keys, arrsize);

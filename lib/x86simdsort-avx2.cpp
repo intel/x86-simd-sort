@@ -1,39 +1,36 @@
 // AVX2 specific routines:
-#include "avx2-32bit-qsort.hpp"
-#include "avx2-64bit-qsort.hpp"
-#include "avx2-32bit-half.hpp"
-#include "xss-common-argsort.h"
+#include "x86simdsort-static-incl.h"
 #include "x86simdsort-internal.h"
 
 #define DEFINE_ALL_METHODS(type) \
     template <> \
     void qsort(type *arr, size_t arrsize, bool hasnan, bool descending) \
     { \
-        avx2_qsort(arr, arrsize, hasnan, descending); \
+        x86simdsortStatic::qsort(arr, arrsize, hasnan, descending); \
     } \
     template <> \
     void qselect( \
             type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
-        avx2_qselect(arr, k, arrsize, hasnan, descending); \
+        x86simdsortStatic::qselect(arr, k, arrsize, hasnan, descending); \
     } \
     template <> \
     void partial_qsort( \
             type *arr, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
-        avx2_partial_qsort(arr, k, arrsize, hasnan, descending); \
+        x86simdsortStatic::partial_qsort(arr, k, arrsize, hasnan, descending); \
     } \
     template <> \
     std::vector<size_t> argsort( \
             type *arr, size_t arrsize, bool hasnan, bool descending) \
     { \
-        return avx2_argsort(arr, arrsize, hasnan, descending); \
+        return x86simdsortStatic::argsort(arr, arrsize, hasnan, descending); \
     } \
     template <> \
     std::vector<size_t> argselect( \
             type *arr, size_t k, size_t arrsize, bool hasnan) \
     { \
-        return avx2_argselect(arr, k, arrsize, hasnan); \
+        return x86simdsortStatic::argselect(arr, k, arrsize, hasnan); \
     }
 
 namespace xss {

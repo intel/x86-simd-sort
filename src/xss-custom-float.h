@@ -1,5 +1,5 @@
-#ifndef UTILS_FLOAT
-#define UTILS_FLOAT
+#ifndef XSS_CUSTOM_FLOAT
+#define XSS_CUSTOM_FLOAT
 #include <cstdint>
 namespace xss {
 namespace fp {
@@ -87,4 +87,4 @@ namespace fp {
 
 } // namespace fp
 } // namespace xss
-#endif
+#endif // XSS_CUSTOM_FLOAT
