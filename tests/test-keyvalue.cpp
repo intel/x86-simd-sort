@@ -6,6 +6,7 @@
 #include "rand_array.h"
 #include "x86simdsort.h"
 #include "x86simdsort-scalar.h"
+#include "test-qsort-common.h"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -106,6 +107,70 @@ TYPED_TEST_P(simdkvsort, test_kvsort)
     }
 }
 
+TYPED_TEST_P(simdkvsort, test_kvselect)
+{
+    using T1 = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
+    for (auto type : this->arrtype) {
+        bool hasnan = (type == "rand_with_nan") ? true : false;
+        for (auto size : this->arrsize) {
+            size_t k = rand() % size;
+            
+            std::vector<T1> key = get_array<T1>(type, size);
+            std::vector<T2> val = get_array<T2>(type, size);
+            std::vector<T1> key_bckp = key;
+            std::vector<T2> val_bckp = val;
+            
+            xss::scalar::keyvalue_qsort(
+                    key_bckp.data(), val_bckp.data(), size, hasnan);
+            
+            // Test select by using it as part of partial_sort
+            x86simdsort::keyvalue_select(key.data(), val.data(), k, size, hasnan);
+            IS_ARR_PARTITIONED<T1>(key, k, key_bckp[k], type);
+            xss::scalar::keyvalue_qsort(key.data(), val.data(), k, hasnan);
+            
+            
+            bool is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), k);
+            ASSERT_EQ(is_kv_equivalent, true);
+            
+            key.clear();
+            val.clear();
+            key_bckp.clear();
+            val_bckp.clear();
+        }
+    }
+}
+
+TYPED_TEST_P(simdkvsort, test_kvpartial_sort)
+{
+    using T1 = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
+    for (auto type : this->arrtype) {
+        bool hasnan = (type == "rand_with_nan") ? true : false;
+        for (auto size : this->arrsize) {
+            size_t k = rand() % size;
+            
+            std::vector<T1> key = get_array<T1>(type, size);
+            std::vector<T2> val = get_array<T2>(type, size);
+            std::vector<T1> key_bckp = key;
+            std::vector<T2> val_bckp = val;
+            x86simdsort::keyvalue_partial_sort(key.data(), val.data(), k, size, hasnan);
+            xss::scalar::keyvalue_qsort(
+                    key_bckp.data(), val_bckp.data(), size, hasnan);
+            
+            IS_ARR_PARTIALSORTED<T1>(key, k, key_bckp, type);
+            
+            bool is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), k);
+            ASSERT_EQ(is_kv_equivalent, true);
+            
+            key.clear();
+            val.clear();
+            key_bckp.clear();
+            val_bckp.clear();
+        }
+    }
+}
+
 TYPED_TEST_P(simdkvsort, test_validator)
 {
     // Tests a few edge cases to verify the tests are working correctly and identifying it as functional
@@ -152,7 +217,7 @@ TYPED_TEST_P(simdkvsort, test_validator)
     ASSERT_EQ(is_kv_equivalent, true);
 }
 
-REGISTER_TYPED_TEST_SUITE_P(simdkvsort, test_kvsort, test_validator);
+REGISTER_TYPED_TEST_SUITE_P(simdkvsort, test_kvsort, test_kvselect, test_kvpartial_sort, test_validator);
 
 #define CREATE_TUPLES(type) \
     std::tuple<double, type>, std::tuple<uint64_t, type>, \

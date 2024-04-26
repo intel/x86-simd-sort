@@ -1,3 +1,6 @@
+#ifndef UTILS_CUSTOM_COMPARE
+#define UTILS_CUSTOM_COMPARE
+
 #include <limits>
 #include <cmath>
 #include "xss-custom-float.h"
@@ -42,3 +45,5 @@ struct compare_arg {
     }
     const T *arr;
 };
+
+#endif // UTILS_CUSTOM_COMPARE
