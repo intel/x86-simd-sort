@@ -49,6 +49,14 @@ template <typename T1, typename T2>
 X86_SIMD_SORT_FINLINE void
 keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
 
+template <typename T1, typename T2>
+X86_SIMD_SORT_FINLINE void
+keyvalue_select(T1 *key, T2 *val, size_t k, size_t size, bool hasnan = false);
+
+template <typename T1, typename T2>
+X86_SIMD_SORT_FINLINE void
+keyvalue_partial_sort(T1 *key, T2 *val, size_t k, size_t size, bool hasnan = false);
+
 } // namespace x86simdsortStatic
 
 #define XSS_METHODS(ISA) \
@@ -106,6 +114,18 @@ keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
             T1 *key, T2 *val, size_t size, bool hasnan) \
     { \
         ISA##_qsort_kv(key, val, size, hasnan); \
+    } \
+    template <typename T1, typename T2> \
+    X86_SIMD_SORT_FINLINE void x86simdsortStatic::keyvalue_select( \
+            T1 *key, T2 *val, size_t k, size_t size, bool hasnan) \
+    { \
+        ISA##_select_kv(key, val, k, size, hasnan); \
+    } \
+    template <typename T1, typename T2> \
+    X86_SIMD_SORT_FINLINE void x86simdsortStatic::keyvalue_partial_sort( \
+            T1 *key, T2 *val, size_t k, size_t size, bool hasnan) \
+    { \
+        ISA##_partial_sort_kv(key, val, k, size, hasnan); \
     }
 
 /*

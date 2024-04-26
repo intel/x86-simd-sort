@@ -48,6 +48,16 @@ template <typename T1, typename T2>
 XSS_EXPORT_SYMBOL void
 keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false);
 
+// keyvalue select
+template <typename T1, typename T2>
+XSS_EXPORT_SYMBOL void
+keyvalue_select(T1 *key, T2 *val, size_t k, size_t arrsize, bool hasnan = false);
+
+// keyvalue partial sort
+template <typename T1, typename T2>
+XSS_EXPORT_SYMBOL void
+keyvalue_partial_sort(T1 *key, T2 *val, size_t k, size_t arrsize, bool hasnan = false);
+
 // sort an object
 template <typename T, typename Func>
 XSS_EXPORT_SYMBOL void object_qsort(T *arr, uint32_t arrsize, Func key_func)
