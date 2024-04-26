@@ -136,7 +136,8 @@ x86simdsortStatic::keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan)
 
 #elif defined(__AVX2__)
 #if defined(__AVX512F__)
-#warning "Building x86simdsortStatic with AVX2 sort functions. AVX512 sorting additionally requires AVX512DQ and AVX512VL."
+#warning \
+        "Building x86simdsortStatic with AVX2 sort functions. AVX512 sorting additionally requires AVX512DQ and AVX512VL."
 #endif
 /* 32-bit and 64-bit dtypes vector definitions on AVX2 */
 #include "avx2-32bit-half.hpp"
