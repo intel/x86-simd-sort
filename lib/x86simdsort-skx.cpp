@@ -36,19 +36,19 @@
 
 #define DEFINE_KEYVALUE_METHODS_BASE(type1, type2) \
     template <> \
-    void keyvalue_qsort(type1 *key, type2 *val, size_t arrsize, bool hasnan) \
+    void keyvalue_qsort(type1 *key, type2 *val, size_t arrsize, bool hasnan, bool descending) \
     { \
-        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan, descending); \
     } \
     template <> \
-    void keyvalue_select(type1 *key, type2 *val, size_t k, size_t arrsize, bool hasnan) \
+    void keyvalue_select(type1 *key, type2 *val, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
-        x86simdsortStatic::keyvalue_select(key, val, k, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_select(key, val, k, arrsize, hasnan, descending); \
     } \
     template <> \
-    void keyvalue_partial_sort(type1 *key, type2 *val, size_t k, size_t arrsize, bool hasnan) \
+    void keyvalue_partial_sort(type1 *key, type2 *val, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
-        x86simdsortStatic::keyvalue_partial_sort(key, val, k, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_partial_sort(key, val, k, arrsize, hasnan, descending); \
     }
     
 #define DEFINE_KEYVALUE_METHODS(type) \

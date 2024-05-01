@@ -435,6 +435,7 @@ X86_SIMD_SORT_INLINE void kvselect_(type1_t *keys,
     type1_t biggest = vtype1::type_min();
     arrsize_t pivot_index = kvpartition_unrolled<vtype1, vtype2, 4>(
             keys, indexes, left, right + 1, pivot, &smallest, &biggest);
+    
     if ((pivot != smallest) && (pos < pivot_index)) {
         kvselect_<vtype1, vtype2>(
                 keys, indexes, pos, left, pivot_index - 1, max_iters - 1);
@@ -452,7 +453,7 @@ template <typename T1,
           template <typename...>
           typename half_vector>
 X86_SIMD_SORT_INLINE void
-xss_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan)
+xss_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan, bool descending)
 {
     using keytype =
             typename std::conditional<sizeof(T1) != sizeof(T2)
@@ -484,14 +485,20 @@ xss_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan)
         else {
             UNUSED(hasnan);
         }
+        
         kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
         replace_inf_with_nan(keys, arrsize, nan_count);
+        
+        if (descending) {
+            std::reverse(keys, keys + arrsize);
+            std::reverse(indexes, indexes + arrsize);
+        }
     }
 }
 
 template <typename T1, typename T2, template <typename...> typename full_vector, template <typename...> typename half_vector>
 X86_SIMD_SORT_INLINE void
-xss_select_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+xss_select_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan, bool descending)
 {
     using keytype =
             typename std::conditional<sizeof(T1) != sizeof(T2)
@@ -513,6 +520,10 @@ xss_select_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan
 #endif // XSS_TEST_KEYVALUE_BASE_CASE
 
     if (minarrsize) {
+        if (descending){
+            k = arrsize - 1 - k;
+        }
+        
         if constexpr (std::is_floating_point_v<T1>) {
             arrsize_t nan_count = 0;
             if (UNLIKELY(hasnan)) {
@@ -526,63 +537,68 @@ xss_select_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan
             UNUSED(hasnan);
             kvselect_<keytype, valtype>(keys, indexes, k, 0, arrsize - 1, maxiters);
         }
+        
+        if (descending) {
+            std::reverse(keys, keys + arrsize);
+            std::reverse(indexes, indexes + arrsize);
+        }
     }
 }
 
 template <typename T1, typename T2, template <typename...> typename full_vector, template <typename...> typename half_vector>
 X86_SIMD_SORT_INLINE void
-xss_partial_sort_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+xss_partial_sort_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan, bool descending)
 {
     if (k == 0) return;
-    xss_select_kv<T1, T2, full_vector, half_vector>(keys, indexes, k - 1, arrsize, hasnan);
-    xss_qsort_kv<T1, T2, full_vector, half_vector>(keys, indexes, k - 1, hasnan);
+    xss_select_kv<T1, T2, full_vector, half_vector>(keys, indexes, k - 1, arrsize, hasnan, descending);
+    xss_qsort_kv<T1, T2, full_vector, half_vector>(keys, indexes, k - 1, hasnan, descending);
 }
 
 template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
-avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
+avx512_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false, bool descending = false)
 {
     xss_qsort_kv<T1, T2, zmm_vector, ymm_vector>(
-            keys, indexes, arrsize, hasnan);
+            keys, indexes, arrsize, hasnan, descending);
 }
 
 template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
-avx2_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false)
+avx2_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan = false, bool descending = false)
 {
     xss_qsort_kv<T1, T2, avx2_vector, avx2_half_vector>(
-            keys, indexes, arrsize, hasnan);
+            keys, indexes, arrsize, hasnan, descending);
 }
 
 template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
-avx512_select_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+avx512_select_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false, bool descending = false)
 {
     xss_select_kv<T1, T2, zmm_vector, ymm_vector>(
-            keys, indexes, k, arrsize, hasnan);
+            keys, indexes, k, arrsize, hasnan, descending);
 }
 
 template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
-avx2_select_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+avx2_select_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false, bool descending = false)
 {
     xss_select_kv<T1, T2, avx2_vector, avx2_half_vector>(
-            keys, indexes, k, arrsize, hasnan);
+            keys, indexes, k, arrsize, hasnan, descending);
 }
 
 template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
-avx512_partial_sort_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+avx512_partial_sort_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false, bool descending = false)
 {
     xss_partial_sort_kv<T1, T2, zmm_vector, ymm_vector>(
-            keys, indexes, k, arrsize, hasnan);
+            keys, indexes, k, arrsize, hasnan, descending);
 }
 
 template <typename T1, typename T2>
 X86_SIMD_SORT_INLINE void
-avx2_partial_sort_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false)
+avx2_partial_sort_kv(T1 *keys, T2 *indexes, arrsize_t k, arrsize_t arrsize, bool hasnan = false, bool descending = false)
 {
     xss_partial_sort_kv<T1, T2, avx2_vector, avx2_half_vector>(
-            keys, indexes, k, arrsize, hasnan);
+            keys, indexes, k, arrsize, hasnan, descending);
 }
 #endif // AVX512_QSORT_64BIT_KV

@@ -131,13 +131,13 @@ namespace x86simdsort {
 
 #define DISPATCH_KEYVALUE_SORT(TYPE1, TYPE2, ISA) \
     static void(CAT(CAT(*internal_kv_qsort_, TYPE1), TYPE2))( \
-            TYPE1 *, TYPE2 *, size_t, bool) \
+            TYPE1 *, TYPE2 *, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void keyvalue_qsort(TYPE1 *key, TYPE2 *val, size_t arrsize, bool hasnan) \
+    void keyvalue_qsort(TYPE1 *key, TYPE2 *val, size_t arrsize, bool hasnan, bool descending) \
     { \
         (CAT(CAT(*internal_kv_qsort_, TYPE1), TYPE2))( \
-                key, val, arrsize, hasnan); \
+                key, val, arrsize, hasnan, descending); \
     } \
     static __attribute__((constructor)) void CAT( \
             CAT(resolve_keyvalue_qsort_, TYPE1), TYPE2)(void) \
@@ -162,13 +162,13 @@ namespace x86simdsort {
         } \
     }\
     static void(CAT(CAT(*internal_kv_select_, TYPE1), TYPE2))( \
-            TYPE1 *, TYPE2 *, size_t, size_t, bool) \
+            TYPE1 *, TYPE2 *, size_t, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void keyvalue_select(TYPE1 *key, TYPE2 *val, size_t k, size_t arrsize, bool hasnan) \
+    void keyvalue_select(TYPE1 *key, TYPE2 *val, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
         (CAT(CAT(*internal_kv_select_, TYPE1), TYPE2))( \
-                key, val, k, arrsize, hasnan); \
+                key, val, k, arrsize, hasnan, descending); \
     } \
     static __attribute__((constructor)) void CAT( \
             CAT(resolve_keyvalue_select_, TYPE1), TYPE2)(void) \
@@ -193,13 +193,13 @@ namespace x86simdsort {
         } \
     } \
     static void(CAT(CAT(*internal_kv_partial_sort_, TYPE1), TYPE2))( \
-            TYPE1 *, TYPE2 *, size_t, size_t, bool) \
+            TYPE1 *, TYPE2 *, size_t, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void keyvalue_partial_sort(TYPE1 *key, TYPE2 *val, size_t k, size_t arrsize, bool hasnan) \
+    void keyvalue_partial_sort(TYPE1 *key, TYPE2 *val, size_t k, size_t arrsize, bool hasnan, bool descending) \
     { \
         (CAT(CAT(*internal_kv_partial_sort_, TYPE1), TYPE2))( \
-                key, val, k, arrsize, hasnan); \
+                key, val, k, arrsize, hasnan, descending); \
     } \
     static __attribute__((constructor)) void CAT( \
             CAT(resolve_keyvalue_partial_sort_, TYPE1), TYPE2)(void) \
