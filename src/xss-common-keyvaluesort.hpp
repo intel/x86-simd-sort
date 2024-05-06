@@ -430,19 +430,18 @@ xss_qsort_kv(T1 *keys, T2 *indexes, arrsize_t arrsize, bool hasnan)
 #endif // XSS_TEST_KEYVALUE_BASE_CASE
 
     if (minarrsize) {
-        if constexpr (std::is_floating_point_v<T1>) {
-            arrsize_t nan_count = 0;
+        arrsize_t nan_count = 0;
+        if constexpr (xss::fp::is_floating_point_v<T1>) {
             if (UNLIKELY(hasnan)) {
                 nan_count
                         = replace_nan_with_inf<full_vector<T1>>(keys, arrsize);
             }
-            kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
-            replace_inf_with_nan(keys, arrsize, nan_count);
         }
         else {
             UNUSED(hasnan);
-            kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
         }
+        kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
+        replace_inf_with_nan(keys, arrsize, nan_count);
     }
 }
 
