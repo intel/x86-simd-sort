@@ -24,6 +24,7 @@ template <typename vtype, typename reg_t>
 X86_SIMD_SORT_INLINE reg_t sort_zmm_64bit(reg_t zmm);
 
 struct avx512_64bit_swizzle_ops;
+struct avx512_ymm_64bit_swizzle_ops;
 
 template <>
 struct ymm_vector<float> {
@@ -33,6 +34,8 @@ struct ymm_vector<float> {
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
     static constexpr simd_type vec_type = simd_type::AVX512;
+
+    using swizzle_ops = avx512_ymm_64bit_swizzle_ops;
 
     static type_t type_max()
     {
@@ -212,6 +215,14 @@ struct ymm_vector<float> {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
         return permutexvar(rev_index, ymm);
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<ymm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
+    }
 };
 template <>
 struct ymm_vector<uint32_t> {
@@ -221,6 +232,8 @@ struct ymm_vector<uint32_t> {
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
     static constexpr simd_type vec_type = simd_type::AVX512;
+
+    using swizzle_ops = avx512_ymm_64bit_swizzle_ops;
 
     static type_t type_max()
     {
@@ -386,6 +399,14 @@ struct ymm_vector<uint32_t> {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
         return permutexvar(rev_index, ymm);
     }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<ymm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
+    }
 };
 template <>
 struct ymm_vector<int32_t> {
@@ -395,6 +416,8 @@ struct ymm_vector<int32_t> {
     using opmask_t = __mmask8;
     static const uint8_t numlanes = 8;
     static constexpr simd_type vec_type = simd_type::AVX512;
+
+    using swizzle_ops = avx512_ymm_64bit_swizzle_ops;
 
     static type_t type_max()
     {
@@ -559,6 +582,14 @@ struct ymm_vector<int32_t> {
     {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
         return permutexvar(rev_index, ymm);
+    }
+    static int double_compressstore(type_t *left_addr,
+                                    type_t *right_addr,
+                                    opmask_t k,
+                                    reg_t reg)
+    {
+        return avx512_double_compressstore<ymm_vector<type_t>>(
+                left_addr, right_addr, k, reg);
     }
 };
 template <>
@@ -1206,6 +1237,79 @@ struct avx512_64bit_swizzle_ops {
         }
         else if constexpr (scale == 8) {
             v1 = _mm512_mask_blend_epi64(0b00001111, v1, v2);
+        }
+        else {
+            static_assert(scale == -1, "should not be reached");
+        }
+
+        return vtype::cast_from(v1);
+    }
+};
+
+struct avx512_ymm_64bit_swizzle_ops {
+    template <typename vtype, int scale>
+    X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg)
+    {
+        __m256i v = vtype::cast_to(reg);
+
+        if constexpr (scale == 2) {
+            __m256 vf = _mm256_castsi256_ps(v);
+            vf = _mm256_permute_ps(vf, 0b10110001);
+            v = _mm256_castps_si256(vf);
+        }
+        else if constexpr (scale == 4) {
+            __m256 vf = _mm256_castsi256_ps(v);
+            vf = _mm256_permute_ps(vf, 0b01001110);
+            v = _mm256_castps_si256(vf);
+        }
+        else if constexpr (scale == 8) {
+            v = _mm256_permute2x128_si256(v, v, 0b00000001);
+        }
+        else {
+            static_assert(scale == -1, "should not be reached");
+        }
+
+        return vtype::cast_from(v);
+    }
+
+    template <typename vtype, int scale>
+    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    reverse_n(typename vtype::reg_t reg)
+    {
+        __m256i v = vtype::cast_to(reg);
+
+        if constexpr (scale == 2) { return swap_n<vtype, 2>(reg); }
+        else if constexpr (scale == 4) {
+            constexpr uint64_t mask = 0b00011011;
+            __m256 vf = _mm256_castsi256_ps(v);
+            vf = _mm256_permute_ps(vf, mask);
+            v = _mm256_castps_si256(vf);
+        }
+        else if constexpr (scale == 8) {
+            return vtype::reverse(reg);
+        }
+        else {
+            static_assert(scale == -1, "should not be reached");
+        }
+
+        return vtype::cast_from(v);
+    }
+
+    template <typename vtype, int scale>
+    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    merge_n(typename vtype::reg_t reg, typename vtype::reg_t other)
+    {
+        __m256i v1 = vtype::cast_to(reg);
+        __m256i v2 = vtype::cast_to(other);
+
+        if constexpr (scale == 2) {
+            v1 = _mm256_blend_epi32(v1, v2, 0b01010101);
+        }
+        else if constexpr (scale == 4) {
+            v1 = _mm256_blend_epi32(v1, v2, 0b00110011);
+        }
+        else if constexpr (scale == 8) {
+            v1 = _mm256_blend_epi32(v1, v2, 0b00001111);
         }
         else {
             static_assert(scale == -1, "should not be reached");
