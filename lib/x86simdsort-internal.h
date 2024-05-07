@@ -23,7 +23,7 @@ namespace avx512 {
                                  bool descending = false);
     // key-value select
     template <typename T1, typename T2>
-    XSS_EXPORT_SYMBOL void
+    XSS_HIDE_SYMBOL void
     keyvalue_select(T1 *key, T2 *val, size_t k, size_t arrsize, bool hasnan = false, bool descending = false);
     // partial sort
     template <typename T>
@@ -34,7 +34,7 @@ namespace avx512 {
                                        bool descending = false);
     // key-value partial sort
     template <typename T1, typename T2>
-    XSS_EXPORT_SYMBOL void
+    XSS_HIDE_SYMBOL void
     keyvalue_partial_sort(T1 *key, T2 *val, size_t k, size_t arrsize, bool hasnan = false, bool descending = false);
     // argsort
     template <typename T>
@@ -55,7 +55,7 @@ namespace avx2 {
     // key-value quicksort
     template <typename T1, typename T2>
     XSS_HIDE_SYMBOL void
-    keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false);
+    keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false, bool descending = false);
     // quickselect
     template <typename T>
     XSS_HIDE_SYMBOL void qselect(T *arr,
@@ -65,7 +65,7 @@ namespace avx2 {
                                  bool descending = false);
     // key-value select
     template <typename T1, typename T2>
-    XSS_EXPORT_SYMBOL void
+    XSS_HIDE_SYMBOL void
     keyvalue_select(T1 *key, T2 *val, size_t k, size_t arrsize, bool hasnan = false, bool descending = false);
     // partial sort
     template <typename T>
@@ -76,7 +76,7 @@ namespace avx2 {
                                        bool descending = false);
     // key-value partial sort
     template <typename T1, typename T2>
-    XSS_EXPORT_SYMBOL void
+    XSS_HIDE_SYMBOL void
     keyvalue_partial_sort(T1 *key, T2 *val, size_t k, size_t arrsize, bool hasnan = false, bool descending = false);
     // argsort
     template <typename T>
@@ -107,7 +107,7 @@ namespace scalar {
                                  bool descending = false);
     // key-value select
     template <typename T1, typename T2>
-    XSS_EXPORT_SYMBOL void
+    XSS_HIDE_SYMBOL void
     keyvalue_select(T1 *key, T2 *val, size_t k, size_t arrsize, bool hasnan = false, bool descending = false);
     // partial sort
     template <typename T>
@@ -118,7 +118,7 @@ namespace scalar {
                                        bool descending = false);
     // key-value partial sort
     template <typename T1, typename T2>
-    XSS_EXPORT_SYMBOL void
+    XSS_HIDE_SYMBOL void
     keyvalue_partial_sort(T1 *key, T2 *val, size_t k, size_t arrsize, bool hasnan = false, bool descending = false);
     // argsort
     template <typename T>

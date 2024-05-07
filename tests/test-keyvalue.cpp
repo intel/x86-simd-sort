@@ -32,10 +32,9 @@ TYPED_TEST_SUITE_P(simdkvsort);
 
 template <typename T>
 bool same_values(T* v1, T* v2, size_t size){
-    // Checks that the values are the same except (maybe) their ordering
+    // Checks that the values are the same except ordering
     auto cmp_eq = compare<T, std::equal_to<T>>();
     
-    // TODO hardcoding hasnan to true doesn't break anything right?
     x86simdsort::qsort(v1, size, true);
     x86simdsort::qsort(v2, size, true);
     
@@ -49,7 +48,7 @@ bool same_values(T* v1, T* v2, size_t size){
 }
 
 template <typename T1, typename T2>
-bool kv_equivalent(T1* keys_comp, T2* vals_comp, T1* keys_ref, T2* vals_ref, size_t size){
+bool is_kv_sorted(T1* keys_comp, T2* vals_comp, T1* keys_ref, T2* vals_ref, size_t size){
     auto cmp_eq = compare<T1, std::equal_to<T1>>();
     
     // First check keys are exactly identical
@@ -66,7 +65,7 @@ bool kv_equivalent(T1* keys_comp, T2* vals_comp, T1* keys_ref, T2* vals_ref, siz
     size_t i = 0;
     for (; i < size; i++){
         if (!cmp_eq(keys_comp[i], key_start)){
-            // Check that every value in 
+            // Check that every value in this block of constant keys
 
             if (!same_values(vals_ref + i_start, vals_comp + i_start, i - i_start)){
                 return false;
@@ -76,6 +75,66 @@ bool kv_equivalent(T1* keys_comp, T2* vals_comp, T1* keys_ref, T2* vals_ref, siz
             i_start = i;
             key_start = keys_comp[i];
         }
+    }
+    
+    // Handle the last group
+    if (!same_values(vals_ref + i_start, vals_comp + i_start, i - i_start)){
+        return false;
+    }
+    
+    return true;
+}
+
+template <typename T1, typename T2>
+bool is_kv_partialsorted(T1* keys_comp, T2* vals_comp, T1* keys_ref, T2* vals_ref, size_t size, size_t k){
+    auto cmp_eq = compare<T1, std::equal_to<T1>>();
+    
+    // First check keys are exactly identical (up to k)
+    for (size_t i = 0; i < k; i++){
+        if (!cmp_eq(keys_comp[i], keys_ref[i])){
+            return false;
+        }
+    }
+    
+    size_t i_start = 0;
+    T1 key_start = keys_comp[0];
+    // Loop through all identical keys in a block, then compare the sets of values to make sure they are identical
+    for (size_t i = 0; i < k; i++){
+        if (!cmp_eq(keys_comp[i], key_start)){
+            // Check that every value in this block of constant keys
+
+            if (!same_values(vals_ref + i_start, vals_comp + i_start, i - i_start)){
+                return false;
+            }
+            
+            // Now setup the start variables to begin gathering keys for the next group
+            i_start = i;
+            key_start = keys_comp[i];
+        }
+    }
+    
+    // Now, we need to do some more work to handle keys exactly equal to the true kth
+    // First, fully kvsort both arrays
+    xss::scalar::keyvalue_qsort<T1, T2>(keys_ref, vals_ref, size, true, false);
+    xss::scalar::keyvalue_qsort<T1, T2>(keys_comp, vals_comp, size, true, false);
+    
+    auto trueKth = keys_ref[k];
+    bool notFoundFirst = true;
+    size_t i = 0;
+    
+    for (; i < size; i++){
+        if (notFoundFirst && cmp_eq(keys_ref[i], trueKth)){
+            notFoundFirst = false;
+            i_start = i;
+        }else if (!notFoundFirst && !cmp_eq(keys_ref[i], trueKth)){
+            break;
+        }
+    }
+
+    if (notFoundFirst) return false;
+    
+    if (!same_values(vals_ref + i_start, vals_comp + i_start, i - i_start)){
+        return false;
     }
     
     return true;
@@ -96,8 +155,8 @@ TYPED_TEST_P(simdkvsort, test_kvsort_ascending)
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, false);
             
-            bool is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), size);
-            ASSERT_EQ(is_kv_equivalent, true);
+            bool is_kv_sorted_ = is_kv_sorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), size);
+            ASSERT_EQ(is_kv_sorted_, true);
             
             key.clear();
             val.clear();
@@ -122,8 +181,8 @@ TYPED_TEST_P(simdkvsort, test_kvsort_descending)
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, true);
             
-            bool is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), size);
-            ASSERT_EQ(is_kv_equivalent, true);
+            bool is_kv_sorted_ = is_kv_sorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), size);
+            ASSERT_EQ(is_kv_sorted_, true);
             
             key.clear();
             val.clear();
@@ -155,9 +214,10 @@ TYPED_TEST_P(simdkvsort, test_kvselect_ascending)
             IS_ARR_PARTITIONED<T1>(key, k, key_bckp[k], type);
             xss::scalar::keyvalue_qsort(key.data(), val.data(), k, hasnan, false);
             
+            ASSERT_EQ(key[k], key_bckp[k]);
             
-            bool is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), k);
-            ASSERT_EQ(is_kv_equivalent, true);
+            bool is_kv_partialsorted_ = is_kv_partialsorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), size, k);
+            ASSERT_EQ(is_kv_partialsorted_, true);
             
             key.clear();
             val.clear();
@@ -189,9 +249,10 @@ TYPED_TEST_P(simdkvsort, test_kvselect_descending)
             IS_ARR_PARTITIONED<T1>(key, k, key_bckp[k], type, true);
             xss::scalar::keyvalue_qsort(key.data(), val.data(), k, hasnan, true);
             
+            ASSERT_EQ(key[k], key_bckp[k]);
             
-            bool is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), k);
-            ASSERT_EQ(is_kv_equivalent, true);
+            bool is_kv_partialsorted_ = is_kv_partialsorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), size, k);
+            ASSERT_EQ(is_kv_partialsorted_, true);
             
             key.clear();
             val.clear();
@@ -220,8 +281,8 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_ascending)
             
             IS_ARR_PARTIALSORTED<T1>(key, k, key_bckp, type);
             
-            bool is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), k);
-            ASSERT_EQ(is_kv_equivalent, true);
+            bool is_kv_partialsorted_ = is_kv_partialsorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), size, k);
+            ASSERT_EQ(is_kv_partialsorted_, true);
             
             key.clear();
             val.clear();
@@ -250,8 +311,8 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_descending)
             
             IS_ARR_PARTIALSORTED<T1>(key, k, key_bckp, type);
             
-            bool is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), k);
-            ASSERT_EQ(is_kv_equivalent, true);
+            bool is_kv_partialsorted_ = is_kv_partialsorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), size, k);
+            ASSERT_EQ(is_kv_partialsorted_, true);
             
             key.clear();
             val.clear();
@@ -275,26 +336,26 @@ TYPED_TEST_P(simdkvsort, test_validator)
     std::vector<T2> val_bckp = val;
     
     // Duplicate keys, but otherwise exactly identical
-    is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
+    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
     ASSERT_EQ(is_kv_equivalent, true);
     
     val = {2,1,4,3};
     
     // Now values are backwards, but this is still fine
-    is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
+    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
     ASSERT_EQ(is_kv_equivalent, true);
     
     val = {1,3,2,4};
     
     // Now values are mixed up, should fail
-    is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
+    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
     ASSERT_EQ(is_kv_equivalent, false);
     
     val = {1,2,3,4};
     key = {0,0,0,0};
     
     // Now keys are messed up, should fail
-    is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
+    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
     ASSERT_EQ(is_kv_equivalent, false);
     
     key = {0,0,0,0,0,0};
@@ -303,7 +364,7 @@ TYPED_TEST_P(simdkvsort, test_validator)
     val = {4,3,1,6,5,2};
     
     // All keys identical, simply reordered values
-    is_kv_equivalent = kv_equivalent<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
+    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(), val.data(), key_bckp.data(), val_bckp.data(), key.size());
     ASSERT_EQ(is_kv_equivalent, true);
 }
 
