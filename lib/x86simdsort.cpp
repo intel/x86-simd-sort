@@ -134,7 +134,11 @@ namespace x86simdsort {
             TYPE1 *, TYPE2 *, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void keyvalue_qsort(TYPE1 *key, TYPE2 *val, size_t arrsize, bool hasnan, bool descending) \
+    void keyvalue_qsort(TYPE1 *key, \
+                        TYPE2 *val, \
+                        size_t arrsize, \
+                        bool hasnan, \
+                        bool descending) \
     { \
         (CAT(CAT(*internal_kv_qsort_, TYPE1), TYPE2))( \
                 key, val, arrsize, hasnan, descending); \
@@ -160,12 +164,17 @@ namespace x86simdsort {
                 return; \
             } \
         } \
-    }\
+    } \
     static void(CAT(CAT(*internal_kv_select_, TYPE1), TYPE2))( \
             TYPE1 *, TYPE2 *, size_t, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void keyvalue_select(TYPE1 *key, TYPE2 *val, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void keyvalue_select(TYPE1 *key, \
+                         TYPE2 *val, \
+                         size_t k, \
+                         size_t arrsize, \
+                         bool hasnan, \
+                         bool descending) \
     { \
         (CAT(CAT(*internal_kv_select_, TYPE1), TYPE2))( \
                 key, val, k, arrsize, hasnan, descending); \
@@ -196,7 +205,12 @@ namespace x86simdsort {
             TYPE1 *, TYPE2 *, size_t, size_t, bool, bool) \
             = NULL; \
     template <> \
-    void keyvalue_partial_sort(TYPE1 *key, TYPE2 *val, size_t k, size_t arrsize, bool hasnan, bool descending) \
+    void keyvalue_partial_sort(TYPE1 *key, \
+                               TYPE2 *val, \
+                               size_t k, \
+                               size_t arrsize, \
+                               bool hasnan, \
+                               bool descending) \
     { \
         (CAT(CAT(*internal_kv_partial_sort_, TYPE1), TYPE2))( \
                 key, val, k, arrsize, hasnan, descending); \

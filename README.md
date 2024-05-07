@@ -45,7 +45,9 @@ int32_t, double, uint64_t, int64_t]`
 
 ## Key-value sort routines on pairs of arrays
 ```cpp
-void x86simdsort::keyvalue_qsort(T1* key, T2* val, size_t size, bool hasnan);
+void x86simdsort::keyvalue_qsort(T1* key, T2* val, size_t size, bool hasnan, bool descending);
+void x86simdsort::keyvalue_select(T1* key, T2* val, size_t k, size_t size, bool hasnan, bool descending);
+void x86simdsort::keyvalue_partial_sort(T1* key, T2* val, size_t k, size_t size, bool hasnan, bool descending);
 ```
 Supported datatypes: `T1`, `T2` $\in$ `[float, uint32_t, int32_t, double,
 uint64_t, int64_t]` Note that keyvalue sort is not yet supported for 16-bit
