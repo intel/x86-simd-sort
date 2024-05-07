@@ -1,5 +1,5 @@
 project('x86-simd-sort', 'cpp',
-        version : '4.0.0',
+        version : '5.0.x',
         license : 'BSD 3-clause',
         default_options : ['cpp_std=c++17'])
 fs = import('fs')
@@ -40,7 +40,7 @@ libsimdsort = shared_library('x86simdsortcpp',
                              link_with : [libtargets],
                              gnu_symbol_visibility : 'inlineshidden',
                              install : true,
-                             soversion : 0,
+                             soversion : 1,
                             )
 
 pkg_mod = import('pkgconfig')
