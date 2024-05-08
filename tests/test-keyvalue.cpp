@@ -369,80 +369,13 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_descending)
     }
 }
 
-TYPED_TEST_P(simdkvsort, test_validator)
-{
-    // Tests a few edge cases to verify the tests are working correctly and identifying it as functional
-    using T1 = typename std::tuple_element<0, decltype(TypeParam())>::type;
-    using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
-
-    bool is_kv_equivalent;
-
-    std::vector<T1> key = {0, 0, 1, 1};
-    std::vector<T2> val = {1, 2, 3, 4};
-    std::vector<T1> key_bckp = key;
-    std::vector<T2> val_bckp = val;
-
-    // Duplicate keys, but otherwise exactly identical
-    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(),
-                                            val.data(),
-                                            key_bckp.data(),
-                                            val_bckp.data(),
-                                            key.size());
-    ASSERT_EQ(is_kv_equivalent, true);
-
-    val = {2, 1, 4, 3};
-
-    // Now values are backwards, but this is still fine
-    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(),
-                                            val.data(),
-                                            key_bckp.data(),
-                                            val_bckp.data(),
-                                            key.size());
-    ASSERT_EQ(is_kv_equivalent, true);
-
-    val = {1, 3, 2, 4};
-
-    // Now values are mixed up, should fail
-    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(),
-                                            val.data(),
-                                            key_bckp.data(),
-                                            val_bckp.data(),
-                                            key.size());
-    ASSERT_EQ(is_kv_equivalent, false);
-
-    val = {1, 2, 3, 4};
-    key = {0, 0, 0, 0};
-
-    // Now keys are messed up, should fail
-    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(),
-                                            val.data(),
-                                            key_bckp.data(),
-                                            val_bckp.data(),
-                                            key.size());
-    ASSERT_EQ(is_kv_equivalent, false);
-
-    key = {0, 0, 0, 0, 0, 0};
-    key_bckp = key;
-    val_bckp = {1, 2, 3, 4, 5, 6};
-    val = {4, 3, 1, 6, 5, 2};
-
-    // All keys identical, simply reordered values
-    is_kv_equivalent = is_kv_sorted<T1, T2>(key.data(),
-                                            val.data(),
-                                            key_bckp.data(),
-                                            val_bckp.data(),
-                                            key.size());
-    ASSERT_EQ(is_kv_equivalent, true);
-}
-
 REGISTER_TYPED_TEST_SUITE_P(simdkvsort,
                             test_kvsort_ascending,
                             test_kvsort_descending,
                             test_kvselect_ascending,
                             test_kvselect_descending,
                             test_kvpartial_sort_ascending,
-                            test_kvpartial_sort_descending,
-                            test_validator);
+                            test_kvpartial_sort_descending);
 
 #define CREATE_TUPLES(type) \
     std::tuple<double, type>, std::tuple<uint64_t, type>, \

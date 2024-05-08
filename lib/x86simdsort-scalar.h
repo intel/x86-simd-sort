@@ -115,13 +115,9 @@ namespace scalar {
                          bool hasnan,
                          bool descending)
     {
-        if (k == 0) return;
-        // Note that this does a full partial sort, not just a select
-        std::vector<size_t> arg = argsort(key, arrsize, hasnan, descending);
-        //arg.resize(k);
-
-        utils::apply_permutation_in_place(key, arg);
-        utils::apply_permutation_in_place(val, arg);
+        // Note that this does a full kv-sort
+        UNUSED(k);
+        keyvalue_qsort(key, val, arrsize, hasnan, descending);
     }
     template <typename T1, typename T2>
     void keyvalue_partial_sort(T1 *key,
@@ -131,12 +127,9 @@ namespace scalar {
                                bool hasnan,
                                bool descending)
     {
-        if (k == 0) return;
-        std::vector<size_t> arg = argsort(key, arrsize, hasnan, descending);
-        //arg.resize(k);
-
-        utils::apply_permutation_in_place(key, arg);
-        utils::apply_permutation_in_place(val, arg);
+        // Note that this does a full kv-sort
+        UNUSED(k);
+        keyvalue_qsort(key, val, arrsize, hasnan, descending);
     }
 
 } // namespace scalar
