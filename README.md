@@ -159,13 +159,11 @@ different metrics:
 
 The performance data (shown in the plot below) can be collected by building the
 benchmarks suite and running `./builddir/benchexe --benchmark_filter==*obj*`.
-The data plot shown below was collected on a processor with AVX-512 because
-`object_qsort` is currently accelerated only on AVX-512 (we plan to add the
-AVX2 version soon). For the simplest of cases where we want to sort an array of
-struct by one of its members, `object_qsort` can be up-to 5x faster for 32-bit
-data type and about 4x for 64-bit data type.  It tends to do even better when
-the metric to sort by gets more complicated. Sorting by Euclidean distance can
-be up-to 10x faster.
+The data plot shown below was collected on a processor with AVX-512. For the
+simplest of cases where we want to sort an array of struct by one of its
+members, `object_qsort` can be up-to 5x faster for 32-bit data type and about
+4x for 64-bit data type.  It tends to do even better when the metric to sort by
+gets more complicated. Sorting by Euclidean distance can be up-to 10x faster.
 
 ![alt text](./misc/object_qsort-perf.jpg?raw=true)
 
