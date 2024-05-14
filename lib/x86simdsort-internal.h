@@ -12,7 +12,7 @@ namespace avx512 {
     qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
     // key-value quicksort
     template <typename T1, typename T2>
-    XSS_EXPORT_SYMBOL void
+    XSS_HIDE_SYMBOL void
     keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false);
     // quickselect
     template <typename T>
@@ -46,7 +46,7 @@ namespace avx2 {
     qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
     // key-value quicksort
     template <typename T1, typename T2>
-    XSS_EXPORT_SYMBOL void
+    XSS_HIDE_SYMBOL void
     keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false);
     // quickselect
     template <typename T>
@@ -80,7 +80,7 @@ namespace scalar {
     qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
     // key-value quicksort
     template <typename T1, typename T2>
-    XSS_EXPORT_SYMBOL void
+    XSS_HIDE_SYMBOL void
     keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false);
     // quickselect
     template <typename T>
