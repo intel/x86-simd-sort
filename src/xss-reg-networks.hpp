@@ -31,12 +31,12 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_4lanes(reg_t reg)
 {
     using swizzle = typename vtype::swizzle_ops;
 
-    const typename vtype::opmask_t oxAA = convert_int_to_mask<vtype>(0xAA);
-    const typename vtype::opmask_t oxCC = convert_int_to_mask<vtype>(0xCC);
+    const typename vtype::opmask_t oxA = convert_int_to_mask<vtype>(0xA);
+    const typename vtype::opmask_t oxC = convert_int_to_mask<vtype>(0xC);
 
-    reg = cmp_merge<vtype>(reg, swizzle::template swap_n<vtype, 2>(reg), oxAA);
-    reg = cmp_merge<vtype>(reg, vtype::reverse(reg), oxCC);
-    reg = cmp_merge<vtype>(reg, swizzle::template swap_n<vtype, 2>(reg), oxAA);
+    reg = cmp_merge<vtype>(reg, swizzle::template swap_n<vtype, 2>(reg), oxA);
+    reg = cmp_merge<vtype>(reg, vtype::reverse(reg), oxC);
+    reg = cmp_merge<vtype>(reg, swizzle::template swap_n<vtype, 2>(reg), oxA);
     return reg;
 }
 
