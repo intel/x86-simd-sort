@@ -159,20 +159,13 @@ template <typename vtype,
           typename reg_t = typename vtype::reg_t>
 X86_SIMD_SORT_FINLINE void sort_vectors(reg_t *vecs)
 {
-    if constexpr (numVecs == 1){
-        vecs[0] = vtype::sort_vec(vecs[0]);
-        if (comparator::leftmost(0, 1) == 1){
-            vecs[0] = vtype::reverse(vecs[0]);
-        }
-    }else{
-        /* Run the initial sorting network to sort the columns of the [numVecs x
-         * num_lanes] matrix
-         */
-        bitonic_sort_n_vec<vtype, comparator, numVecs>(vecs);
+    /* Run the initial sorting network to sort the columns of the [numVecs x
+     * num_lanes] matrix
+     */
+    bitonic_sort_n_vec<vtype, comparator, numVecs>(vecs);
 
-        // Merge the vectors using bitonic merging networks
-        merge_n_vec<vtype, comparator, numVecs>(vecs);
-    }
+    // Merge the vectors using bitonic merging networks
+    merge_n_vec<vtype, comparator, numVecs>(vecs);
 }
 
 template <typename vtype,
