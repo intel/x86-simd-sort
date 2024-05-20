@@ -46,8 +46,27 @@ void X86_SIMD_SORT_FINLINE
 argselect(T *arr, size_t *arg, size_t k, size_t size, bool hasnan = false);
 
 template <typename T1, typename T2>
-X86_SIMD_SORT_FINLINE void
-keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
+X86_SIMD_SORT_FINLINE void keyvalue_qsort(T1 *key,
+                                          T2 *val,
+                                          size_t size,
+                                          bool hasnan = false,
+                                          bool descending = false);
+
+template <typename T1, typename T2>
+X86_SIMD_SORT_FINLINE void keyvalue_select(T1 *key,
+                                           T2 *val,
+                                           size_t k,
+                                           size_t size,
+                                           bool hasnan = false,
+                                           bool descending = false);
+
+template <typename T1, typename T2>
+X86_SIMD_SORT_FINLINE void keyvalue_partial_sort(T1 *key,
+                                                 T2 *val,
+                                                 size_t k,
+                                                 size_t size,
+                                                 bool hasnan = false,
+                                                 bool descending = false);
 
 } // namespace x86simdsortStatic
 
@@ -103,9 +122,31 @@ keyvalue_qsort(T1 *key, T2 *val, size_t size, bool hasnan = false);
     } \
     template <typename T1, typename T2> \
     X86_SIMD_SORT_FINLINE void x86simdsortStatic::keyvalue_qsort( \
-            T1 *key, T2 *val, size_t size, bool hasnan) \
+            T1 *key, T2 *val, size_t size, bool hasnan, bool descending) \
     { \
-        ISA##_qsort_kv(key, val, size, hasnan); \
+        ISA##_qsort_kv(key, val, size, hasnan, descending); \
+    } \
+    template <typename T1, typename T2> \
+    X86_SIMD_SORT_FINLINE void x86simdsortStatic::keyvalue_select( \
+            T1 *key, \
+            T2 *val, \
+            size_t k, \
+            size_t size, \
+            bool hasnan, \
+            bool descending) \
+    { \
+        ISA##_select_kv(key, val, k, size, hasnan, descending); \
+    } \
+    template <typename T1, typename T2> \
+    X86_SIMD_SORT_FINLINE void x86simdsortStatic::keyvalue_partial_sort( \
+            T1 *key, \
+            T2 *val, \
+            size_t k, \
+            size_t size, \
+            bool hasnan, \
+            bool descending) \
+    { \
+        ISA##_partial_sort_kv(key, val, k, size, hasnan, descending); \
     }
 
 /*

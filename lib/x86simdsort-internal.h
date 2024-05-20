@@ -12,8 +12,11 @@ namespace avx512 {
     qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
     // key-value quicksort
     template <typename T1, typename T2>
-    XSS_HIDE_SYMBOL void
-    keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false);
+    XSS_HIDE_SYMBOL void keyvalue_qsort(T1 *key,
+                                        T2 *val,
+                                        size_t arrsize,
+                                        bool hasnan = false,
+                                        bool descending = false);
     // quickselect
     template <typename T>
     XSS_HIDE_SYMBOL void qselect(T *arr,
@@ -21,6 +24,14 @@ namespace avx512 {
                                  size_t arrsize,
                                  bool hasnan = false,
                                  bool descending = false);
+    // key-value select
+    template <typename T1, typename T2>
+    XSS_HIDE_SYMBOL void keyvalue_select(T1 *key,
+                                         T2 *val,
+                                         size_t k,
+                                         size_t arrsize,
+                                         bool hasnan = false,
+                                         bool descending = false);
     // partial sort
     template <typename T>
     XSS_HIDE_SYMBOL void partial_qsort(T *arr,
@@ -28,6 +39,14 @@ namespace avx512 {
                                        size_t arrsize,
                                        bool hasnan = false,
                                        bool descending = false);
+    // key-value partial sort
+    template <typename T1, typename T2>
+    XSS_HIDE_SYMBOL void keyvalue_partial_sort(T1 *key,
+                                               T2 *val,
+                                               size_t k,
+                                               size_t arrsize,
+                                               bool hasnan = false,
+                                               bool descending = false);
     // argsort
     template <typename T>
     XSS_HIDE_SYMBOL std::vector<size_t> argsort(T *arr,
@@ -46,8 +65,11 @@ namespace avx2 {
     qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
     // key-value quicksort
     template <typename T1, typename T2>
-    XSS_HIDE_SYMBOL void
-    keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false);
+    XSS_HIDE_SYMBOL void keyvalue_qsort(T1 *key,
+                                        T2 *val,
+                                        size_t arrsize,
+                                        bool hasnan = false,
+                                        bool descending = false);
     // quickselect
     template <typename T>
     XSS_HIDE_SYMBOL void qselect(T *arr,
@@ -55,6 +77,14 @@ namespace avx2 {
                                  size_t arrsize,
                                  bool hasnan = false,
                                  bool descending = false);
+    // key-value select
+    template <typename T1, typename T2>
+    XSS_HIDE_SYMBOL void keyvalue_select(T1 *key,
+                                         T2 *val,
+                                         size_t k,
+                                         size_t arrsize,
+                                         bool hasnan = false,
+                                         bool descending = false);
     // partial sort
     template <typename T>
     XSS_HIDE_SYMBOL void partial_qsort(T *arr,
@@ -62,6 +92,14 @@ namespace avx2 {
                                        size_t arrsize,
                                        bool hasnan = false,
                                        bool descending = false);
+    // key-value partial sort
+    template <typename T1, typename T2>
+    XSS_HIDE_SYMBOL void keyvalue_partial_sort(T1 *key,
+                                               T2 *val,
+                                               size_t k,
+                                               size_t arrsize,
+                                               bool hasnan = false,
+                                               bool descending = false);
     // argsort
     template <typename T>
     XSS_HIDE_SYMBOL std::vector<size_t> argsort(T *arr,
@@ -80,8 +118,11 @@ namespace scalar {
     qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
     // key-value quicksort
     template <typename T1, typename T2>
-    XSS_HIDE_SYMBOL void
-    keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan = false);
+    XSS_HIDE_SYMBOL void keyvalue_qsort(T1 *key,
+                                        T2 *val,
+                                        size_t arrsize,
+                                        bool hasnan = false,
+                                        bool descending = false);
     // quickselect
     template <typename T>
     XSS_HIDE_SYMBOL void qselect(T *arr,
@@ -89,6 +130,14 @@ namespace scalar {
                                  size_t arrsize,
                                  bool hasnan = false,
                                  bool descending = false);
+    // key-value select
+    template <typename T1, typename T2>
+    XSS_HIDE_SYMBOL void keyvalue_select(T1 *key,
+                                         T2 *val,
+                                         size_t k,
+                                         size_t arrsize,
+                                         bool hasnan = false,
+                                         bool descending = false);
     // partial sort
     template <typename T>
     XSS_HIDE_SYMBOL void partial_qsort(T *arr,
@@ -96,6 +145,14 @@ namespace scalar {
                                        size_t arrsize,
                                        bool hasnan = false,
                                        bool descending = false);
+    // key-value partial sort
+    template <typename T1, typename T2>
+    XSS_HIDE_SYMBOL void keyvalue_partial_sort(T1 *key,
+                                               T2 *val,
+                                               size_t k,
+                                               size_t arrsize,
+                                               bool hasnan = false,
+                                               bool descending = false);
     // argsort
     template <typename T>
     XSS_HIDE_SYMBOL std::vector<size_t> argsort(T *arr,

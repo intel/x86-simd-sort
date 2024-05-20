@@ -181,8 +181,7 @@ TYPED_TEST_P(simdsort, test_partial_qsort_ascending)
     for (auto type : this->arrtype) {
         bool hasnan = (type == "rand_with_nan") ? true : false;
         for (auto size : this->arrsize) {
-            // k should be at least 1
-            size_t k = std::max((size_t)1, rand() % size);
+            size_t k = rand() % size;
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
 
             // Ascending order

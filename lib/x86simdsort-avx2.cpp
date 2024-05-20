@@ -34,37 +34,47 @@
         return x86simdsortStatic::argselect(arr, k, arrsize, hasnan); \
     }
 
-#define DEFINE_KEYVALUE_METHODS(type) \
+#define DEFINE_KEYVALUE_METHODS_BASE(type1, type2) \
     template <> \
-    void keyvalue_qsort(type *key, uint64_t *val, size_t arrsize, bool hasnan) \
+    void keyvalue_qsort(type1 *key, \
+                        type2 *val, \
+                        size_t arrsize, \
+                        bool hasnan, \
+                        bool descending) \
     { \
-        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_qsort( \
+                key, val, arrsize, hasnan, descending); \
     } \
     template <> \
-    void keyvalue_qsort(type *key, int64_t *val, size_t arrsize, bool hasnan) \
+    void keyvalue_select(type1 *key, \
+                         type2 *val, \
+                         size_t k, \
+                         size_t arrsize, \
+                         bool hasnan, \
+                         bool descending) \
     { \
-        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_select( \
+                key, val, k, arrsize, hasnan, descending); \
     } \
     template <> \
-    void keyvalue_qsort(type *key, double *val, size_t arrsize, bool hasnan) \
+    void keyvalue_partial_sort(type1 *key, \
+                               type2 *val, \
+                               size_t k, \
+                               size_t arrsize, \
+                               bool hasnan, \
+                               bool descending) \
     { \
-        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
-    } \
-    template <> \
-    void keyvalue_qsort(type *key, uint32_t *val, size_t arrsize, bool hasnan) \
-    { \
-        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
-    } \
-    template <> \
-    void keyvalue_qsort(type *key, int32_t *val, size_t arrsize, bool hasnan) \
-    { \
-        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
-    } \
-    template <> \
-    void keyvalue_qsort(type *key, float *val, size_t arrsize, bool hasnan) \
-    { \
-        x86simdsortStatic::keyvalue_qsort(key, val, arrsize, hasnan); \
+        x86simdsortStatic::keyvalue_partial_sort( \
+                key, val, k, arrsize, hasnan, descending); \
     }
+
+#define DEFINE_KEYVALUE_METHODS(type) \
+    DEFINE_KEYVALUE_METHODS_BASE(type, uint64_t) \
+    DEFINE_KEYVALUE_METHODS_BASE(type, int64_t) \
+    DEFINE_KEYVALUE_METHODS_BASE(type, double) \
+    DEFINE_KEYVALUE_METHODS_BASE(type, uint32_t) \
+    DEFINE_KEYVALUE_METHODS_BASE(type, int32_t) \
+    DEFINE_KEYVALUE_METHODS_BASE(type, float)
 
 namespace xss {
 namespace avx2 {

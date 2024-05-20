@@ -13,7 +13,8 @@ static void scalarkvsort(benchmark::State &state, Args &&...args)
     std::vector<T> key_bkp = key;
     // benchmark
     for (auto _ : state) {
-        xss::scalar::keyvalue_qsort(key.data(), val.data(), arrsize, false);
+        xss::scalar::keyvalue_qsort(
+                key.data(), val.data(), arrsize, false, false);
         state.PauseTiming();
         key = key_bkp;
         state.ResumeTiming();

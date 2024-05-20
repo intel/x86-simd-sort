@@ -100,11 +100,36 @@ namespace scalar {
         return arg;
     }
     template <typename T1, typename T2>
-    void keyvalue_qsort(T1 *key, T2 *val, size_t arrsize, bool hasnan)
+    void keyvalue_qsort(
+            T1 *key, T2 *val, size_t arrsize, bool hasnan, bool descending)
     {
-        std::vector<size_t> arg = argsort(key, arrsize, hasnan, false);
+        std::vector<size_t> arg = argsort(key, arrsize, hasnan, descending);
         utils::apply_permutation_in_place(key, arg);
         utils::apply_permutation_in_place(val, arg);
+    }
+    template <typename T1, typename T2>
+    void keyvalue_select(T1 *key,
+                         T2 *val,
+                         size_t k,
+                         size_t arrsize,
+                         bool hasnan,
+                         bool descending)
+    {
+        // Note that this does a full kv-sort
+        UNUSED(k);
+        keyvalue_qsort(key, val, arrsize, hasnan, descending);
+    }
+    template <typename T1, typename T2>
+    void keyvalue_partial_sort(T1 *key,
+                               T2 *val,
+                               size_t k,
+                               size_t arrsize,
+                               bool hasnan,
+                               bool descending)
+    {
+        // Note that this does a full kv-sort
+        UNUSED(k);
+        keyvalue_qsort(key, val, arrsize, hasnan, descending);
     }
 
 } // namespace scalar
