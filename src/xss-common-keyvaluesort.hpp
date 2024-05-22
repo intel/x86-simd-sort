@@ -366,7 +366,8 @@ X86_SIMD_SORT_INLINE void kvsort_(type1_t *keys,
                                   type2_t *indexes,
                                   arrsize_t left,
                                   arrsize_t right,
-                                  int max_iters)
+                                  int max_iters,
+                                  arrsize_t task_threshold)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -391,14 +392,44 @@ X86_SIMD_SORT_INLINE void kvsort_(type1_t *keys,
     type1_t biggest = vtype1::type_min();
     arrsize_t pivot_index = kvpartition_unrolled<vtype1, vtype2, 4>(
             keys, indexes, left, right + 1, pivot, &smallest, &biggest);
+
+
+#if defined(XSS_USE_OPENMP) && defined(_OPENMP)
+    if (pivot != smallest) {
+        bool parallelLeft = (pivot_index - left) > task_threshold;
+        if (parallelLeft){
+            #pragma omp task if(parallelLeft)
+            kvsort_<vtype1, vtype2>(
+                keys, indexes, left, pivot_index - 1, max_iters - 1, task_threshold);
+        }else{
+            kvsort_<vtype1, vtype2>(
+                keys, indexes, left, pivot_index - 1, max_iters - 1, task_threshold);
+        }
+    }
+    if (pivot != biggest) {
+        bool parallelRight = (right - pivot_index) > task_threshold;
+        
+        if (parallelRight){
+            #pragma omp task if(parallelRight)
+            kvsort_<vtype1, vtype2>(
+                keys, indexes, pivot_index, right, max_iters - 1, task_threshold);
+        }else{
+            kvsort_<vtype1, vtype2>(
+                keys, indexes, pivot_index, right, max_iters - 1, task_threshold); 
+        }
+    }
+#else
+    UNUSED(task_threshold);
+
     if (pivot != smallest) {
         kvsort_<vtype1, vtype2>(
-                keys, indexes, left, pivot_index - 1, max_iters - 1);
+                keys, indexes, left, pivot_index - 1, max_iters - 1, 0);
     }
     if (pivot != biggest) {
         kvsort_<vtype1, vtype2>(
-                keys, indexes, pivot_index, right, max_iters - 1);
+                keys, indexes, pivot_index, right, max_iters - 1, 0);
     }
+#endif
 }
 
 template <typename vtype1,
@@ -486,7 +517,20 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
             UNUSED(hasnan);
         }
 
-        kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters);
+#if defined(XSS_USE_OPENMP) && defined(_OPENMP)
+        bool useParallel = arrsize > 10000;
+        arrsize_t taskThreshold = std::max((arrsize_t) 10000, arrsize / 100);
+        if (useParallel){
+            #pragma omp parallel
+            #pragma omp single
+            kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters, taskThreshold);
+        }else{
+            kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters, taskThreshold);
+        }
+#else
+        kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters, 0);
+#endif    
+        
         replace_inf_with_nan(keys, arrsize, nan_count);
 
         if (descending) {
