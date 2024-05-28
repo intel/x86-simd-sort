@@ -11,6 +11,11 @@
 #include "xss-common-qsort.h"
 #include "xss-network-keyvaluesort.hpp"
 
+#if defined(XSS_USE_OPENMP) && defined(_OPENMP)
+#define XSS_COMPILE_OPENMP
+#include <omp.h>
+#endif
+
 /*
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
@@ -393,7 +398,7 @@ X86_SIMD_SORT_INLINE void kvsort_(type1_t *keys,
     arrsize_t pivot_index = kvpartition_unrolled<vtype1, vtype2, 4>(
             keys, indexes, left, right + 1, pivot, &smallest, &biggest);
 
-#if defined(XSS_USE_OPENMP) && defined(_OPENMP)
+#ifdef XSS_COMPILE_OPENMP
     if (pivot != smallest) {
         bool parallel_left = (pivot_index - left) > task_threshold;
         if (parallel_left) {
@@ -534,18 +539,28 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
             UNUSED(hasnan);
         }
 
-#if defined(XSS_USE_OPENMP) && defined(_OPENMP)
+#ifdef XSS_COMPILE_OPENMP
+
         bool use_parallel = arrsize > 10000;
-        arrsize_t task_threshold = std::max((arrsize_t)10000, arrsize / 100);
+
         if (use_parallel) {
-#pragma omp parallel
+            // This thread limit was determined experimentally; it may be better for it to be the number of physical cores on the system
+            constexpr int thread_limit = 8;
+            int thread_count = std::min(thread_limit, omp_get_max_threads());
+            arrsize_t task_threshold
+                    = std::max((arrsize_t)10000, arrsize / 100);
+
+            // We use omp parallel and then omp single to setup the threads that will run the omp task calls in kvsort_
+            // The omp single prevents multiple threads from running the initial kvsort_ simultaneously and causing problems
+            // Note that we do not use the if(...) clause built into OpenMP, because it causes a performance regression for small arrays
+#pragma omp parallel num_threads(thread_count)
 #pragma omp single
             kvsort_<keytype, valtype>(
                     keys, indexes, 0, arrsize - 1, maxiters, task_threshold);
         }
         else {
             kvsort_<keytype, valtype>(
-                    keys, indexes, 0, arrsize - 1, maxiters, task_threshold);
+                    keys, indexes, 0, arrsize - 1, maxiters, 0);
         }
 #else
         kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters, 0);
