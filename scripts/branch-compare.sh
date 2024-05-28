@@ -27,7 +27,7 @@ build_branch() {
         fi
     fi
     cd $dir_name
-    meson setup -Dbuild_benchmarks=true --warnlevel 0 --buildtype release builddir
+    meson setup -Dbuild_benchmarks=true -Duse_openmp=true --warnlevel 0 --buildtype release builddir
     cd builddir
     ninja
     cd ../../
