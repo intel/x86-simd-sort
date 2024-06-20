@@ -406,10 +406,10 @@ struct avx2_vector<uint64_t> {
 };
 
 /*
- * workaround on 64-bit macOS which defines size_t as unsigned long and defines
- * uint64_t as unsigned long long, both of which are 8 bytes
+ * workaround on 64-bit macOS and OpenBSD which both define size_t as unsigned
+ * long and define uint64_t as unsigned long long, both of which are 8 bytes
  */
-#if defined(__APPLE__) && defined(__x86_64__)
+#if (defined(__APPLE__) || defined(__OpenBSD__)) && defined(__x86_64__)
 static_assert(sizeof(size_t) == sizeof(uint64_t),
               "Size of size_t and uint64_t are not the same");
 template <>
