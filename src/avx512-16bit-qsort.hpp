@@ -30,10 +30,6 @@ struct zmm_vector<float16> {
 
     using swizzle_ops = avx512_16bit_swizzle_ops;
 
-    static reg_t get_network(int index)
-    {
-        return _mm512_loadu_si512(&network[index - 1][0]);
-    }
     static type_t type_max()
     {
         return X86_SIMD_SORT_INFINITYH;
@@ -179,12 +175,12 @@ struct zmm_vector<float16> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const auto rev_index = get_network(4);
+        const auto rev_index = _mm512_set_epi16(NETWORK_REVERSE_32LANES);
         return permutexvar(rev_index, zmm);
     }
     static reg_t sort_vec(reg_t x)
     {
-        return sort_zmm_16bit<zmm_vector<float16>>(x);
+        return sort_reg_32lanes<zmm_vector<float16>>(x);
     }
     static reg_t cast_from(__m512i v)
     {
@@ -225,10 +221,6 @@ struct zmm_vector<int16_t> {
 
     using swizzle_ops = avx512_16bit_swizzle_ops;
 
-    static reg_t get_network(int index)
-    {
-        return _mm512_loadu_si512(&network[index - 1][0]);
-    }
     static type_t type_max()
     {
         return X86_SIMD_SORT_MAX_INT16;
@@ -328,12 +320,12 @@ struct zmm_vector<int16_t> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const auto rev_index = get_network(4);
+        const auto rev_index = _mm512_set_epi16(NETWORK_REVERSE_32LANES);
         return permutexvar(rev_index, zmm);
     }
     static reg_t sort_vec(reg_t x)
     {
-        return sort_zmm_16bit<zmm_vector<type_t>>(x);
+        return sort_reg_32lanes<zmm_vector<type_t>>(x);
     }
     static reg_t cast_from(__m512i v)
     {
@@ -373,10 +365,6 @@ struct zmm_vector<uint16_t> {
 
     using swizzle_ops = avx512_16bit_swizzle_ops;
 
-    static reg_t get_network(int index)
-    {
-        return _mm512_loadu_si512(&network[index - 1][0]);
-    }
     static type_t type_max()
     {
         return X86_SIMD_SORT_MAX_UINT16;
@@ -474,12 +462,12 @@ struct zmm_vector<uint16_t> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const auto rev_index = get_network(4);
+        const auto rev_index = _mm512_set_epi16(NETWORK_REVERSE_32LANES);
         return permutexvar(rev_index, zmm);
     }
     static reg_t sort_vec(reg_t x)
     {
-        return sort_zmm_16bit<zmm_vector<type_t>>(x);
+        return sort_reg_32lanes<zmm_vector<type_t>>(x);
     }
     static reg_t cast_from(__m512i v)
     {

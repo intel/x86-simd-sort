@@ -37,6 +37,7 @@
 #include "xss-pivot-selection.hpp"
 #include "xss-network-qsort.hpp"
 #include "xss-common-comparators.hpp"
+#include "xss-reg-networks.hpp"
 
 template <typename T>
 bool is_a_nan(T elem)
