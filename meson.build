@@ -34,7 +34,8 @@ int main() {
 cancompilefp16 = cpp.compiles(fp16code, args:'-march=sapphirerapids')
 
 subdir('lib')
-libsimdsort = shared_library('x86simdsortcpp',
+if get_option('lib_type') == 'shared'
+  libsimdsort = shared_library('x86simdsortcpp',
                              'lib/x86simdsort.cpp',
                              include_directories : [src, utils, lib],
                              link_args : [openmpflags],
@@ -43,6 +44,17 @@ libsimdsort = shared_library('x86simdsortcpp',
                              install : true,
                              soversion : 1,
                             )
+else
+  libsimdsort = static_library('x86simdsortcpp',
+                             'lib/x86simdsort.cpp',
+                             include_directories : [src, utils, lib],
+                             link_args : [openmpflags],
+                             link_with : [libtargets],
+                             gnu_symbol_visibility : 'inlineshidden',
+                             install : true,
+                             pic: true,
+                            )
+endif
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libraries : libsimdsort,
@@ -68,10 +80,11 @@ endif
 
 if get_option('build_benchmarks')
   gbench_dep = dependency('benchmark', required : true, static: false)
+  thread_dep = dependency('threads') # libbenchmark could need pthread_create
   subdir('benchmarks')
   benchexe = executable('benchexe',
                       include_directories : [src, lib, utils, bench],
-                      dependencies : [gbench_dep],
+                      dependencies : [gbench_dep, thread_dep],
                       link_args: ['-lbenchmark_main', ipplink],
                       link_whole : [libbench],
                       link_with : libsimdsort,
