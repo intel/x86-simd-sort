@@ -18,6 +18,10 @@ sharedlib:
 	meson setup --warnlevel 2 --werror --buildtype release builddir
 	cd builddir && ninja
 
+staticlib:
+	meson setup -Dlib_type=static --warnlevel 2 --werror --buildtype release builddir
+	cd builddir && ninja
+
 install:
 	meson setup --warnlevel 2 --werror --buildtype release builddir
 	cd builddir && meson install
