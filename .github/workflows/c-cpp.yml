@@ -11,7 +11,7 @@ permissions: read-all
 jobs:
   SKL-gcc9:
 
-    runs-on: intel-ubuntu-latest
+    runs-on: intel-ubuntu-24.04
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -41,7 +41,7 @@ jobs:
 
   SKX-gcc10:
 
-    runs-on: intel-ubuntu-latest
+    runs-on: intel-ubuntu-24.04
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -71,7 +71,7 @@ jobs:
 
   TGL-gcc11:
 
-    runs-on: intel-ubuntu-latest
+    runs-on: intel-ubuntu-24.04
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -100,7 +100,7 @@ jobs:
 
   SPR-gcc13:
 
-    runs-on: intel-ubuntu-latest
+    runs-on: intel-ubuntu-24.04
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -137,7 +137,7 @@ jobs:
 
   SKX-SKL-openmp:
 
-    runs-on: intel-ubuntu-latest
+    runs-on: intel-ubuntu-24.04
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -169,7 +169,7 @@ jobs:
 
   SPR-gcc13-special-cases:
 
-    runs-on: intel-ubuntu-latest
+    runs-on: intel-ubuntu-24.04
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -204,7 +204,7 @@ jobs:
 
   manylinux-32bit:
 
-    runs-on: intel-ubuntu-latest
+    runs-on: intel-ubuntu-24.04
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -216,7 +216,7 @@ jobs:
 
   SPR-icpx:
 
-    runs-on: intel-ubuntu-latest
+    runs-on: intel-ubuntu-24.04
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
