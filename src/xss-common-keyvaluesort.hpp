@@ -559,9 +559,14 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
                     keys, indexes, 0, arrsize - 1, maxiters, task_threshold);
         }
         else {
-            kvsort_<keytype, valtype>(
-                    keys, indexes, 0, arrsize - 1, maxiters, 0);
+            kvsort_<keytype, valtype>(keys,
+                                      indexes,
+                                      0,
+                                      arrsize - 1,
+                                      maxiters,
+                                      std::numeric_limits<arrsize_t>::max());
         }
+#pragma omp taskwait
 #else
         kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters, 0);
 #endif
