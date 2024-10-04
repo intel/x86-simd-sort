@@ -136,7 +136,7 @@ static std::vector<T> get_array(std::string arrtype,
         else {
             val = std::numeric_limits<T>::max();
         }
-        for (size_t ii = 1; ii <= arrsize; ++ii) {
+        for (size_t ii = 0; ii < arrsize; ++ii) {
             if (rand() & 0x1) { arr[ii] = val; }
         }
     }
