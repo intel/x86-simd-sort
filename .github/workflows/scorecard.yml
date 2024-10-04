@@ -22,7 +22,7 @@ jobs:
   
     name: Scorecard analysis
     if: github.repository == 'intel/x86-simd-sort'
-    runs-on: ubuntu-latest
+    runs-on: intel-ubuntu-24.04
     permissions:
       # Needed to upload the results to code-scanning dashboard.
       security-events: write
