@@ -72,7 +72,7 @@ X86_SIMD_SORT_INLINE arrsize_t kvpartition(type_t1 *keys,
     for (int32_t i = (right - left) % vtype1::numlanes; i > 0; --i) {
         *smallest = std::min(*smallest, keys[left]);
         *biggest = std::max(*biggest, keys[left]);
-        if (keys[left] > pivot) {
+        if (keys[left] >= pivot) {
             right--;
             std::swap(keys[left], keys[right]);
             std::swap(indexes[left], indexes[right]);
@@ -204,12 +204,13 @@ X86_SIMD_SORT_INLINE arrsize_t kvpartition_unrolled(type_t1 *keys,
         return kvpartition<vtype1, vtype2>(
                 keys, indexes, left, right, pivot, smallest, biggest);
     }
+
     /* make array length divisible by vtype1::numlanes , shortening the array */
     for (int32_t i = ((right - left) % (num_unroll * vtype1::numlanes)); i > 0;
          --i) {
         *smallest = std::min(*smallest, keys[left]);
         *biggest = std::max(*biggest, keys[left]);
-        if (keys[left] > pivot) {
+        if (keys[left] >= pivot) {
             right--;
             std::swap(keys[left], keys[right]);
             std::swap(indexes[left], indexes[right]);
@@ -386,17 +387,26 @@ X86_SIMD_SORT_INLINE void kvsort_(type1_t *keys,
      * Base case: use bitonic networks to sort arrays <= 128
      */
     if (right + 1 - left <= 128) {
-
         kvsort_n<vtype1, vtype2, 128>(
                 keys + left, indexes + left, (int32_t)(right + 1 - left));
         return;
     }
 
-    type1_t pivot = get_pivot_blocks<vtype1>(keys, left, right);
+    // Ascending comparator for this vtype
+    using comparator = Comparator<vtype1, false>;
+    type1_t pivot;
+    auto pivot_result
+            = get_pivot_smart<vtype1, comparator, type1_t>(keys, left, right);
+    pivot = pivot_result.pivot;
+
+    if (pivot_result.result == pivot_result_t::Sorted) { return; }
+
     type1_t smallest = vtype1::type_max();
     type1_t biggest = vtype1::type_min();
     arrsize_t pivot_index = kvpartition_unrolled<vtype1, vtype2, 4>(
             keys, indexes, left, right + 1, pivot, &smallest, &biggest);
+
+    if (pivot_result.result == pivot_result_t::Only2Values) { return; }
 
 #ifdef XSS_COMPILE_OPENMP
     if (pivot != smallest) {

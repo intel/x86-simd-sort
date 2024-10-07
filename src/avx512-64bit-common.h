@@ -210,6 +210,10 @@ struct ymm_vector<float> {
     {
         return _mm256_castps_si256(v);
     }
+    static bool all_false(opmask_t k)
+    {
+        return k == 0;
+    }
     static reg_t reverse(reg_t ymm)
     {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
@@ -394,6 +398,10 @@ struct ymm_vector<uint32_t> {
     {
         return v;
     }
+    static bool all_false(opmask_t k)
+    {
+        return k == 0;
+    }
     static reg_t reverse(reg_t ymm)
     {
         const __m256i rev_index = _mm256_set_epi32(NETWORK_32BIT_AVX2_2);
@@ -577,6 +585,10 @@ struct ymm_vector<int32_t> {
     static __m256i cast_to(reg_t v)
     {
         return v;
+    }
+    static bool all_false(opmask_t k)
+    {
+        return k == 0;
     }
     static reg_t reverse(reg_t ymm)
     {
