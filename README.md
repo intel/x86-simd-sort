@@ -182,6 +182,7 @@ gets more complicated. Sorting by Euclidean distance can be up-to 10x faster.
 ## Downstream projects using x86-simd-sort
 
 - NumPy uses this as a [submodule](https://github.com/numpy/numpy/pull/22315) to accelerate `np.sort, np.argsort, np.partition and np.argpartition`.
+- PyTorch uses this as a [submodule](https://github.com/pytorch/pytorch/pull/127936) to accelerate `torch.sort and torch.argsort` on AVX-512 and AVX2. 
 - A slightly modifed version this library has been integrated into [openJDK](https://github.com/openjdk/jdk/pull/14227).
 - [GRAPE](https://github.com/alibaba/libgrape-lite.git): C++ library for parallel graph processing.
 - AVX-512 version of the key-value sort has been submitted to [Oceanbase](https://github.com/oceanbase/oceanbase/pull/1325).
