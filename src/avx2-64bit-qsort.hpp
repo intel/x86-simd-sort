@@ -413,8 +413,7 @@ struct avx2_vector<uint64_t> {
 static_assert(sizeof(size_t) == sizeof(uint64_t),
               "Size of size_t and uint64_t are not the same");
 template <>
-struct avx2_vector<size_t> : public avx2_vector<uint64_t> {
-};
+struct avx2_vector<size_t> : public avx2_vector<uint64_t> {};
 #endif
 
 template <>
