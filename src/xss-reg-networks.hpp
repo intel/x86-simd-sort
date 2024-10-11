@@ -34,8 +34,10 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_4lanes(reg_t reg)
     const typename vtype::opmask_t oxA = convert_int_to_mask<vtype>(0xA);
     const typename vtype::opmask_t oxC = convert_int_to_mask<vtype>(0xC);
 
-    reg = cmp_merge<vtype>(reg, swizzle::template swap_n<vtype, 2>(reg), oxA);
-    reg = cmp_merge<vtype>(reg, vtype::reverse(reg), oxC);
+    reg = cmp_merge<vtype>(
+            reg, swizzle::template reverse_n<vtype, 2>(reg), oxA);
+    reg = cmp_merge<vtype>(
+            reg, swizzle::template reverse_n<vtype, 4>(reg), oxC);
     reg = cmp_merge<vtype>(reg, swizzle::template swap_n<vtype, 2>(reg), oxA);
     return reg;
 }
@@ -57,12 +59,11 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_8lanes(reg_t reg)
             reg, swizzle::template reverse_n<vtype, 2>(reg), oxAA);
     reg = cmp_merge<vtype>(
             reg, swizzle::template reverse_n<vtype, 4>(reg), oxCC);
+    reg = cmp_merge<vtype>(reg, swizzle::template swap_n<vtype, 2>(reg), oxAA);
     reg = cmp_merge<vtype>(
-            reg, swizzle::template reverse_n<vtype, 2>(reg), oxAA);
-    reg = cmp_merge<vtype>(reg, vtype::reverse(reg), oxF0);
+            reg, swizzle::template reverse_n<vtype, 8>(reg), oxF0);
     reg = cmp_merge<vtype>(reg, swizzle::template swap_n<vtype, 4>(reg), oxCC);
-    reg = cmp_merge<vtype>(
-            reg, swizzle::template reverse_n<vtype, 2>(reg), oxAA);
+    reg = cmp_merge<vtype>(reg, swizzle::template swap_n<vtype, 2>(reg), oxAA);
     return reg;
 }
 
@@ -85,20 +86,21 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_16lanes(reg_t reg)
     reg = cmp_merge<vtype>(
             reg, swizzle::template reverse_n<vtype, 4>(reg), oxCCCC);
     reg = cmp_merge<vtype>(
-            reg, swizzle::template reverse_n<vtype, 2>(reg), oxAAAA);
+            reg, swizzle::template swap_n<vtype, 2>(reg), oxAAAA);
     reg = cmp_merge<vtype>(
             reg, swizzle::template reverse_n<vtype, 8>(reg), oxF0F0);
     reg = cmp_merge<vtype>(
             reg, swizzle::template swap_n<vtype, 4>(reg), oxCCCC);
     reg = cmp_merge<vtype>(
-            reg, swizzle::template reverse_n<vtype, 2>(reg), oxAAAA);
-    reg = cmp_merge<vtype>(reg, vtype::reverse(reg), oxFF00);
+            reg, swizzle::template swap_n<vtype, 2>(reg), oxAAAA);
+    reg = cmp_merge<vtype>(
+            reg, swizzle::template reverse_n<vtype, 16>(reg), oxFF00);
     reg = cmp_merge<vtype>(
             reg, swizzle::template swap_n<vtype, 8>(reg), oxF0F0);
     reg = cmp_merge<vtype>(
             reg, swizzle::template swap_n<vtype, 4>(reg), oxCCCC);
     reg = cmp_merge<vtype>(
-            reg, swizzle::template reverse_n<vtype, 2>(reg), oxAAAA);
+            reg, swizzle::template swap_n<vtype, 2>(reg), oxAAAA);
     return reg;
 }
 
@@ -129,14 +131,14 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_32lanes(reg_t reg)
     reg = cmp_merge<vtype>(
             reg, swizzle::template reverse_n<vtype, 4>(reg), oxCCCCCCCC);
     reg = cmp_merge<vtype>(
-            reg, swizzle::template reverse_n<vtype, 2>(reg), oxAAAAAAAA);
+            reg, swizzle::template swap_n<vtype, 2>(reg), oxAAAAAAAA);
     // Level 3
     reg = cmp_merge<vtype>(
             reg, swizzle::template reverse_n<vtype, 8>(reg), oxF0F0F0F0);
     reg = cmp_merge<vtype>(
             reg, swizzle::template swap_n<vtype, 4>(reg), oxCCCCCCCC);
     reg = cmp_merge<vtype>(
-            reg, swizzle::template reverse_n<vtype, 2>(reg), oxAAAAAAAA);
+            reg, swizzle::template swap_n<vtype, 2>(reg), oxAAAAAAAA);
     // Level 4
     reg = cmp_merge<vtype>(
             reg, swizzle::template reverse_n<vtype, 16>(reg), oxFF00FF00);
@@ -145,9 +147,10 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_32lanes(reg_t reg)
     reg = cmp_merge<vtype>(
             reg, swizzle::template swap_n<vtype, 4>(reg), oxCCCCCCCC);
     reg = cmp_merge<vtype>(
-            reg, swizzle::template reverse_n<vtype, 2>(reg), oxAAAAAAAA);
+            reg, swizzle::template swap_n<vtype, 2>(reg), oxAAAAAAAA);
     // Level 5
-    reg = cmp_merge<vtype>(reg, vtype::reverse(reg), oxFFFF0000);
+    reg = cmp_merge<vtype>(
+            reg, swizzle::template reverse_n<vtype, 32>(reg), oxFFFF0000);
     reg = cmp_merge<vtype>(
             reg, swizzle::template swap_n<vtype, 16>(reg), oxFF00FF00);
     reg = cmp_merge<vtype>(
@@ -155,7 +158,7 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_32lanes(reg_t reg)
     reg = cmp_merge<vtype>(
             reg, swizzle::template swap_n<vtype, 4>(reg), oxCCCCCCCC);
     reg = cmp_merge<vtype>(
-            reg, swizzle::template reverse_n<vtype, 2>(reg), oxAAAAAAAA);
+            reg, swizzle::template swap_n<vtype, 2>(reg), oxAAAAAAAA);
     return reg;
 }
 
@@ -175,15 +178,16 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_4lanes(reg_t key_reg, index_type &index_reg)
 
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
-            key_swizzle::template swap_n<vtype1, 2>(key_reg),
+            key_swizzle::template reverse_n<vtype1, 2>(key_reg),
             index_reg,
-            index_swizzle::template swap_n<vtype2, 2>(index_reg),
+            index_swizzle::template reverse_n<vtype2, 2>(index_reg),
             oxA);
-    key_reg = cmp_merge<vtype1, vtype2>(key_reg,
-                                        vtype1::reverse(key_reg),
-                                        index_reg,
-                                        vtype2::reverse(index_reg),
-                                        oxC);
+    key_reg = cmp_merge<vtype1, vtype2>(
+            key_reg,
+            key_swizzle::template reverse_n<vtype1, 4>(key_reg),
+            index_reg,
+            index_swizzle::template reverse_n<vtype2, 4>(index_reg),
+            oxC);
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
             key_swizzle::template swap_n<vtype1, 2>(key_reg),
@@ -208,9 +212,9 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_8lanes(reg_t key_reg, index_type &index_reg)
 
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
-            key_swizzle::template swap_n<vtype1, 2>(key_reg),
+            key_swizzle::template reverse_n<vtype1, 2>(key_reg),
             index_reg,
-            index_swizzle::template swap_n<vtype2, 2>(index_reg),
+            index_swizzle::template reverse_n<vtype2, 2>(index_reg),
             oxAA);
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
@@ -224,11 +228,12 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_8lanes(reg_t key_reg, index_type &index_reg)
             index_reg,
             index_swizzle::template swap_n<vtype2, 2>(index_reg),
             oxAA);
-    key_reg = cmp_merge<vtype1, vtype2>(key_reg,
-                                        vtype1::reverse(key_reg),
-                                        index_reg,
-                                        vtype2::reverse(index_reg),
-                                        oxF0);
+    key_reg = cmp_merge<vtype1, vtype2>(
+            key_reg,
+            key_swizzle::template reverse_n<vtype1, 8>(key_reg),
+            index_reg,
+            index_swizzle::template reverse_n<vtype2, 8>(index_reg),
+            oxF0);
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
             key_swizzle::template swap_n<vtype1, 4>(key_reg),
@@ -273,9 +278,9 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_16lanes(reg_t key_reg,
             oxCCCC);
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
-            key_swizzle::template reverse_n<vtype1, 2>(key_reg),
+            key_swizzle::template swap_n<vtype1, 2>(key_reg),
             index_reg,
-            index_swizzle::template reverse_n<vtype2, 2>(index_reg),
+            index_swizzle::template swap_n<vtype2, 2>(index_reg),
             oxAAAA);
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
@@ -291,15 +296,16 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_16lanes(reg_t key_reg,
             oxCCCC);
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
-            key_swizzle::template reverse_n<vtype1, 2>(key_reg),
+            key_swizzle::template swap_n<vtype1, 2>(key_reg),
             index_reg,
-            index_swizzle::template reverse_n<vtype2, 2>(index_reg),
+            index_swizzle::template swap_n<vtype2, 2>(index_reg),
             oxAAAA);
-    key_reg = cmp_merge<vtype1, vtype2>(key_reg,
-                                        vtype1::reverse(key_reg),
-                                        index_reg,
-                                        vtype2::reverse(index_reg),
-                                        oxFF00);
+    key_reg = cmp_merge<vtype1, vtype2>(
+            key_reg,
+            key_swizzle::template reverse_n<vtype1, 16>(key_reg),
+            index_reg,
+            index_swizzle::template reverse_n<vtype2, 16>(index_reg),
+            oxFF00);
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
             key_swizzle::template swap_n<vtype1, 8>(key_reg),
@@ -314,9 +320,9 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_16lanes(reg_t key_reg,
             oxCCCC);
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
-            key_swizzle::template reverse_n<vtype1, 2>(key_reg),
+            key_swizzle::template swap_n<vtype1, 2>(key_reg),
             index_reg,
-            index_swizzle::template reverse_n<vtype2, 2>(index_reg),
+            index_swizzle::template swap_n<vtype2, 2>(index_reg),
             oxAAAA);
     return key_reg;
 }
@@ -427,9 +433,9 @@ X86_SIMD_SORT_INLINE reg_t bitonic_merge_reg_16lanes(reg_t key_reg,
             oxCCCC);
     key_reg = cmp_merge<vtype1, vtype2>(
             key_reg,
-            key_swizzle::template reverse_n<vtype1, 2>(key_reg),
+            key_swizzle::template swap_n<vtype1, 2>(key_reg),
             index_reg,
-            index_swizzle::template reverse_n<vtype2, 2>(index_reg),
+            index_swizzle::template swap_n<vtype2, 2>(index_reg),
             oxAAAA);
     return key_reg;
 }
