@@ -575,6 +575,11 @@ X86_SIMD_SORT_INLINE void xss_argsort(T *arr,
 
         if (descending) { std::reverse(arg, arg + arrsize); }
     }
+
+#ifdef __MMX__
+    // Workaround for compiler bug generating MMX instructions without emms
+    _mm_empty();
+#endif
 }
 
 template <typename T>
@@ -632,6 +637,11 @@ X86_SIMD_SORT_INLINE void xss_argselect(T *arr,
         argselect_<vectype, argtype>(
                 arr, arg, k, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
     }
+
+#ifdef __MMX__
+    // Workaround for compiler bug generating MMX instructions without emms
+    _mm_empty();
+#endif
 }
 
 template <typename T>
