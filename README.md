@@ -80,16 +80,6 @@ benchmark](https://github.com/google/benchmark) frameworks respectively. You
 can configure meson to build them both by using `-Dbuild_tests=true` and
 `-Dbuild_benchmarks=true`.
 
-### Note about building with avx512 by g++ v9 and v10
-
-There is a risk when compile with avx512 by g++ v9 and v10,
-as some `MMX Technology` instructions is used by g++ v9/v10 
-without clearing fpu state. 
-Check [issue 154](https://github.com/intel/x86-simd-sort/issues/154) 
-for more details.
-
-Adding `g++` option `-mno-mmx`, which disables `MMX Technology` instructions, is a possible workaround.
-
 ## Example usage
 
 #### Sort an array of floats
