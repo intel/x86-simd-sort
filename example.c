@@ -5,14 +5,14 @@
 
 // declare function here, linker will find this when linked to
 // libx86simdsortcpp.so
-void keyvalue_qsort_float_sizet(float*, size_t*, size_t);
-void keyvalue_qsort_float_uint32(float*, uint32_t*, uint32_t);
-void keyvalue_qsort_sizet_sizet(size_t*, size_t*, size_t);
-void keyvalue_qsort_sizet_uint32(size_t*, uint32_t*, uint32_t);
-void keyvalue_qsort_uint32_sizet(uint32_t*, size_t*, size_t);
-void keyvalue_qsort_uint32_uint32(uint32_t*, uint32_t*, uint32_t);
-void keyvalue_qsort_int32_sizet(int32_t*, size_t*, size_t);
-void keyvalue_qsort_int32_uint32(int32_t*, uint32_t*, uint32_t);
+void keyvalue_qsort_float_sizet(float *, size_t *, size_t);
+void keyvalue_qsort_float_uint32(float *, uint32_t *, uint32_t);
+void keyvalue_qsort_sizet_sizet(size_t *, size_t *, size_t);
+void keyvalue_qsort_sizet_uint32(size_t *, uint32_t *, uint32_t);
+void keyvalue_qsort_uint32_sizet(uint32_t *, size_t *, size_t);
+void keyvalue_qsort_uint32_uint32(uint32_t *, uint32_t *, uint32_t);
+void keyvalue_qsort_int32_sizet(int32_t *, size_t *, size_t);
+void keyvalue_qsort_int32_uint32(int32_t *, uint32_t *, uint32_t);
 
 // struct definition, we will sort an array of these:
 struct Point {
@@ -22,15 +22,20 @@ struct Point {
     size_t metric;
 };
 
-#define SWAP(a, b, type) {type temp = a; a = b; b = temp;}
+#define SWAP(a, b, type) \
+    { \
+        type temp = a; \
+        a = b; \
+        b = temp; \
+    }
 
 // Function to sort an array of objects:
-void object_qsort(struct Point* arr, size_t size)
+void object_qsort(struct Point *arr, size_t size)
 {
     /* (1) Create and initialize arrays of key and value  */
-    size_t* key = malloc(size * sizeof(size_t));
-    size_t* arg = malloc(size * sizeof(size_t));
-    bool* done = malloc(size * sizeof(bool));
+    size_t *key = malloc(size * sizeof(size_t));
+    size_t *arg = malloc(size * sizeof(size_t));
+    bool *done = malloc(size * sizeof(bool));
     for (size_t ii = 0; ii < size; ++ii) {
         key[ii] = arr[ii].metric;
         arg[ii] = ii;
@@ -58,14 +63,15 @@ void object_qsort(struct Point* arr, size_t size)
     free(done);
 }
 
-int main() {
+int main()
+{
     const size_t size = 10;
     struct Point arr[size];
 
     // Initialize:
     for (size_t ii = 0; ii < size; ++ii) {
-        arr[ii].distance = (float) rand() / RAND_MAX;
-        arr[ii].metric =  rand() % 100;
+        arr[ii].distance = (float)rand() / RAND_MAX;
+        arr[ii].metric = rand() % 100;
     }
 
     // sort:
