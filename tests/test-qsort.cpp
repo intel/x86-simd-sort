@@ -11,6 +11,10 @@ public:
     simdsort()
     {
         std::iota(arrsize.begin(), arrsize.end(), 1);
+        arrsize.push_back(10'000);
+        arrsize.push_back(100'000);
+        arrsize.push_back(1'000'000);
+
         arrtype = {"random",
                    "constant",
                    "sorted",

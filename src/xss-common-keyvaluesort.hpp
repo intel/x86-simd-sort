@@ -11,11 +11,6 @@
 #include "xss-common-qsort.h"
 #include "xss-network-keyvaluesort.hpp"
 
-#if defined(XSS_USE_OPENMP) && defined(_OPENMP)
-#define XSS_COMPILE_OPENMP
-#include <omp.h>
-#endif
-
 /*
  * Sort all the NAN's to end of the array and return the index of the last elem
  * in the array which is not a nan
