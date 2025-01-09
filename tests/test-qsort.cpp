@@ -11,9 +11,13 @@ public:
     simdsort()
     {
         std::iota(arrsize.begin(), arrsize.end(), 1);
-        arrsize.push_back(10'000);
-        arrsize.push_back(100'000);
-        arrsize.push_back(1'000'000);
+        std::iota(arrsize_long.begin(), arrsize_long.end(), 1);
+#ifdef XSS_USE_OPENMP
+        // These extended tests are only needed for the OpenMP logic
+        arrsize_long.push_back(10'000);
+        arrsize_long.push_back(100'000);
+        arrsize_long.push_back(1'000'000);
+#endif
 
         arrtype = {"random",
                    "constant",
@@ -28,6 +32,7 @@ public:
     }
     std::vector<std::string> arrtype;
     std::vector<size_t> arrsize = std::vector<size_t>(1024);
+    std::vector<size_t> arrsize_long = std::vector<size_t>(1024);
 };
 
 TYPED_TEST_SUITE_P(simdsort);
@@ -36,7 +41,7 @@ TYPED_TEST_P(simdsort, test_qsort_ascending)
 {
     for (auto type : this->arrtype) {
         bool hasnan = is_nan_test(type);
-        for (auto size : this->arrsize) {
+        for (auto size : this->arrsize_long) {
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
 
             // Ascending order
@@ -58,7 +63,7 @@ TYPED_TEST_P(simdsort, test_qsort_descending)
 {
     for (auto type : this->arrtype) {
         bool hasnan = is_nan_test(type);
-        for (auto size : this->arrsize) {
+        for (auto size : this->arrsize_long) {
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
 
             // Descending order
