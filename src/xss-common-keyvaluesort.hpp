@@ -17,6 +17,34 @@
 #endif
 
 /*
+ * Sort all the NAN's to end of the array and return the index of the last elem
+ * in the array which is not a nan
+ */
+template <typename T1, typename T2>
+X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T1 *keys,
+                                                         T2 *vals,
+                                                         arrsize_t size)
+{
+    arrsize_t jj = size - 1;
+    arrsize_t ii = 0;
+    arrsize_t count = 0;
+    while (ii < jj) {
+        if (is_a_nan(keys[ii])) {
+            std::swap(keys[ii], keys[jj]);
+            std::swap(vals[ii], vals[jj]);
+            jj -= 1;
+            count++;
+        }
+        else {
+            ii += 1;
+        }
+    }
+    /* Haven't checked for nan when ii == jj */
+    if (is_a_nan(keys[ii])) { count++; }
+    return size - count - 1;
+}
+
+/*
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
@@ -538,11 +566,11 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
 #endif // XSS_TEST_KEYVALUE_BASE_CASE
 
     if (minarrsize) {
-        arrsize_t nan_count = 0;
+        arrsize_t index_last_elem = arrsize - 1;
         if constexpr (xss::fp::is_floating_point_v<T1>) {
             if (UNLIKELY(hasnan)) {
-                nan_count
-                        = replace_nan_with_inf<full_vector<T1>>(keys, arrsize);
+                index_last_elem
+                        = move_nans_to_end_of_array(keys, indexes, arrsize);
             }
         }
         else {
@@ -565,23 +593,26 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
             // Note that we do not use the if(...) clause built into OpenMP, because it causes a performance regression for small arrays
 #pragma omp parallel num_threads(thread_count)
 #pragma omp single
-            kvsort_<keytype, valtype>(
-                    keys, indexes, 0, arrsize - 1, maxiters, task_threshold);
+            kvsort_<keytype, valtype>(keys,
+                                      indexes,
+                                      0,
+                                      index_last_elem,
+                                      maxiters,
+                                      task_threshold);
         }
         else {
             kvsort_<keytype, valtype>(keys,
                                       indexes,
                                       0,
-                                      arrsize - 1,
+                                      index_last_elem,
                                       maxiters,
                                       std::numeric_limits<arrsize_t>::max());
         }
 #pragma omp taskwait
 #else
-        kvsort_<keytype, valtype>(keys, indexes, 0, arrsize - 1, maxiters, 0);
+        kvsort_<keytype, valtype>(
+                keys, indexes, 0, index_last_elem, maxiters, 0);
 #endif
-
-        replace_inf_with_nan(keys, arrsize, nan_count);
 
         if (descending) {
             std::reverse(keys, keys + arrsize);
@@ -625,20 +656,18 @@ X86_SIMD_SORT_INLINE void xss_select_kv(T1 *keys,
     if (minarrsize) {
         if (descending) { k = arrsize - 1 - k; }
 
-        if constexpr (std::is_floating_point_v<T1>) {
-            arrsize_t nan_count = 0;
+        arrsize_t index_last_elem = arrsize - 1;
+        if constexpr (xss::fp::is_floating_point_v<T1>) {
             if (UNLIKELY(hasnan)) {
-                nan_count
-                        = replace_nan_with_inf<full_vector<T1>>(keys, arrsize);
+                index_last_elem
+                        = move_nans_to_end_of_array(keys, indexes, arrsize);
             }
-            kvselect_<keytype, valtype>(
-                    keys, indexes, k, 0, arrsize - 1, maxiters);
-            replace_inf_with_nan(keys, arrsize, nan_count);
         }
-        else {
-            UNUSED(hasnan);
+
+        UNUSED(hasnan);
+        if (index_last_elem >= k) {
             kvselect_<keytype, valtype>(
-                    keys, indexes, k, 0, arrsize - 1, maxiters);
+                    keys, indexes, k, 0, index_last_elem, maxiters);
         }
 
         if (descending) {

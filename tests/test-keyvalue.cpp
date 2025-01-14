@@ -26,7 +26,9 @@ public:
                    "smallrange",
                    "max_at_the_end",
                    "random_5d",
-                   "rand_max"};
+                   "rand_max",
+                   "rand_with_nan",
+                   "rand_with_max_and_nan"};
     }
     std::vector<std::string> arrtype;
     std::vector<size_t> arrsize = std::vector<size_t>(1024);
@@ -123,27 +125,36 @@ bool is_kv_partialsorted(T1 *keys_comp,
     }
 
     // Now, we need to do some more work to handle keys exactly equal to the true kth
+    // There may be more values after the kth element with the same key,
+    // and thus we can find that the values of the kth elements do not match,
+    // even though the sort is correct.
+
     // First, fully kvsort both arrays
     xss::scalar::keyvalue_qsort<T1, T2>(keys_ref, vals_ref, size, true, false);
     xss::scalar::keyvalue_qsort<T1, T2>(
             keys_comp, vals_comp, size, true, false);
 
-    auto trueKth = keys_ref[k];
-    bool notFoundFirst = true;
+    auto trueKthKey = keys_ref[k];
+    bool foundFirstKthKey = false;
     size_t i = 0;
 
+    // Search forwards until we find the block of keys that match the kth key,
+    // then find where it ends
     for (; i < size; i++) {
-        if (notFoundFirst && cmp_eq(keys_ref[i], trueKth)) {
-            notFoundFirst = false;
+        if (!foundFirstKthKey && cmp_eq(keys_ref[i], trueKthKey)) {
+            foundFirstKthKey = true;
             i_start = i;
         }
-        else if (!notFoundFirst && !cmp_eq(keys_ref[i], trueKth)) {
+        else if (foundFirstKthKey && !cmp_eq(keys_ref[i], trueKthKey)) {
             break;
         }
     }
 
-    if (notFoundFirst) return false;
+    // kth key is somehow missing? Since we got that value from keys_ref, should be impossible
+    if (!foundFirstKthKey) { return false; }
 
+    // Check that the values in the kth key block match, so they are equivalent
+    // up to permutation, which is allowed since the sort is not stable
     if (!same_values(vals_ref + i_start, vals_comp + i_start, i - i_start)) {
         return false;
     }
@@ -156,7 +167,7 @@ TYPED_TEST_P(simdkvsort, test_kvsort_ascending)
     using T1 = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             std::vector<T1> key = get_array<T1>(type, size);
             std::vector<T2> val = get_array<T2>(type, size);
@@ -187,7 +198,7 @@ TYPED_TEST_P(simdkvsort, test_kvsort_descending)
     using T1 = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             std::vector<T1> key = get_array<T1>(type, size);
             std::vector<T2> val = get_array<T2>(type, size);
@@ -217,8 +228,9 @@ TYPED_TEST_P(simdkvsort, test_kvselect_ascending)
 {
     using T1 = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
+    auto cmp_eq = compare<T1, std::equal_to<T1>>();
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             size_t k = rand() % size;
 
@@ -237,7 +249,7 @@ TYPED_TEST_P(simdkvsort, test_kvselect_ascending)
             xss::scalar::keyvalue_qsort(
                     key.data(), val.data(), k, hasnan, false);
 
-            ASSERT_EQ(key[k], key_bckp[k]);
+            ASSERT_EQ(cmp_eq(key[k], key_bckp[k]), true);
 
             bool is_kv_partialsorted_
                     = is_kv_partialsorted<T1, T2>(key.data(),
@@ -260,8 +272,9 @@ TYPED_TEST_P(simdkvsort, test_kvselect_descending)
 {
     using T1 = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
+    auto cmp_eq = compare<T1, std::equal_to<T1>>();
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             size_t k = rand() % size;
 
@@ -280,7 +293,7 @@ TYPED_TEST_P(simdkvsort, test_kvselect_descending)
             xss::scalar::keyvalue_qsort(
                     key.data(), val.data(), k, hasnan, true);
 
-            ASSERT_EQ(key[k], key_bckp[k]);
+            ASSERT_EQ(cmp_eq(key[k], key_bckp[k]), true);
 
             bool is_kv_partialsorted_
                     = is_kv_partialsorted<T1, T2>(key.data(),
@@ -304,7 +317,7 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_ascending)
     using T1 = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             size_t k = rand() % size;
 
@@ -341,7 +354,7 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_descending)
     using T1 = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             size_t k = rand() % size;
 

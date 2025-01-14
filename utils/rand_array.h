@@ -140,6 +140,26 @@ static std::vector<T> get_array(std::string arrtype,
             if (rand() & 0x1) { arr[ii] = val; }
         }
     }
+    else if (arrtype == "rand_with_max_and_nan") {
+        arr = get_uniform_rand_array<T>(arrsize, max, min);
+        T max_val;
+        T nan_val;
+        if constexpr (xss::fp::is_floating_point_v<T>) {
+            max_val = xss::fp::infinity<T>();
+            nan_val = xss::fp::quiet_NaN<T>();
+        }
+        else {
+            max_val = std::numeric_limits<T>::max();
+            nan_val = std::numeric_limits<T>::max();
+        }
+        for (size_t ii = 0; ii < arrsize; ++ii) {
+            int res = rand() % 4;
+            if (res == 2) { arr[ii] = max_val; }
+            else if (res == 3) {
+                arr[ii] = nan_val;
+            }
+        }
+    }
     else {
         std::cout << "Warning: unrecognized array type " << arrtype
                   << std::endl;

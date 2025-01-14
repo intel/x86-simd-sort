@@ -19,7 +19,8 @@ public:
                    "max_at_the_end",
                    "random_5d",
                    "rand_max",
-                   "rand_with_nan"};
+                   "rand_with_nan",
+                   "rand_with_max_and_nan"};
     }
     std::vector<std::string> arrtype;
     std::vector<size_t> arrsize = std::vector<size_t>(1024);
@@ -30,7 +31,7 @@ TYPED_TEST_SUITE_P(simdsort);
 TYPED_TEST_P(simdsort, test_qsort_ascending)
 {
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
 
@@ -52,7 +53,7 @@ TYPED_TEST_P(simdsort, test_qsort_ascending)
 TYPED_TEST_P(simdsort, test_qsort_descending)
 {
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
 
@@ -74,7 +75,7 @@ TYPED_TEST_P(simdsort, test_qsort_descending)
 TYPED_TEST_P(simdsort, test_argsort_ascending)
 {
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
@@ -92,7 +93,7 @@ TYPED_TEST_P(simdsort, test_argsort_ascending)
 TYPED_TEST_P(simdsort, test_argsort_descending)
 {
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
@@ -111,7 +112,7 @@ TYPED_TEST_P(simdsort, test_argsort_descending)
 TYPED_TEST_P(simdsort, test_qselect_ascending)
 {
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             size_t k = rand() % size;
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
@@ -135,7 +136,7 @@ TYPED_TEST_P(simdsort, test_qselect_ascending)
 TYPED_TEST_P(simdsort, test_qselect_descending)
 {
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             size_t k = rand() % size;
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
@@ -159,7 +160,7 @@ TYPED_TEST_P(simdsort, test_qselect_descending)
 TYPED_TEST_P(simdsort, test_argselect)
 {
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             size_t k = rand() % size;
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
@@ -179,7 +180,7 @@ TYPED_TEST_P(simdsort, test_argselect)
 TYPED_TEST_P(simdsort, test_partial_qsort_ascending)
 {
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             size_t k = rand() % size;
             std::vector<TypeParam> basearr = get_array<TypeParam>(type, size);
@@ -202,7 +203,7 @@ TYPED_TEST_P(simdsort, test_partial_qsort_ascending)
 TYPED_TEST_P(simdsort, test_partial_qsort_descending)
 {
     for (auto type : this->arrtype) {
-        bool hasnan = (type == "rand_with_nan") ? true : false;
+        bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
             // k should be at least 1
             size_t k = std::max((size_t)1, rand() % size);
