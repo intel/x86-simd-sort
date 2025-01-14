@@ -20,14 +20,42 @@
  * Sort all the NAN's to end of the array and return the index of the last elem
  * in the array which is not a nan
  */
-template <typename T1, typename T2>
+template <typename T1, typename T2, typename vtype>
 X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T1 *keys,
                                                          T2 *vals,
                                                          arrsize_t size)
 {
+    using reg_t = typename vtype::reg_t;
+
     arrsize_t jj = size - 1;
     arrsize_t ii = 0;
     arrsize_t count = 0;
+
+    while (ii + vtype::numlanes < jj) {
+        reg_t in = vtype::loadu(keys + ii);
+        auto nanmask = vtype::convert_mask_to_int(
+                vtype::template fpclass<0x01 | 0x80>(in));
+
+        // Check if there are any nans in this vector, and process them if so
+        if (nanmask != 0x00) {
+            for (size_t offset = 0; offset < vtype::numlanes; offset++) {
+                if (is_a_nan(keys[ii])) {
+                    std::swap(keys[ii], keys[jj]);
+                    std::swap(vals[ii], vals[jj]);
+                    jj -= 1;
+                    count++;
+                }
+                else {
+                    ii += 1;
+                }
+            }
+        }
+        else {
+            ii += vtype::numlanes;
+        }
+    }
+
+    // Handle the remainders once we have less than 1 vector worth
     while (ii < jj) {
         if (is_a_nan(keys[ii])) {
             std::swap(keys[ii], keys[jj]);
@@ -39,6 +67,7 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_end_of_array(T1 *keys,
             ii += 1;
         }
     }
+
     /* Haven't checked for nan when ii == jj */
     if (is_a_nan(keys[ii])) { count++; }
     return size - count - 1;
@@ -570,7 +599,8 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
         if constexpr (xss::fp::is_floating_point_v<T1>) {
             if (UNLIKELY(hasnan)) {
                 index_last_elem
-                        = move_nans_to_end_of_array(keys, indexes, arrsize);
+                        = move_nans_to_end_of_array<T1, T2, full_vector<T1>>(
+                                keys, indexes, arrsize);
             }
         }
         else {
@@ -660,7 +690,8 @@ X86_SIMD_SORT_INLINE void xss_select_kv(T1 *keys,
         if constexpr (xss::fp::is_floating_point_v<T1>) {
             if (UNLIKELY(hasnan)) {
                 index_last_elem
-                        = move_nans_to_end_of_array(keys, indexes, arrsize);
+                        = move_nans_to_end_of_array<T1, T2, full_vector<T1>>(
+                                keys, indexes, arrsize);
             }
         }
 
