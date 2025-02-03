@@ -269,42 +269,42 @@ DISPATCH_KEYVALUE_SORT_FORTYPE(float)
 
 extern "C" {
 XSS_EXPORT_SYMBOL
-void keyvalue_qsort_float_uint32(float *key, uint32_t *val, uint32_t size)
+void keyvalue_qsort_float_uint32(float *key, uint32_t *val, size_t size)
 {
     x86simdsort::keyvalue_qsort(key, val, size, true);
 }
 XSS_EXPORT_SYMBOL
-void keyvalue_qsort_float_sizet(float *key, size_t *val, size_t size)
+void keyvalue_qsort_float_uint64(float *key, uint64_t *val, size_t size)
 {
     x86simdsort::keyvalue_qsort(key, val, size, true);
 }
 XSS_EXPORT_SYMBOL
-void keyvalue_qsort_sizet_uint32(size_t *key, uint32_t *val, uint32_t size)
+void keyvalue_qsort_uint64_uint32(uint64_t *key, uint32_t *val, size_t size)
 {
     x86simdsort::keyvalue_qsort(key, val, size, true);
 }
 XSS_EXPORT_SYMBOL
-void keyvalue_qsort_sizet_sizet(size_t *key, size_t *val, size_t size)
+void keyvalue_qsort_uint64_uint64(uint64_t *key, uint64_t *val, size_t size)
 {
     x86simdsort::keyvalue_qsort(key, val, size, true);
 }
 XSS_EXPORT_SYMBOL
-void keyvalue_qsort_int32_uint32(int32_t *key, uint32_t *val, uint32_t size)
+void keyvalue_qsort_int32_uint32(int32_t *key, uint32_t *val, size_t size)
 {
     x86simdsort::keyvalue_qsort(key, val, size, true);
 }
 XSS_EXPORT_SYMBOL
-void keyvalue_qsort_int32_sizet(int32_t *key, size_t *val, size_t size)
+void keyvalue_qsort_int32_uint64(int32_t *key, uint64_t *val, size_t size)
 {
     x86simdsort::keyvalue_qsort(key, val, size, true);
 }
 XSS_EXPORT_SYMBOL
-void keyvalue_qsort_uint32_uint32(uint32_t *key, uint32_t *val, uint32_t size)
+void keyvalue_qsort_uint32_uint32(uint32_t *key, uint32_t *val, size_t size)
 {
     x86simdsort::keyvalue_qsort(key, val, size, true);
 }
 XSS_EXPORT_SYMBOL
-void keyvalue_qsort_uint32_sizet(uint32_t *key, size_t *val, size_t size)
+void keyvalue_qsort_uint32_uint64(uint32_t *key, uint64_t *val, size_t size)
 {
     x86simdsort::keyvalue_qsort(key, val, size, true);
 }
