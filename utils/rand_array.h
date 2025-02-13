@@ -70,6 +70,7 @@ static std::vector<T> get_array(std::string arrtype,
                                 T max = xss::fp::max<T>())
 {
     std::vector<T> arr;
+    if (arrsize == 0) return arr;
     if (arrtype == "random") {
         arr = get_uniform_rand_array<T>(arrsize, max, min);
     }

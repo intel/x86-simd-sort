@@ -529,6 +529,8 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
                                       half_vector<T2>,
                                       full_vector<T2>>::type;
 
+    if (arrsize == 0) return;
+
 #ifdef XSS_TEST_KEYVALUE_BASE_CASE
     int maxiters = -1;
     bool minarrsize = true;
@@ -613,6 +615,8 @@ X86_SIMD_SORT_INLINE void xss_select_kv(T1 *keys,
                                               && sizeof(T2) == sizeof(int32_t),
                                       half_vector<T2>,
                                       full_vector<T2>>::type;
+
+    if (arrsize == 0) return;
 
 #ifdef XSS_TEST_KEYVALUE_BASE_CASE
     int maxiters = -1;

@@ -644,6 +644,8 @@ xss_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
                                       Comparator<vtype, true>,
                                       Comparator<vtype, false>>::type;
 
+    if (arrsize == 0) return;
+
     arrsize_t index_first_elem = 0;
     arrsize_t index_last_elem = arrsize - 1;
 
