@@ -15,9 +15,13 @@ public:
     simdkvsort()
     {
         std::iota(arrsize.begin(), arrsize.end(), 1);
-        arrsize.push_back(10'000);
-        arrsize.push_back(100'000);
-        arrsize.push_back(1'000'000);
+        std::iota(arrsize_long.begin(), arrsize_long.end(), 1);
+#ifdef XSS_USE_OPENMP
+        // These extended tests are only needed for the OpenMP logic
+        arrsize_long.push_back(10'000);
+        arrsize_long.push_back(100'000);
+        arrsize_long.push_back(1'000'000);
+#endif
 
         arrtype = {"random",
                    "constant",
@@ -30,6 +34,7 @@ public:
     }
     std::vector<std::string> arrtype;
     std::vector<size_t> arrsize = std::vector<size_t>(1024);
+    std::vector<size_t> arrsize_long = std::vector<size_t>(1024);
 };
 
 TYPED_TEST_SUITE_P(simdkvsort);
@@ -157,7 +162,7 @@ TYPED_TEST_P(simdkvsort, test_kvsort_ascending)
     using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
     for (auto type : this->arrtype) {
         bool hasnan = (type == "rand_with_nan") ? true : false;
-        for (auto size : this->arrsize) {
+        for (auto size : this->arrsize_long) {
             std::vector<T1> key = get_array<T1>(type, size);
             std::vector<T2> val = get_array<T2>(type, size);
             std::vector<T1> key_bckp = key;
@@ -188,7 +193,7 @@ TYPED_TEST_P(simdkvsort, test_kvsort_descending)
     using T2 = typename std::tuple_element<1, decltype(TypeParam())>::type;
     for (auto type : this->arrtype) {
         bool hasnan = (type == "rand_with_nan") ? true : false;
-        for (auto size : this->arrsize) {
+        for (auto size : this->arrsize_long) {
             std::vector<T1> key = get_array<T1>(type, size);
             std::vector<T2> val = get_array<T2>(type, size);
             std::vector<T1> key_bckp = key;

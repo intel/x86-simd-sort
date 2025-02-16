@@ -11,11 +11,6 @@
 #include "xss-common-qsort.h"
 #include "xss-network-keyvaluesort.hpp"
 
-#if defined(XSS_USE_OPENMP) && defined(_OPENMP)
-#define XSS_COMPILE_OPENMP
-#include <omp.h>
-#endif
-
 /*
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
