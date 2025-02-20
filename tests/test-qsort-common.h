@@ -20,6 +20,12 @@
     ASSERT_TRUE(false) << msg << ". arr size = " << size \
                        << ", type = " << type << ", k = " << k;
 
+inline bool is_nan_test(std::string type)
+{
+    // Currently, determine whether the test uses nan just be checking if nan is in its name
+    return type.find("nan") != std::string::npos;
+}
+
 template <typename T>
 void IS_SORTED(std::vector<T> sorted, std::vector<T> arr, std::string type)
 {
