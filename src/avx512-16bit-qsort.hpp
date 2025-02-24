@@ -572,6 +572,11 @@ avx512_qsort_fp16(uint16_t *arr,
         }
         replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }
+
+#ifdef __MMX__
+    // Workaround for compiler bug generating MMX instructions without emms
+    _mm_empty();
+#endif
 }
 
 [[maybe_unused]] X86_SIMD_SORT_INLINE void
@@ -605,6 +610,11 @@ avx512_qselect_fp16(uint16_t *arr,
                     2 * (arrsize_t)log2(indx_last_elem));
         }
     }
+
+#ifdef __MMX__
+    // Workaround for compiler bug generating MMX instructions without emms
+    _mm_empty();
+#endif
 }
 
 [[maybe_unused]] X86_SIMD_SORT_INLINE void
