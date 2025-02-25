@@ -14,7 +14,7 @@ class simdkvsort : public ::testing::Test {
 public:
     simdkvsort()
     {
-        std::iota(arrsize.begin(), arrsize.end(), 1);
+        std::iota(arrsize.begin(), arrsize.end(), 0);
         arrsize.push_back(10'000);
         arrsize.push_back(100'000);
         arrsize.push_back(1'000'000);
@@ -57,6 +57,9 @@ bool is_kv_sorted(
         T1 *keys_comp, T2 *vals_comp, T1 *keys_ref, T2 *vals_ref, size_t size)
 {
     auto cmp_eq = compare<T1, std::equal_to<T1>>();
+
+    // Always true for arrays of zero length
+    if (size == 0) return true;
 
     // First check keys are exactly identical
     for (size_t i = 0; i < size; i++) {
@@ -232,7 +235,7 @@ TYPED_TEST_P(simdkvsort, test_kvselect_ascending)
     for (auto type : this->arrtype) {
         bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
-            size_t k = rand() % size;
+            size_t k = size != 0 ? rand() % size : 0;
 
             std::vector<T1> key = get_array<T1>(type, size);
             std::vector<T2> val = get_array<T2>(type, size);
@@ -245,6 +248,7 @@ TYPED_TEST_P(simdkvsort, test_kvselect_ascending)
             // Test select by using it as part of partial_sort
             x86simdsort::keyvalue_select(
                     key.data(), val.data(), k, size, hasnan, false);
+            if (size == 0) continue;
             IS_ARR_PARTITIONED<T1>(key, k, key_bckp[k], type);
             xss::scalar::keyvalue_qsort(
                     key.data(), val.data(), k, hasnan, false);
@@ -276,7 +280,7 @@ TYPED_TEST_P(simdkvsort, test_kvselect_descending)
     for (auto type : this->arrtype) {
         bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
-            size_t k = rand() % size;
+            size_t k = size != 0 ? rand() % size : 0;
 
             std::vector<T1> key = get_array<T1>(type, size);
             std::vector<T2> val = get_array<T2>(type, size);
@@ -289,6 +293,7 @@ TYPED_TEST_P(simdkvsort, test_kvselect_descending)
             // Test select by using it as part of partial_sort
             x86simdsort::keyvalue_select(
                     key.data(), val.data(), k, size, hasnan, true);
+            if (size == 0) continue;
             IS_ARR_PARTITIONED<T1>(key, k, key_bckp[k], type, true);
             xss::scalar::keyvalue_qsort(
                     key.data(), val.data(), k, hasnan, true);
@@ -319,7 +324,7 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_ascending)
     for (auto type : this->arrtype) {
         bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
-            size_t k = rand() % size;
+            size_t k = size != 0 ? rand() % size : 0;
 
             std::vector<T1> key = get_array<T1>(type, size);
             std::vector<T2> val = get_array<T2>(type, size);
@@ -327,6 +332,7 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_ascending)
             std::vector<T2> val_bckp = val;
             x86simdsort::keyvalue_partial_sort(
                     key.data(), val.data(), k, size, hasnan, false);
+            if (size == 0) continue;
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, false);
 
@@ -356,7 +362,7 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_descending)
     for (auto type : this->arrtype) {
         bool hasnan = is_nan_test(type);
         for (auto size : this->arrsize) {
-            size_t k = rand() % size;
+            size_t k = size != 0 ? rand() % size : 0;
 
             std::vector<T1> key = get_array<T1>(type, size);
             std::vector<T2> val = get_array<T2>(type, size);
@@ -364,6 +370,7 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_descending)
             std::vector<T2> val_bckp = val;
             x86simdsort::keyvalue_partial_sort(
                     key.data(), val.data(), k, size, hasnan, true);
+            if (size == 0) continue;
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, true);
 
