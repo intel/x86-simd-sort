@@ -652,6 +652,11 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
             std::reverse(indexes, indexes + arrsize);
         }
     }
+
+#ifdef __MMX__
+    // Workaround for compiler bug generating MMX instructions without emms
+    _mm_empty();
+#endif
 }
 
 template <typename T1,
@@ -712,6 +717,11 @@ X86_SIMD_SORT_INLINE void xss_select_kv(T1 *keys,
             std::reverse(indexes, indexes + arrsize);
         }
     }
+
+#ifdef __MMX__
+    // Workaround for compiler bug generating MMX instructions without emms
+    _mm_empty();
+#endif
 }
 
 template <typename T1,

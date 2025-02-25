@@ -632,6 +632,11 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
 
         replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }
+
+#ifdef __MMX__
+    // Workaround for compiler bug generating MMX instructions without emms
+    _mm_empty();
+#endif
 }
 
 // Quick select methods
@@ -666,6 +671,11 @@ xss_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
                                        index_last_elem,
                                        2 * (arrsize_t)log2(arrsize));
     }
+
+#ifdef __MMX__
+    // Workaround for compiler bug generating MMX instructions without emms
+    _mm_empty();
+#endif
 }
 
 // Partial sort methods:
