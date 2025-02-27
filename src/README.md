@@ -75,7 +75,7 @@ Equivalent to `np.argselect` in
 [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.argpartition.html).
 
 ```cpp
-void x86simdsortStatic::argselect<T>(T* arr, size_t *arg, size_t k, size_t arrsize);
+void x86simdsortStatic::argselect<T>(T* arr, size_t *arg, size_t k, size_t arrsize, bool hasnan = false);
 ```
 Supported datatypes: `uint32_t`, `int32_t`, `float`, `uint64_t`, `int64_t` and
 `double`.
@@ -84,7 +84,7 @@ The algorithm resorts to scalar `std::sort` if the array contains NaNs.
 
 #### Key-value sort
 ```cpp
-void x86simdsortStatic::keyvalue_qsort<T1, T2>(T1* key, T2* value, size_t arrsize);
+void x86simdsortStatic::keyvalue_qsort<T1, T2>(T1* key, T2* value, size_t arrsize, bool hasnan = false, bool descending = false);
 ```
 Supported datatypes: `uint32_t`, `int32_t`, `float`, `uint64_t`, `int64_t` and
 `double`.
@@ -127,7 +127,7 @@ int main() {
 ### Build using g++
 
 ```
-g++ main.cpp -mavx512f -mavx512dq -O3 /* for AVX-512 */
+g++ main.cpp -mavx512f -mavx512dq -mavx512vl -O3 /* for AVX-512 */
 g++ main.cpp -mavx2 -O3 /* for AVX2 */
 ```
 
