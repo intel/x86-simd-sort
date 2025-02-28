@@ -18,6 +18,11 @@ if get_option('build_ippbench')
   ipplink = ['-lipps', '-lippcore']
 endif
 
+# Essentially '-Werror' for the sanitizers; all problems become fatal with this set
+if get_option('fatal_sanitizers')
+  add_project_arguments([ '-fno-sanitize-recover=all' ], language: 'cpp')
+endif
+
 # Add google vqsort to benchmarks:
 benchvq = false
 if get_option('build_vqsortbench')
