@@ -11,7 +11,7 @@ static int check_cpu_feature_support(std::string_view cpufeature)
 
     if ((cpufeature == "avx512_spr") && (!disable_avx512))
 #if defined(__FLT16_MAX__) && !defined(__INTEL_LLVM_COMPILER) \
-        && __clang_major__ >= 18
+        && (!defined(__clang_major__) || __clang_major__ >= 18)
         return __builtin_cpu_supports("avx512f")
                 && __builtin_cpu_supports("avx512fp16")
                 && __builtin_cpu_supports("avx512vbmi2");
