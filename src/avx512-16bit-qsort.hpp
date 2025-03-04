@@ -556,6 +556,7 @@ avx512_qsort_fp16(uint16_t *arr,
 {
     using vtype = zmm_vector<float16>;
 
+    // TODO multithreading support here
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
         if (UNLIKELY(hasnan)) {
@@ -564,11 +565,11 @@ avx512_qsort_fp16(uint16_t *arr,
         }
         if (descending) {
             qsort_<vtype, Comparator<vtype, true>, uint16_t>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
         }
         else {
             qsort_<vtype, Comparator<vtype, false>, uint16_t>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize));
+                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
         }
         replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }
