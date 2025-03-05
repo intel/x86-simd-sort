@@ -25,7 +25,7 @@ class simdobjsort : public ::testing::Test {
 public:
     simdobjsort()
     {
-        std::iota(arrsize.begin(), arrsize.end(), 1);
+        std::iota(arrsize.begin(), arrsize.end(), 0);
         arrtype = {"random",
                    "constant",
                    "sorted",

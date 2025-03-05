@@ -10,4 +10,5 @@ option('use_openmp', type : 'boolean', value : false,
   description : 'Use OpenMP to accelerate key-value sort (default: "false").')
 option('lib_type', type : 'string', value : 'shared',
   description : 'Library type: shared or static (default: "shared").')
-
+option('fatal_sanitizers', type : 'boolean', value : 'false',
+  description : 'If sanitizers are enabled, should all issues be considered fatal? (default: "false").')
