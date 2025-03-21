@@ -135,6 +135,80 @@ jobs:
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe
 
+  ADL-ASAN-clang18:
+
+    runs-on: intel-ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install clang-18 libomp-18-dev libgtest-dev meson curl git
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Build examples
+      env:
+        CXX: clang++-18
+      run: |
+        cd examples
+        make all
+
+    - name: Build
+      env:
+        CXX: clang++-18
+      run: |
+        make clean
+        meson setup -Dbuild_tests=true -Duse_openmp=true -Db_sanitize=address,undefined -Dfatal_sanitizers=true  -Dasan_ci_dont_validate=true -Db_lundef=false --warnlevel 0 --buildtype release builddir
+        cd builddir
+        ninja
+
+    - name: Run test suite on SPR
+      run: sde -adl -- ./builddir/testexe
+
+  SPR-ASAN-clang18:
+
+    runs-on: intel-ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt -y install clang-18 libomp-18-dev libgtest-dev meson curl git
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Build examples
+      env:
+        CXX: clang++-18
+      run: |
+        cd examples
+        make all
+
+    - name: Build
+      env:
+        CXX: clang++-18
+      run: |
+        make clean
+        meson setup -Dbuild_tests=true -Duse_openmp=true -Db_sanitize=address,undefined -Dfatal_sanitizers=true  -Dasan_ci_dont_validate=true -Db_lundef=false --warnlevel 0 --buildtype release builddir
+        cd builddir
+        ninja
+
+    - name: Run test suite on SPR
+      run: sde -spr -- ./builddir/testexe
+
   SKX-SKL-openmp:
 
     runs-on: intel-ubuntu-24.04
