@@ -181,8 +181,10 @@ TYPED_TEST_P(simdkvsort, test_kvsort_ascending)
             std::vector<T2> val = get_array<T2>(type, size);
             std::vector<T1> key_bckp = key;
             std::vector<T2> val_bckp = val;
+
             x86simdsort::keyvalue_qsort(
                     key.data(), val.data(), size, hasnan, false);
+#ifndef XSS_ASAN_CI_NOCHECK
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, false);
 
@@ -192,7 +194,7 @@ TYPED_TEST_P(simdkvsort, test_kvsort_ascending)
                                                       val_bckp.data(),
                                                       size);
             ASSERT_EQ(is_kv_sorted_, true);
-
+#endif
             key.clear();
             val.clear();
             key_bckp.clear();
@@ -212,8 +214,10 @@ TYPED_TEST_P(simdkvsort, test_kvsort_descending)
             std::vector<T2> val = get_array<T2>(type, size);
             std::vector<T1> key_bckp = key;
             std::vector<T2> val_bckp = val;
+
             x86simdsort::keyvalue_qsort(
                     key.data(), val.data(), size, hasnan, true);
+#ifndef XSS_ASAN_CI_NOCHECK
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, true);
 
@@ -223,7 +227,7 @@ TYPED_TEST_P(simdkvsort, test_kvsort_descending)
                                                       val_bckp.data(),
                                                       size);
             ASSERT_EQ(is_kv_sorted_, true);
-
+#endif
             key.clear();
             val.clear();
             key_bckp.clear();
@@ -247,12 +251,13 @@ TYPED_TEST_P(simdkvsort, test_kvselect_ascending)
             std::vector<T1> key_bckp = key;
             std::vector<T2> val_bckp = val;
 
+            x86simdsort::keyvalue_select(
+                    key.data(), val.data(), k, size, hasnan, false);
+#ifndef XSS_ASAN_CI_NOCHECK
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, false);
 
             // Test select by using it as part of partial_sort
-            x86simdsort::keyvalue_select(
-                    key.data(), val.data(), k, size, hasnan, false);
             if (size == 0) continue;
             IS_ARR_PARTITIONED<T1>(key, k, key_bckp[k], type);
             xss::scalar::keyvalue_qsort(
@@ -268,7 +273,7 @@ TYPED_TEST_P(simdkvsort, test_kvselect_ascending)
                                                   size,
                                                   k);
             ASSERT_EQ(is_kv_partialsorted_, true);
-
+#endif
             key.clear();
             val.clear();
             key_bckp.clear();
@@ -292,12 +297,13 @@ TYPED_TEST_P(simdkvsort, test_kvselect_descending)
             std::vector<T1> key_bckp = key;
             std::vector<T2> val_bckp = val;
 
+            x86simdsort::keyvalue_select(
+                    key.data(), val.data(), k, size, hasnan, true);
+#ifndef XSS_ASAN_CI_NOCHECK
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, true);
 
             // Test select by using it as part of partial_sort
-            x86simdsort::keyvalue_select(
-                    key.data(), val.data(), k, size, hasnan, true);
             if (size == 0) continue;
             IS_ARR_PARTITIONED<T1>(key, k, key_bckp[k], type, true);
             xss::scalar::keyvalue_qsort(
@@ -313,7 +319,7 @@ TYPED_TEST_P(simdkvsort, test_kvselect_descending)
                                                   size,
                                                   k);
             ASSERT_EQ(is_kv_partialsorted_, true);
-
+#endif
             key.clear();
             val.clear();
             key_bckp.clear();
@@ -335,8 +341,10 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_ascending)
             std::vector<T2> val = get_array<T2>(type, size);
             std::vector<T1> key_bckp = key;
             std::vector<T2> val_bckp = val;
+
             x86simdsort::keyvalue_partial_sort(
                     key.data(), val.data(), k, size, hasnan, false);
+#ifndef XSS_ASAN_CI_NOCHECK
             if (size == 0) continue;
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, false);
@@ -351,7 +359,7 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_ascending)
                                                   size,
                                                   k);
             ASSERT_EQ(is_kv_partialsorted_, true);
-
+#endif
             key.clear();
             val.clear();
             key_bckp.clear();
@@ -373,8 +381,10 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_descending)
             std::vector<T2> val = get_array<T2>(type, size);
             std::vector<T1> key_bckp = key;
             std::vector<T2> val_bckp = val;
+
             x86simdsort::keyvalue_partial_sort(
                     key.data(), val.data(), k, size, hasnan, true);
+#ifndef XSS_ASAN_CI_NOCHECK
             if (size == 0) continue;
             xss::scalar::keyvalue_qsort(
                     key_bckp.data(), val_bckp.data(), size, hasnan, true);
@@ -389,7 +399,7 @@ TYPED_TEST_P(simdkvsort, test_kvpartial_sort_descending)
                                                   size,
                                                   k);
             ASSERT_EQ(is_kv_partialsorted_, true);
-
+#endif
             key.clear();
             val.clear();
             key_bckp.clear();

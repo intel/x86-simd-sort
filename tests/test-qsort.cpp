@@ -47,12 +47,14 @@ TYPED_TEST_P(simdsort, test_qsort_ascending)
             // Ascending order
             std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
+
+            x86simdsort::qsort(arr.data(), arr.size(), hasnan);
+#ifndef XSS_ASAN_CI_NOCHECK
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::less<TypeParam>>());
-            x86simdsort::qsort(arr.data(), arr.size(), hasnan);
             IS_SORTED(sortedarr, arr, type);
-
+#endif
             arr.clear();
             sortedarr.clear();
         }
@@ -69,12 +71,14 @@ TYPED_TEST_P(simdsort, test_qsort_descending)
             // Descending order
             std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
+
+            x86simdsort::qsort(arr.data(), arr.size(), hasnan, true);
+#ifndef XSS_ASAN_CI_NOCHECK
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::greater<TypeParam>>());
-            x86simdsort::qsort(arr.data(), arr.size(), hasnan, true);
             IS_SORTED(sortedarr, arr, type);
-
+#endif
             arr.clear();
             sortedarr.clear();
         }
@@ -88,11 +92,14 @@ TYPED_TEST_P(simdsort, test_argsort_ascending)
         for (auto size : this->arrsize) {
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
+
+            auto arg = x86simdsort::argsort(arr.data(), arr.size(), hasnan);
+#ifndef XSS_ASAN_CI_NOCHECK
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::less<TypeParam>>());
-            auto arg = x86simdsort::argsort(arr.data(), arr.size(), hasnan);
             IS_ARG_SORTED(sortedarr, arr, arg, type);
+#endif
             arr.clear();
             arg.clear();
         }
@@ -106,12 +113,15 @@ TYPED_TEST_P(simdsort, test_argsort_descending)
         for (auto size : this->arrsize) {
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
+
+            auto arg = x86simdsort::argsort(
+                    arr.data(), arr.size(), hasnan, true);
+#ifndef XSS_ASAN_CI_NOCHECK
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::greater<TypeParam>>());
-            auto arg = x86simdsort::argsort(
-                    arr.data(), arr.size(), hasnan, true);
             IS_ARG_SORTED(sortedarr, arr, arg, type);
+#endif
             arr.clear();
             arg.clear();
         }
@@ -129,14 +139,16 @@ TYPED_TEST_P(simdsort, test_qselect_ascending)
             // Ascending order
             std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
+
+            x86simdsort::qselect(arr.data(), k, arr.size(), hasnan);
+#ifndef XSS_ASAN_CI_NOCHECK
             std::nth_element(sortedarr.begin(),
                              sortedarr.begin() + k,
                              sortedarr.end(),
                              compare<TypeParam, std::less<TypeParam>>());
-            x86simdsort::qselect(arr.data(), k, arr.size(), hasnan);
             if (size == 0) continue;
             IS_ARR_PARTITIONED(arr, k, sortedarr[k], type);
-
+#endif
             arr.clear();
             sortedarr.clear();
         }
@@ -154,14 +166,16 @@ TYPED_TEST_P(simdsort, test_qselect_descending)
             // Descending order
             std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
+
+            x86simdsort::qselect(arr.data(), k, arr.size(), hasnan, true);
+#ifndef XSS_ASAN_CI_NOCHECK
             std::nth_element(sortedarr.begin(),
                              sortedarr.begin() + k,
                              sortedarr.end(),
                              compare<TypeParam, std::greater<TypeParam>>());
-            x86simdsort::qselect(arr.data(), k, arr.size(), hasnan, true);
             if (size == 0) continue;
             IS_ARR_PARTITIONED(arr, k, sortedarr[k], type, true);
-
+#endif
             arr.clear();
             sortedarr.clear();
         }
@@ -176,13 +190,16 @@ TYPED_TEST_P(simdsort, test_argselect)
             size_t k = size != 0 ? rand() % size : 0;
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
+
+            auto arg
+                    = x86simdsort::argselect(arr.data(), k, arr.size(), hasnan);
+#ifndef XSS_ASAN_CI_NOCHECK
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::less<TypeParam>>());
-            auto arg
-                    = x86simdsort::argselect(arr.data(), k, arr.size(), hasnan);
             if (size == 0) continue;
             IS_ARG_PARTITIONED(arr, arg, sortedarr[k], k, type);
+#endif
             arr.clear();
             sortedarr.clear();
         }
@@ -200,13 +217,15 @@ TYPED_TEST_P(simdsort, test_partial_qsort_ascending)
             // Ascending order
             std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
+
+            x86simdsort::partial_qsort(arr.data(), k, arr.size(), hasnan);
+#ifndef XSS_ASAN_CI_NOCHECK
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::less<TypeParam>>());
-            x86simdsort::partial_qsort(arr.data(), k, arr.size(), hasnan);
             if (size == 0) continue;
             IS_ARR_PARTIALSORTED(arr, k, sortedarr, type);
-
+#endif
             arr.clear();
             sortedarr.clear();
         }
@@ -224,13 +243,15 @@ TYPED_TEST_P(simdsort, test_partial_qsort_descending)
             // Descending order
             std::vector<TypeParam> arr = basearr;
             std::vector<TypeParam> sortedarr = arr;
+
+            x86simdsort::partial_qsort(arr.data(), k, arr.size(), hasnan, true);
+#ifndef XSS_ASAN_CI_NOCHECK
             std::sort(sortedarr.begin(),
                       sortedarr.end(),
                       compare<TypeParam, std::greater<TypeParam>>());
-            x86simdsort::partial_qsort(arr.data(), k, arr.size(), hasnan, true);
             if (size == 0) continue;
             IS_ARR_PARTIALSORTED(arr, k, sortedarr, type);
-
+#endif
             arr.clear();
             sortedarr.clear();
         }

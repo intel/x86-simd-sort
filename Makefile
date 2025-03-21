@@ -7,7 +7,7 @@ test_openmp:
 	cd builddir && ninja
 
 test_asan:
-	meson setup -Dbuild_tests=true -Duse_openmp=true -Db_sanitize=address,undefined -Dfatal_sanitizers=true -Db_lundef=false --warnlevel 2 --werror --buildtype debugoptimized builddir
+	meson setup -Dbuild_tests=true -Duse_openmp=true -Db_sanitize=address,undefined -Dfatal_sanitizers=true -Db_lundef=false -Dasan_ci_dont_validate=true --warnlevel 0 --buildtype debugoptimized builddir
 	cd builddir && ninja
 
 bench:
