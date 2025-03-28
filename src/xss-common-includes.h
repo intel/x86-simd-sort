@@ -109,4 +109,8 @@ enum class simd_type : int { AVX2, AVX512 };
 template <typename vtype, typename T = typename vtype::type_t>
 X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b);
 
+struct float16 {
+    uint16_t val;
+};
+
 #endif // XSS_COMMON_INCLUDES

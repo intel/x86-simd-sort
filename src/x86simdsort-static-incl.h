@@ -173,6 +173,27 @@ X86_SIMD_SORT_FINLINE void keyvalue_partial_sort(T1 *key,
 
 XSS_METHODS(avx512)
 
+#if defined(__FLT16_MAX__) && defined(__AVX512BW__) && defined(__AVX512VBMI2__) && !defined(__AVX512FP16__)
+template <>
+void x86simdsortStatic::qsort<_Float16>(
+		_Float16 *arr, size_t size, bool hasnan, bool descending)
+{
+	avx512_qsort_fp16((uint16_t *)arr, size, hasnan, descending);
+}
+template <>
+void x86simdsortStatic::qselect<_Float16>(
+		_Float16 *arr, size_t k, size_t size, bool hasnan, bool descending)
+{
+	avx512_qselect_fp16((uint16_t *)arr, k, size, hasnan, descending);
+}
+template <>
+void x86simdsortStatic::partial_qsort<_Float16>(
+		_Float16 *arr, size_t k, size_t size, bool hasnan, bool descending)
+{
+	avx512_partial_qsort_fp16((uint16_t *)arr, k, size, hasnan, descending);
+}
+#endif
+
 #elif defined(__AVX512F__)
 #error "x86simdsort requires AVX512DQ and AVX512VL to be enabled in addition to AVX512F to use AVX512"
 

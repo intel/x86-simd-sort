@@ -137,9 +137,9 @@ namespace x86simdsort {
     }
 
 #ifdef __FLT16_MAX__
-DISPATCH(qsort, _Float16, ISA_LIST("avx512_spr"))
-DISPATCH(qselect, _Float16, ISA_LIST("avx512_spr"))
-DISPATCH(partial_qsort, _Float16, ISA_LIST("avx512_spr"))
+DISPATCH(qsort, _Float16, ISA_LIST("avx512_spr", "avx512_icl"))
+DISPATCH(qselect, _Float16, ISA_LIST("avx512_spr", "avx512_icl"))
+DISPATCH(partial_qsort, _Float16, ISA_LIST("avx512_spr", "avx512_icl"))
 DISPATCH(argsort, _Float16, ISA_LIST("none"))
 DISPATCH(argselect, _Float16, ISA_LIST("none"))
 #endif

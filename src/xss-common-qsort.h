@@ -45,6 +45,12 @@ bool is_a_nan(T elem)
     return std::isnan(elem);
 }
 
+template <>
+X86_SIMD_SORT_INLINE_ONLY bool is_a_nan<uint16_t>(uint16_t elem)
+{
+    return ((elem & 0x7c00u) == 0x7c00u) && ((elem & 0x03ffu) != 0);
+}
+
 template <typename vtype, typename T>
 X86_SIMD_SORT_INLINE arrsize_t replace_nan_with_inf(T *arr, arrsize_t size)
 {
