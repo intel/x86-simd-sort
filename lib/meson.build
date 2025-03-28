@@ -34,7 +34,7 @@ if cpp.has_argument('-march=icelake-client')
       'x86simdsort-icl.cpp',
       ),
     include_directories : [src],
-    cpp_args : ['-march=icelake-client'],
+    cpp_args : ['-march=icelake-client', openmpflags],
     gnu_symbol_visibility : 'inlineshidden',
     )
 endif
@@ -45,7 +45,7 @@ if cancompilefp16
       'x86simdsort-spr.cpp',
       ),
     include_directories : [src],
-    cpp_args : ['-march=sapphirerapids'],
+    cpp_args : ['-march=sapphirerapids', openmpflags],
     gnu_symbol_visibility : 'inlineshidden',
     )
 endif
