@@ -89,7 +89,7 @@ TYPED_TEST_P(simdsort, test_argsort_ascending)
 {
     for (auto type : this->arrtype) {
         bool hasnan = is_nan_test(type);
-        for (auto size : this->arrsize) {
+        for (auto size : this->arrsize_long) {
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
 
@@ -110,7 +110,7 @@ TYPED_TEST_P(simdsort, test_argsort_descending)
 {
     for (auto type : this->arrtype) {
         bool hasnan = is_nan_test(type);
-        for (auto size : this->arrsize) {
+        for (auto size : this->arrsize_long) {
             std::vector<TypeParam> arr = get_array<TypeParam>(type, size);
             std::vector<TypeParam> sortedarr = arr;
 
