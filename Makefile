@@ -1,5 +1,5 @@
 test:
-	meson setup -Dbuild_tests=true -Duse_openmp=false --warnlevel 2 --werror --buildtype release builddir
+	meson setup -Dbuild_tests=true -Duse_openmp=true --warnlevel 2 --werror --buildtype release builddir
 	cd builddir && ninja
 
 test_openmp:
@@ -7,7 +7,7 @@ test_openmp:
 	cd builddir && ninja
 
 bench:
-	meson setup -Dbuild_benchmarks=true --warnlevel 2 --werror --buildtype release builddir
+	meson setup -Dbuild_benchmarks=true -Duse_openmp=true --warnlevel 2 --werror --buildtype release builddir
 	cd builddir && ninja
 
 debug:

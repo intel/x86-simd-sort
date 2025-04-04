@@ -525,7 +525,7 @@ static void qsort_(type_t *arr,
                    arrsize_t left,
                    arrsize_t right,
                    arrsize_t max_iters,
-                   arrsize_t task_threshold)
+                   struct threadmanager &tm)
 {
     /*
      * Resort to std::sort if quicksort isnt making any progress
@@ -562,40 +562,49 @@ static void qsort_(type_t *arr,
     type_t leftmostValue = comparator::leftmost(smallest, biggest);
     type_t rightmostValue = comparator::rightmost(smallest, biggest);
 
-#ifdef XSS_COMPILE_OPENMP
+    std::thread t1, t2;
+    bool parallel_left = ((pivot_index - left) > tm.task_threshold)
+            && (tm.sharedCount < tm.max_thread_count);
     if (pivot != leftmostValue) {
-        bool parallel_left = (pivot_index - left) > task_threshold;
         if (parallel_left) {
-#pragma omp task
-            qsort_<vtype, comparator>(
-                    arr, left, pivot_index - 1, max_iters - 1, task_threshold);
+            tm.incrementCount(1);
+            t1 = std::thread(qsort_<vtype, comparator, type_t>,
+                             arr,
+                             left,
+                             pivot_index - 1,
+                             max_iters - 1,
+                             std::ref(tm));
         }
         else {
             qsort_<vtype, comparator>(
-                    arr, left, pivot_index - 1, max_iters - 1, task_threshold);
+                    arr, left, pivot_index - 1, max_iters - 1, tm);
         }
     }
+    bool parallel_right = ((right - pivot_index) > tm.task_threshold)
+            && (tm.sharedCount < tm.max_thread_count);
     if (pivot != rightmostValue) {
-        bool parallel_right = (right - pivot_index) > task_threshold;
-
         if (parallel_right) {
-#pragma omp task
-            qsort_<vtype, comparator>(
-                    arr, pivot_index, right, max_iters - 1, task_threshold);
+            tm.incrementCount(1);
+            t2 = std::thread(qsort_<vtype, comparator, type_t>,
+                             arr,
+                             pivot_index,
+                             right,
+                             max_iters - 1,
+                             std::ref(tm));
         }
         else {
             qsort_<vtype, comparator>(
-                    arr, pivot_index, right, max_iters - 1, task_threshold);
+                    arr, pivot_index, right, max_iters - 1, tm);
         }
     }
-#else
-    UNUSED(task_threshold);
-
-    if (pivot != leftmostValue)
-        qsort_<vtype, comparator>(arr, left, pivot_index - 1, max_iters - 1, 0);
-    if (pivot != rightmostValue)
-        qsort_<vtype, comparator>(arr, pivot_index, right, max_iters - 1, 0);
-#endif
+    if (t1.joinable()) {
+        t1.join();
+        tm.incrementCount(-1);
+    }
+    if (t2.joinable()) {
+        t2.join();
+        tm.incrementCount(-1);
+    }
 }
 
 template <typename vtype, typename comparator, typename type_t>
@@ -661,40 +670,9 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
 
         UNUSED(hasnan);
 
-#ifdef XSS_COMPILE_OPENMP
-
-        bool use_parallel = arrsize > 100000;
-
-        if (use_parallel) {
-            // This thread limit was determined experimentally; it may be better for it to be the number of physical cores on the system
-            constexpr int thread_limit = 8;
-            int thread_count = std::min(thread_limit, omp_get_max_threads());
-            arrsize_t task_threshold
-                    = std::max((arrsize_t)100000, arrsize / 100);
-
-            // We use omp parallel and then omp single to setup the threads that will run the omp task calls in qsort_
-            // The omp single prevents multiple threads from running the initial qsort_ simultaneously and causing problems
-            // Note that we do not use the if(...) clause built into OpenMP, because it causes a performance regression for small arrays
-#pragma omp parallel num_threads(thread_count)
-#pragma omp single
-            qsort_<vtype, comparator, T>(arr,
-                                         0,
-                                         arrsize - 1,
-                                         2 * (arrsize_t)log2(arrsize),
-                                         task_threshold);
-        }
-        else {
-            qsort_<vtype, comparator, T>(arr,
-                                         0,
-                                         arrsize - 1,
-                                         2 * (arrsize_t)log2(arrsize),
-                                         std::numeric_limits<arrsize_t>::max());
-        }
-#pragma omp taskwait
-#else
+        struct threadmanager tm;
         qsort_<vtype, comparator, T>(
-                arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
-#endif
+                arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), tm);
 
         replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }

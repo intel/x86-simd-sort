@@ -9,10 +9,6 @@
 
 #include "avx512-16bit-common.h"
 
-struct float16 {
-    uint16_t val;
-};
-
 template <>
 struct zmm_vector<float16> {
     using type_t = uint16_t;
@@ -555,6 +551,7 @@ avx512_qsort_fp16(uint16_t *arr,
                   bool descending = false)
 {
     using vtype = zmm_vector<float16>;
+    struct threadmanager tm;
 
     // TODO multithreading support here
     if (arrsize > 1) {
@@ -565,11 +562,11 @@ avx512_qsort_fp16(uint16_t *arr,
         }
         if (descending) {
             qsort_<vtype, Comparator<vtype, true>, uint16_t>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
+                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), tm);
         }
         else {
             qsort_<vtype, Comparator<vtype, false>, uint16_t>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
+                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), tm);
         }
         replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }
