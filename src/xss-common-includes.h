@@ -7,6 +7,8 @@
 #include <immintrin.h>
 #include <limits>
 #include <vector>
+#include <thread>
+#include <mutex>
 #include "xss-custom-float.h"
 
 #define X86_SIMD_SORT_INFINITY std::numeric_limits<double>::infinity()
@@ -87,6 +89,10 @@
 #include <omp.h>
 #endif
 
+struct float16 {
+    uint16_t val;
+};
+
 template <class... T>
 constexpr bool always_false = false;
 
@@ -108,5 +114,27 @@ enum class simd_type : int { AVX2, AVX512 };
 
 template <typename vtype, typename T = typename vtype::type_t>
 X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b);
+
+struct threadmanager {
+    int max_thread_count;
+    std::mutex mymutex;
+    int sharedCount;
+    arrsize_t task_threshold;
+
+    threadmanager() {
+#ifdef XSS_COMPILE_OPENMP
+        max_thread_count = 8;
+#else
+        max_thread_count = 0;
+#endif
+        sharedCount = 0;
+        task_threshold = 100000;
+    };
+    void incrementCount(int ii) {
+        mymutex.lock();
+        sharedCount += ii;
+        mymutex.unlock();
+    }
+};
 
 #endif // XSS_COMMON_INCLUDES
