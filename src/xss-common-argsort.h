@@ -627,7 +627,7 @@ X86_SIMD_SORT_INLINE void xss_argsort(T *arr,
             constexpr int thread_limit = 8;
             int thread_count = std::min(thread_limit, omp_get_max_threads());
             arrsize_t task_threshold
-                    = std::max((arrsize_t)100000, arrsize / 100);
+                    = std::max((arrsize_t)10000, arrsize / 100);
 
             // We use omp parallel and then omp single to setup the threads that will run the omp task calls in qsort_
             // The omp single prevents multiple threads from running the initial qsort_ simultaneously and causing problems
