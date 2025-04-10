@@ -640,6 +640,7 @@ X86_SIMD_SORT_INLINE void xss_argsort(T *arr,
                                        arrsize - 1,
                                        2 * (arrsize_t)log2(arrsize),
                                        task_threshold);
+#pragma omp taskwait
         }
         else {
             argsort_<vectype, argtype>(arr,
@@ -649,7 +650,6 @@ X86_SIMD_SORT_INLINE void xss_argsort(T *arr,
                                        2 * (arrsize_t)log2(arrsize),
                                        std::numeric_limits<arrsize_t>::max());
         }
-#pragma omp taskwait
 #else
         argsort_<vectype, argtype>(
                 arr, arg, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
