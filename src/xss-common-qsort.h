@@ -682,6 +682,7 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
                                          arrsize - 1,
                                          2 * (arrsize_t)log2(arrsize),
                                          task_threshold);
+#pragma omp taskwait
         }
         else {
             qsort_<vtype, comparator, T>(arr,
@@ -690,7 +691,6 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
                                          2 * (arrsize_t)log2(arrsize),
                                          std::numeric_limits<arrsize_t>::max());
         }
-#pragma omp taskwait
 #else
         qsort_<vtype, comparator, T>(
                 arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
