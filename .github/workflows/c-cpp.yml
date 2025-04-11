@@ -9,7 +9,8 @@ on:
 permissions: read-all
 
 jobs:
-  SKL-gcc9:
+# All AVX2 code paths
+  ADL-gcc9:
 
     runs-on: intel-ubuntu-24.04
 
@@ -37,67 +38,9 @@ jobs:
         ninja
 
     - name: Run test suite on SKL
-      run: sde -skl -- ./builddir/testexe
+      run: sde -adl -- ./builddir/testexe
 
-  SKX-gcc10:
-
-    runs-on: intel-ubuntu-24.04
-
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt -y install g++-10 libgtest-dev meson curl git
-
-    - name: Install Intel SDE
-      run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
-        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
-        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
-
-    - name: Build
-      env:
-        CXX: g++-10
-      run: |
-        make clean
-        meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir
-        cd builddir
-        ninja
-
-    - name: Run test suite on SKX
-      run: sde -skx -- ./builddir/testexe
-
-  TGL-gcc11:
-
-    runs-on: intel-ubuntu-24.04
-
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt -y install g++-11 libgtest-dev meson curl git
-
-    - name: Install Intel SDE
-      run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
-        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
-        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
-
-    - name: Build
-      env:
-        CXX: g++-11
-      run: |
-        make clean
-        meson setup -Dbuild_tests=true --warnlevel 2 --werror --buildtype release builddir
-        cd builddir
-        ninja
-    - name: Run test suite on TGL
-      run: sde -tgl -- ./builddir/testexe
-
+# All AVX-512 code paths
   SPR-gcc13:
 
     runs-on: intel-ubuntu-24.04
@@ -135,7 +78,7 @@ jobs:
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe
 
-  ADL-ASAN-clang18:
+  ASAN-clang18:
 
     runs-on: intel-ubuntu-24.04
 
@@ -169,47 +112,13 @@ jobs:
         cd builddir
         ninja
 
-    - name: Run test suite on SPR
+    - name: Run test suite on ADL
       run: sde -adl -- ./builddir/testexe
-
-  SPR-ASAN-clang18:
-
-    runs-on: intel-ubuntu-24.04
-
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt -y install clang-18 libomp-18-dev libgtest-dev meson curl git
-
-    - name: Install Intel SDE
-      run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/784319/sde-external-9.24.0-2023-07-13-lin.tar.xz
-        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
-        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
-
-    - name: Build examples
-      env:
-        CXX: clang++-18
-      run: |
-        cd examples
-        make all
-
-    - name: Build
-      env:
-        CXX: clang++-18
-      run: |
-        make clean
-        meson setup -Dbuild_tests=true -Duse_openmp=true -Db_sanitize=address,undefined -Dfatal_sanitizers=true  -Dasan_ci_dont_validate=true -Db_lundef=false --warnlevel 0 --buildtype release builddir
-        cd builddir
-        ninja
 
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe
 
-  SKX-SKL-openmp:
+  openmp-build:
 
     runs-on: intel-ubuntu-24.04
 
@@ -236,10 +145,10 @@ jobs:
         cd builddir
         ninja
 
-    - name: Run test suite on SKX and SKL
+    - name: Run test suite on SKX and ADL
       run: |
         sde -skx -- ./builddir/testexe
-        sde -skl -- ./builddir/testexe
+        sde -adl -- ./builddir/testexe
 
   SPR-gcc13-special-cases:
 
