@@ -596,7 +596,7 @@ X86_SIMD_SORT_INLINE void xss_argsort(T *arr,
                                       bool hasnan = false,
                                       bool descending = false)
 {
-    /* TODO optimization: on 32-bit, use full_vector for 32-bit dtype */
+
     using vectype = typename std::conditional<sizeof(T) == sizeof(int32_t),
                                               half_vector<T>,
                                               full_vector<T>>::type;
@@ -607,6 +607,7 @@ X86_SIMD_SORT_INLINE void xss_argsort(T *arr,
                                       full_vector<arrsize_t>>::type;
 
     if (arrsize > 1) {
+        /* simdargsort does not work for float/double arrays with nan */
         if constexpr (xss::fp::is_floating_point_v<T>) {
             if ((hasnan) && (array_has_nan<vectype>(arr, arrsize))) {
                 std_argsort_withnan(arr, arg, 0, arrsize);
@@ -617,6 +618,11 @@ X86_SIMD_SORT_INLINE void xss_argsort(T *arr,
             }
         }
         UNUSED(hasnan);
+
+        /* early exit for already sorted arrays: float/double with nan never reach here*/
+        auto comp = descending ? Comparator<vectype, true>::STDSortComparator
+                               : Comparator<vectype, false>::STDSortComparator;
+        if (std::is_sorted(arr, arr + arrsize, comp)) { return; }
 
 #ifdef XSS_COMPILE_OPENMP
 
