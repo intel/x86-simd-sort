@@ -61,6 +61,11 @@ else
                             )
 endif
 
+x86simdsortcpp_dep = declare_dependency(
+  include_directories: include_directories('lib'),
+  link_with: libsimdsort,
+)
+
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libraries : libsimdsort,
                  version : '4.0',
