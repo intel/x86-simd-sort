@@ -139,7 +139,8 @@ struct zmm_vector<_Float16> {
     }
     static reg_t reverse(reg_t zmm)
     {
-        const auto rev_index = _mm512_set_epi16(NETWORK_REVERSE_32LANES);
+        constexpr static uint16_t arr[] = {NETWORK_REVERSE_32LANES};
+        const auto rev_index = _mm512_loadu_si512(arr);
         return permutexvar(rev_index, zmm);
     }
     static reg_t sort_vec(reg_t x)
