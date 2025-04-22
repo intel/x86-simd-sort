@@ -50,6 +50,8 @@ namespace avx512 {
     {
         x86simdsortStatic::partial_qsort(arr, k, arrsize, hasnan, descending);
     }
+} // namespace avx512
+namespace fp16_icl {
 #ifdef __FLT16_MAX__
     template <>
     void qsort(_Float16 *arr, size_t size, bool hasnan, bool descending)
@@ -75,5 +77,5 @@ namespace avx512 {
         x86simdsortStatic::partial_qsort(arr, k, arrsize, hasnan, descending);
     }
 #endif
-} // namespace avx512
+} // namespace fp16_icl
 } // namespace xss

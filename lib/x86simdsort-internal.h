@@ -164,5 +164,45 @@ namespace scalar {
     XSS_HIDE_SYMBOL std::vector<size_t>
     argselect(T *arr, size_t k, size_t arrsize, bool hasnan = false);
 } // namespace scalar
+namespace fp16_spr {
+    // quicksort
+    template <typename T>
+    XSS_HIDE_SYMBOL void
+    qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
+    // quickselect
+    template <typename T>
+    XSS_HIDE_SYMBOL void qselect(T *arr,
+                                 size_t k,
+                                 size_t arrsize,
+                                 bool hasnan = false,
+                                 bool descending = false);
+    // partial sort
+    template <typename T>
+    XSS_HIDE_SYMBOL void partial_qsort(T *arr,
+                                       size_t k,
+                                       size_t arrsize,
+                                       bool hasnan = false,
+                                       bool descending = false);
+} // namespace fp16_spr
+namespace fp16_icl {
+    // quicksort
+    template <typename T>
+    XSS_HIDE_SYMBOL void
+    qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false);
+    // quickselect
+    template <typename T>
+    XSS_HIDE_SYMBOL void qselect(T *arr,
+                                 size_t k,
+                                 size_t arrsize,
+                                 bool hasnan = false,
+                                 bool descending = false);
+    // partial sort
+    template <typename T>
+    XSS_HIDE_SYMBOL void partial_qsort(T *arr,
+                                       size_t k,
+                                       size_t arrsize,
+                                       bool hasnan = false,
+                                       bool descending = false);
+} // namespace fp16_icl
 } // namespace xss
 #endif
