@@ -61,11 +61,6 @@ else
                             )
 endif
 
-x86simdsortcpp_dep = declare_dependency(
-  include_directories: include_directories('lib'),
-  link_with: libsimdsort,
-)
-
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libraries : libsimdsort,
                  version : '4.0',
@@ -73,15 +68,20 @@ pkg_mod.generate(libraries : libsimdsort,
                  filebase : 'x86simdsortcpp',
                  description : 'C++ template library for high performance SIMD based sorting routines.')
 
+# Create a new dependency variable making it easy to use this as a subproject:
+x86simdsortcpp_dep = declare_dependency(
+  include_directories: include_directories('lib'),
+  link_with: libsimdsort,
+)
+
 # Build test suite if option build_tests set to true
 if get_option('build_tests')
   gtest_dep = dependency('gtest_main', required : true, static: false)
   subdir('tests')
   testexe = executable('testexe',
                      include_directories : [lib, utils],
-                     dependencies : gtest_dep,
+                     dependencies : [gtest_dep, x86simdsortcpp_dep],
                      link_whole : [libtests],
-                     link_with : libsimdsort,
                     )
   test('x86 simd sort tests', testexe)
 endif
@@ -94,10 +94,9 @@ if get_option('build_benchmarks')
   subdir('benchmarks')
   benchexe = executable('benchexe',
                       include_directories : [src, lib, utils, bench],
-                      dependencies : [gbench_dep, thread_dep],
+                      dependencies : [gbench_dep, thread_dep, x86simdsortcpp_dep],
                       link_args: ['-lbenchmark_main', ipplink],
                       link_whole : [libbench],
-                      link_with : libsimdsort,
                      )
 endif
 
