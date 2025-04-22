@@ -81,6 +81,19 @@ benchmark](https://github.com/google/benchmark) frameworks respectively. You
 can configure meson to build them both by using `-Dbuild_tests=true` and
 `-Dbuild_benchmarks=true`.
 
+## Using x86-simd-sort as a Meson subproject
+
+If you would like to use this as a Meson subproject, then create `subprojects`
+directory and copy `x86-simd-sort` into it. Add these two lines
+in your meson.build.
+```
+xss = subproject('x86-simd-sort')
+xss_dep = xss.get_variable('x86simdsortcpp_dep')
+```
+
+For more detailed instructions please refer to Meson
+[documentation](https://mesonbuild.com/Subprojects.html#using-a-subproject).
+
 ## Example usage
 
 #### Sort an array of floats
