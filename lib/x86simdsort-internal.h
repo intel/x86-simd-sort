@@ -7,8 +7,10 @@
 #define DECLAREALLFUNCS(name) \
     namespace name { \
     template <typename T> \
-    XSS_HIDE_SYMBOL void \
-    qsort(T *arr, size_t arrsize, bool hasnan = false, bool descending = false); \
+    XSS_HIDE_SYMBOL void qsort(T *arr, \
+                               size_t arrsize, \
+                               bool hasnan = false, \
+                               bool descending = false); \
     template <typename T1, typename T2> \
     XSS_HIDE_SYMBOL void keyvalue_qsort(T1 *key, \
                                         T2 *val, \
@@ -49,13 +51,13 @@
     template <typename T> \
     XSS_HIDE_SYMBOL std::vector<size_t> \
     argselect(T *arr, size_t k, size_t arrsize, bool hasnan = false); \
-    } \
+    }
 
 namespace xss {
-    DECLAREALLFUNCS(avx512)
-    DECLAREALLFUNCS(avx2)
-    DECLAREALLFUNCS(scalar)
-    DECLAREALLFUNCS(fp16_spr)
-    DECLAREALLFUNCS(fp16_icl)
+DECLAREALLFUNCS(avx512)
+DECLAREALLFUNCS(avx2)
+DECLAREALLFUNCS(scalar)
+DECLAREALLFUNCS(fp16_spr)
+DECLAREALLFUNCS(fp16_icl)
 } // namespace xss
 #endif

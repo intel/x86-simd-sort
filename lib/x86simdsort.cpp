@@ -119,18 +119,23 @@ namespace x86simdsort {
         if constexpr (dispatch_requested("avx512", ISA)) { \
             if (preferred_cpu.find("avx512") != std::string_view::npos) { \
                 if constexpr (std::is_same_v<TYPE, _Float16>) { \
-                    if (preferred_cpu.find("avx512_spr") != std::string_view::npos) { \
-                        CAT(CAT(internal_, func), TYPE) = &xss::fp16_spr::func<TYPE>; \
+                    if (preferred_cpu.find("avx512_spr") \
+                        != std::string_view::npos) { \
+                        CAT(CAT(internal_, func), TYPE) \
+                                = &xss::fp16_spr::func<TYPE>; \
                         return; \
                     } \
-                    if (preferred_cpu.find("avx512_icl") != std::string_view::npos) { \
-                        CAT(CAT(internal_, func), TYPE) = &xss::fp16_icl::func<TYPE>; \
+                    if (preferred_cpu.find("avx512_icl") \
+                        != std::string_view::npos) { \
+                        CAT(CAT(internal_, func), TYPE) \
+                                = &xss::fp16_icl::func<TYPE>; \
                         return; \
                     } \
                 } \
                 else { \
-                    CAT(CAT(internal_, func), TYPE) = &xss::avx512::func<TYPE>; \
-                }\
+                    CAT(CAT(internal_, func), TYPE) \
+                            = &xss::avx512::func<TYPE>; \
+                } \
                 return; \
             } \
         } \
