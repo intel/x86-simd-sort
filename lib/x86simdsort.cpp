@@ -118,34 +118,25 @@ namespace x86simdsort {
         std::string_view preferred_cpu = find_preferred_cpu(ISA); \
         if constexpr (dispatch_requested("avx512", ISA)) { \
             if (preferred_cpu.find("avx512") != std::string_view::npos) { \
-                CAT(CAT(internal_, func), TYPE) = &xss::avx512::func<TYPE>; \
+                if constexpr (std::is_same_v<TYPE, _Float16>) { \
+                    if (preferred_cpu.find("avx512_spr") != std::string_view::npos) { \
+                        CAT(CAT(internal_, func), TYPE) = &xss::fp16_spr::func<TYPE>; \
+                        return; \
+                    } \
+                    if (preferred_cpu.find("avx512_icl") != std::string_view::npos) { \
+                        CAT(CAT(internal_, func), TYPE) = &xss::fp16_icl::func<TYPE>; \
+                        return; \
+                    } \
+                } \
+                else { \
+                    CAT(CAT(internal_, func), TYPE) = &xss::avx512::func<TYPE>; \
+                }\
                 return; \
             } \
         } \
         if constexpr (dispatch_requested("avx2", ISA)) { \
             if (preferred_cpu.find("avx2") != std::string_view::npos) { \
                 CAT(CAT(internal_, func), TYPE) = &xss::avx2::func<TYPE>; \
-                return; \
-            } \
-        } \
-    }
-
-#define DISPATCH_FP16(func, TYPE, ISA) \
-    DECLARE_INTERNAL_##func(TYPE) static __attribute__((constructor)) void \
-    CAT(CAT(resolve_, func), TYPE)(void) \
-    { \
-        CAT(CAT(internal_, func), TYPE) = &xss::scalar::func<TYPE>; \
-        __builtin_cpu_init(); \
-        std::string_view preferred_cpu = find_preferred_cpu(ISA); \
-        if constexpr (dispatch_requested("avx512_spr", ISA)) { \
-            if (preferred_cpu.find("avx512_spr") != std::string_view::npos) { \
-                CAT(CAT(internal_, func), TYPE) = &xss::fp16_spr::func<TYPE>; \
-                return; \
-            } \
-        } \
-        if constexpr (dispatch_requested("avx512_icl", ISA)) { \
-            if (preferred_cpu.find("avx512_icl") != std::string_view::npos) { \
-                CAT(CAT(internal_, func), TYPE) = &xss::fp16_icl::func<TYPE>; \
                 return; \
             } \
         } \
@@ -158,9 +149,9 @@ namespace x86simdsort {
     }
 
 #ifdef __FLT16_MAX__
-DISPATCH_FP16(qsort, _Float16, ISA_LIST("avx512_spr", "avx512_icl"))
-DISPATCH_FP16(qselect, _Float16, ISA_LIST("avx512_spr", "avx512_icl"))
-DISPATCH_FP16(partial_qsort, _Float16, ISA_LIST("avx512_spr", "avx512_icl"))
+DISPATCH(qsort, _Float16, ISA_LIST("avx512_spr", "avx512_icl"))
+DISPATCH(qselect, _Float16, ISA_LIST("avx512_spr", "avx512_icl"))
+DISPATCH(partial_qsort, _Float16, ISA_LIST("avx512_spr", "avx512_icl"))
 DISPATCH(argsort, _Float16, ISA_LIST("none"))
 DISPATCH(argselect, _Float16, ISA_LIST("none"))
 #endif
