@@ -108,6 +108,17 @@ namespace x86simdsort {
         return (*internal_argselect##TYPE)(arr, k, arrsize, hasnan); \
     }
 
+/* simple constexpr function as a way around having #ifdef __FLT16_MAX__ block
+ * within the DISPATCH macro */
+template <typename T>
+constexpr bool IS_TYPE_FLOAT16()
+{
+#ifdef __FLT16_MAX__
+    if constexpr (std::is_same_v<T, _Float16>) { return true; }
+#endif
+    return false;
+}
+
 /* runtime dispatch mechanism */
 #define DISPATCH(func, TYPE, ISA) \
     DECLARE_INTERNAL_##func(TYPE) static __attribute__((constructor)) void \
@@ -118,7 +129,7 @@ namespace x86simdsort {
         std::string_view preferred_cpu = find_preferred_cpu(ISA); \
         if constexpr (dispatch_requested("avx512", ISA)) { \
             if (preferred_cpu.find("avx512") != std::string_view::npos) { \
-                if constexpr (std::is_same_v<TYPE, _Float16>) { \
+                if constexpr (IS_TYPE_FLOAT16<TYPE>()) { \
                     if (preferred_cpu.find("avx512_spr") \
                         != std::string_view::npos) { \
                         CAT(CAT(internal_, func), TYPE) \
