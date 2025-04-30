@@ -9,10 +9,6 @@
 
 #include "avx512-16bit-common.h"
 
-struct float16 {
-    uint16_t val;
-};
-
 template <>
 struct zmm_vector<float16> {
     using type_t = uint16_t;
@@ -545,10 +541,45 @@ replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr, arrsize_t arrsize)
     return nan_count;
 }
 
-template <>
-X86_SIMD_SORT_INLINE_ONLY bool is_a_nan<uint16_t>(uint16_t elem)
+template <typename comparator>
+[[maybe_unused]] X86_SIMD_SORT_INLINE void
+avx512_qsort_fp16_helper(uint16_t *arr, arrsize_t arrsize)
 {
-    return ((elem & 0x7c00u) == 0x7c00u) && ((elem & 0x03ffu) != 0);
+    using T = uint16_t;
+    using vtype = zmm_vector<float16>;
+
+#ifdef XSS_COMPILE_OPENMP
+    bool use_parallel = arrsize > 100000;
+
+    if (use_parallel) {
+        // This thread limit was determined experimentally; it may be better for it to be the number of physical cores on the system
+        constexpr int thread_limit = 8;
+        int thread_count = std::min(thread_limit, omp_get_max_threads());
+        arrsize_t task_threshold = std::max((arrsize_t)100000, arrsize / 100);
+
+        // We use omp parallel and then omp single to setup the threads that will run the omp task calls in qsort_
+        // The omp single prevents multiple threads from running the initial qsort_ simultaneously and causing problems
+        // Note that we do not use the if(...) clause built into OpenMP, because it causes a performance regression for small arrays
+#pragma omp parallel num_threads(thread_count)
+#pragma omp single
+        qsort_<vtype, comparator, T>(arr,
+                                     0,
+                                     arrsize - 1,
+                                     2 * (arrsize_t)log2(arrsize),
+                                     task_threshold);
+    }
+    else {
+        qsort_<vtype, comparator, T>(arr,
+                                     0,
+                                     arrsize - 1,
+                                     2 * (arrsize_t)log2(arrsize),
+                                     std::numeric_limits<arrsize_t>::max());
+    }
+#pragma omp taskwait
+#else
+    qsort_<vtype, comparator, T>(
+            arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
+#endif
 }
 
 [[maybe_unused]] X86_SIMD_SORT_INLINE void
@@ -559,20 +590,16 @@ avx512_qsort_fp16(uint16_t *arr,
 {
     using vtype = zmm_vector<float16>;
 
-    // TODO multithreading support here
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
         if (UNLIKELY(hasnan)) {
-            nan_count = replace_nan_with_inf<zmm_vector<float16>, uint16_t>(
-                    arr, arrsize);
+            nan_count = replace_nan_with_inf<vtype, uint16_t>(arr, arrsize);
         }
         if (descending) {
-            qsort_<vtype, Comparator<vtype, true>, uint16_t>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
+            avx512_qsort_fp16_helper<Comparator<vtype, true>>(arr, arrsize);
         }
         else {
-            qsort_<vtype, Comparator<vtype, false>, uint16_t>(
-                    arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
+            avx512_qsort_fp16_helper<Comparator<vtype, false>>(arr, arrsize);
         }
         replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }
@@ -592,26 +619,37 @@ avx512_qselect_fp16(uint16_t *arr,
 {
     using vtype = zmm_vector<float16>;
 
-    arrsize_t indx_last_elem = arrsize - 1;
+    // Exit early if no work would be done
+    if (arrsize <= 1) return;
+
+    arrsize_t index_first_elem = 0;
+    arrsize_t index_last_elem = arrsize - 1;
+
     if (UNLIKELY(hasnan)) {
-        indx_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        if (descending) {
+            index_first_elem = move_nans_to_start_of_array(arr, arrsize);
+        }
+        else {
+            index_last_elem = move_nans_to_end_of_array(arr, arrsize);
+        }
     }
-    if (indx_last_elem >= k) {
+
+    if (index_first_elem <= k && index_last_elem >= k) {
         if (descending) {
             qselect_<vtype, Comparator<vtype, true>, uint16_t>(
                     arr,
                     k,
-                    0,
-                    indx_last_elem,
-                    2 * (arrsize_t)log2(indx_last_elem));
+                    index_first_elem,
+                    index_last_elem,
+                    2 * (arrsize_t)log2(arrsize));
         }
         else {
             qselect_<vtype, Comparator<vtype, false>, uint16_t>(
                     arr,
                     k,
-                    0,
-                    indx_last_elem,
-                    2 * (arrsize_t)log2(indx_last_elem));
+                    index_first_elem,
+                    index_last_elem,
+                    2 * (arrsize_t)log2(arrsize));
         }
     }
 
@@ -628,7 +666,8 @@ avx512_partial_qsort_fp16(uint16_t *arr,
                           bool hasnan = false,
                           bool descending = false)
 {
+    if (k == 0) return;
     avx512_qselect_fp16(arr, k - 1, arrsize, hasnan, descending);
-    avx512_qsort_fp16(arr, k - 1, descending);
+    avx512_qsort_fp16(arr, k - 1, hasnan, descending);
 }
 #endif // AVX512_QSORT_16BIT

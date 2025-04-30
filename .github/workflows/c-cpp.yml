@@ -208,6 +208,9 @@ jobs:
 
     - name: Run test suite on SPR
       run: sde -spr -- ./builddir/testexe
+    - name: Run ICL fp16 tests
+      # Note: This filters for the _Float16 tests based on the number assigned to it, which could change in the future
+      run: sde -icx -- ./builddir/testexe --gtest_filter="*/simdsort/2*"
 
   SKX-SKL-openmp:
 

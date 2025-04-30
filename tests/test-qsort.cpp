@@ -305,8 +305,8 @@ REGISTER_TYPED_TEST_SUITE_P(simdsort,
 
 using QSortTestTypes = testing::Types<uint16_t,
                                       int16_t,
-// support for _Float16 is incomplete in gcc-12
-#if __GNUC__ >= 13
+// support for _Float16 is incomplete in gcc-12, clang < 6
+#if __GNUC__ >= 13 || __clang_major__ >= 6
                                       _Float16,
 #endif
                                       float,
