@@ -541,28 +541,6 @@ replace_nan_with_inf<zmm_vector<float16>>(uint16_t *arr, arrsize_t arrsize)
     return nan_count;
 }
 
-X86_SIMD_SORT_INLINE_ONLY void replace_inf_with_nan_fp16(float16 *arr,
-                                                         arrsize_t size,
-                                                         arrsize_t nan_count,
-                                                         bool descending
-                                                         = false)
-{
-    constexpr float16 quiet_NaN = {0x7c01};
-
-    if (descending) {
-        for (arrsize_t ii = 0; nan_count > 0; ++ii) {
-            arr[ii] = quiet_NaN;
-            nan_count -= 1;
-        }
-    }
-    else {
-        for (arrsize_t ii = size - 1; nan_count > 0; --ii) {
-            arr[ii] = quiet_NaN;
-            nan_count -= 1;
-        }
-    }
-}
-
 template <typename comparator>
 [[maybe_unused]] X86_SIMD_SORT_INLINE void
 avx512_qsort_fp16_helper(uint16_t *arr, arrsize_t arrsize)
@@ -623,8 +601,7 @@ avx512_qsort_fp16(uint16_t *arr,
         else {
             avx512_qsort_fp16_helper<Comparator<vtype, false>>(arr, arrsize);
         }
-        replace_inf_with_nan_fp16(
-                (float16 *)arr, arrsize, nan_count, descending);
+        replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }
 
 #ifdef __MMX__

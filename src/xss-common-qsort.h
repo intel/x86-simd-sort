@@ -116,7 +116,7 @@ X86_SIMD_SORT_INLINE void replace_inf_with_nan(type_t *arr,
                 arr[ii] = xss::fp::quiet_NaN<type_t>();
             }
             else {
-                arr[ii] = 0xFFFF;
+                arr[ii] = 0x7c01; // std::quiet_nan
             }
             nan_count -= 1;
         }
@@ -127,7 +127,7 @@ X86_SIMD_SORT_INLINE void replace_inf_with_nan(type_t *arr,
                 arr[ii] = xss::fp::quiet_NaN<type_t>();
             }
             else {
-                arr[ii] = 0xFFFF;
+                arr[ii] = 0x7c01; // std::quiet_nan
             }
             nan_count -= 1;
         }
