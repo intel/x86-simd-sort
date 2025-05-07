@@ -548,25 +548,35 @@ avx512_qsort_fp16_helper(uint16_t *arr, arrsize_t arrsize)
     using T = uint16_t;
     using vtype = zmm_vector<float16>;
 
-#ifdef XSS_COMPILE_OPENMP
+#ifdef XSS_BUILD_WITH_STD_THREADS
     bool use_parallel = arrsize > 100000;
+#else
+    bool use_parallel = false;
+#endif
 
     if (use_parallel) {
-        // This thread limit was determined experimentally; it may be better for it to be the number of physical cores on the system
+#ifdef XSS_BUILD_WITH_STD_THREADS
+
+        // This thread limit was determined experimentally
         constexpr int thread_limit = 8;
-        int thread_count = std::min(thread_limit, omp_get_max_threads());
+        int thread_count = std::min(thread_limit,
+                                    (int)std::thread::hardware_concurrency());
         arrsize_t task_threshold = std::max((arrsize_t)100000, arrsize / 100);
 
-        // We use omp parallel and then omp single to setup the threads that will run the omp task calls in qsort_
-        // The omp single prevents multiple threads from running the initial qsort_ simultaneously and causing problems
-        // Note that we do not use the if(...) clause built into OpenMP, because it causes a performance regression for small arrays
-#pragma omp parallel num_threads(thread_count)
-#pragma omp single
-        qsort_<vtype, comparator, T>(arr,
-                                     0,
-                                     arrsize - 1,
-                                     2 * (arrsize_t)log2(arrsize),
-                                     task_threshold);
+        // Create a thread pool
+        ThreadPool pool(thread_count);
+
+        // Initial sort task
+        qsort_threads<vtype, comparator, T>(arr,
+                                            0,
+                                            arrsize - 1,
+                                            2 * (arrsize_t)log2(arrsize),
+                                            task_threshold,
+                                            pool);
+
+        // Wait for all tasks to complete
+        pool.wait_all();
+#endif
     }
     else {
         qsort_<vtype, comparator, T>(arr,
@@ -575,11 +585,6 @@ avx512_qsort_fp16_helper(uint16_t *arr, arrsize_t arrsize)
                                      2 * (arrsize_t)log2(arrsize),
                                      std::numeric_limits<arrsize_t>::max());
     }
-#pragma omp taskwait
-#else
-    qsort_<vtype, comparator, T>(
-            arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
-#endif
 }
 
 [[maybe_unused]] X86_SIMD_SORT_INLINE void
