@@ -29,6 +29,20 @@ if get_option('build_vqsortbench')
   benchvq = true
 endif
 
+# build with openmp
+omp = []
+omp_dep = []
+if get_option('use_openmp')
+  omp = dependency('openmp', required : true)
+  omp_dep = declare_dependency(dependencies: omp, compile_args: ['-DXSS_USE_OPENMP'])
+endif
+
+# build with std::threads
+stdthreadsflag = []
+if get_option('use_stdthreads')
+  stdthreadsflag += ['-DXSS_BUILD_WITH_STD_THREADS']
+endif
+
 fp16code = '''#include<immintrin.h>
 int main() {
   __m512h temp = _mm512_set1_ph(1.0f);
@@ -43,8 +57,8 @@ if get_option('lib_type') == 'shared'
   libsimdsort = shared_library('x86simdsortcpp',
                              'lib/x86simdsort.cpp',
                              include_directories : [src, utils, lib],
-                             link_args : [openmpflags],
                              link_with : [libtargets],
+                             dependencies: [omp],
                              gnu_symbol_visibility : 'inlineshidden',
                              install : true,
                              soversion : 1,
@@ -53,7 +67,7 @@ else
   libsimdsort = static_library('x86simdsortcpp',
                              'lib/x86simdsort.cpp',
                              include_directories : [src, utils, lib],
-                             link_args : [openmpflags],
+                             dependencies: [omp],
                              link_with : [libtargets],
                              gnu_symbol_visibility : 'inlineshidden',
                              install : true,
