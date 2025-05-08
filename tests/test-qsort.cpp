@@ -12,8 +12,7 @@ public:
     {
         std::iota(arrsize.begin(), arrsize.end(), 0);
         std::iota(arrsize_long.begin(), arrsize_long.end(), 0);
-#ifdef XSS_USE_OPENMP
-        // These extended tests are only needed for the OpenMP logic
+#if defined(XSS_BUILD_WITH_STD_THREADS)
         arrsize_long.push_back(10'000);
         arrsize_long.push_back(100'000);
         arrsize_long.push_back(1'000'000);
