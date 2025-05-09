@@ -588,7 +588,7 @@ static void qsort_threads(type_t *arr,
                           arrsize_t right,
                           arrsize_t max_iters,
                           arrsize_t task_threshold,
-                          ThreadPool &thread_pool)
+                          xss::tp::ThreadPool &thread_pool)
 {
     /*
      * Resort to std::sort if quicksort isn't making any progress
@@ -629,20 +629,21 @@ static void qsort_threads(type_t *arr,
     if (pivot != leftmostValue) {
         bool parallel_left = (pivot_index - left) > task_threshold;
         if (parallel_left) {
-            submit_task(thread_pool,
-                        [arr,
-                         left,
-                         pivot_index,
-                         max_iters,
-                         task_threshold,
-                         &thread_pool]() {
-                            qsort_threads<vtype, comparator>(arr,
-                                                             left,
-                                                             pivot_index - 1,
-                                                             max_iters - 1,
-                                                             task_threshold,
-                                                             thread_pool);
-                        });
+            xss::tp::submit_task(thread_pool,
+                                 [arr,
+                                  left,
+                                  pivot_index,
+                                  max_iters,
+                                  task_threshold,
+                                  &thread_pool]() {
+                                     qsort_threads<vtype, comparator>(
+                                             arr,
+                                             left,
+                                             pivot_index - 1,
+                                             max_iters - 1,
+                                             task_threshold,
+                                             thread_pool);
+                                 });
         }
         else {
             qsort_threads<vtype, comparator>(arr,
@@ -658,20 +659,21 @@ static void qsort_threads(type_t *arr,
     if (pivot != rightmostValue) {
         bool parallel_right = (right - pivot_index) > task_threshold;
         if (parallel_right) {
-            submit_task(thread_pool,
-                        [arr,
-                         pivot_index,
-                         right,
-                         max_iters,
-                         task_threshold,
-                         &thread_pool]() {
-                            qsort_threads<vtype, comparator>(arr,
-                                                             pivot_index,
-                                                             right,
-                                                             max_iters - 1,
-                                                             task_threshold,
-                                                             thread_pool);
-                        });
+            xss::tp::submit_task(thread_pool,
+                                 [arr,
+                                  pivot_index,
+                                  right,
+                                  max_iters,
+                                  task_threshold,
+                                  &thread_pool]() {
+                                     qsort_threads<vtype, comparator>(
+                                             arr,
+                                             pivot_index,
+                                             right,
+                                             max_iters - 1,
+                                             task_threshold,
+                                             thread_pool);
+                                 });
         }
         else {
             qsort_threads<vtype, comparator>(arr,
@@ -764,7 +766,7 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
                     = std::max((arrsize_t)100000, arrsize / 100);
 
             // Create a thread pool
-            ThreadPool pool(thread_count);
+            xss::tp::ThreadPool pool(thread_count);
 
             // Initial sort task
             qsort_threads<vtype, comparator, T>(arr,

@@ -564,7 +564,7 @@ avx512_qsort_fp16_helper(uint16_t *arr, arrsize_t arrsize)
         arrsize_t task_threshold = std::max((arrsize_t)100000, arrsize / 100);
 
         // Create a thread pool
-        ThreadPool pool(thread_count);
+        xss::tp::ThreadPool pool(thread_count);
 
         // Initial sort task
         qsort_threads<vtype, comparator, T>(arr,
