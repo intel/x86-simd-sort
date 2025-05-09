@@ -110,7 +110,6 @@ public:
         if (tasks.empty() && active_tasks == 0) { done_condition.notify_all(); }
         // lock is automatically released here
     }
-
 };
 
 // Wrapper for submitting tasks to the thread pool with automatic tracking
