@@ -37,10 +37,10 @@ namespace tp {
         std::condition_variable
                 done_condition; // Condition variable for waiting
         int active_tasks {0};
-        bool stop;
+        bool stop {false};
 
     public:
-        ThreadPool(size_t num_threads) : stop(false)
+        ThreadPool(size_t num_threads)
         {
             for (size_t i = 0; i < num_threads; ++i) {
                 // Create a worker thread and add it to the pool
@@ -97,7 +97,6 @@ namespace tp {
             done_condition.wait(lock, [this] {
                 return tasks.empty() && (active_tasks == 0);
             });
-            // lock is automatically released here
         }
 
         // Track the number of active tasks
@@ -105,7 +104,6 @@ namespace tp {
         {
             std::unique_lock<std::mutex> lock(queue_mutex);
             active_tasks++;
-            // lock is automatically released here
         }
 
         // Decrement the active task count and notify if all tasks are done
@@ -116,7 +114,6 @@ namespace tp {
             if (tasks.empty() && active_tasks == 0) {
                 done_condition.notify_all();
             }
-            // lock is automatically released here
         }
     };
 

@@ -752,12 +752,7 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
 
 #ifdef XSS_BUILD_WITH_STD_THREADS
         bool use_parallel = arrsize > 100000;
-#else
-        bool use_parallel = false;
-#endif
-
         if (use_parallel) {
-#ifdef XSS_BUILD_WITH_STD_THREADS
             // This thread limit was determined experimentally
             constexpr int thread_limit = 8;
             int thread_count = std::min(
@@ -777,13 +772,16 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
                                                 pool);
             // Wait for all tasks to complete
             pool.wait_all();
-#endif
         }
         else {
             // For small arrays, just use the sequential version
             qsort_<vtype, comparator, T>(
                     arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
         }
+#else
+        qsort_<vtype, comparator, T>(
+                arr, 0, arrsize - 1, 2 * (arrsize_t)log2(arrsize), 0);
+#endif // XSS_BUILD_WITH_STD_THREADS
 
         replace_inf_with_nan(arr, arrsize, nan_count, descending);
     }

@@ -165,7 +165,7 @@ jobs:
         CXX: clang++-18
       run: |
         make clean
-        meson setup -Dbuild_tests=true -Duse_openmp=true -Db_sanitize=address,undefined -Dfatal_sanitizers=true  -Dasan_ci_dont_validate=true -Db_lundef=false --warnlevel 0 --buildtype release builddir
+        meson setup -Dbuild_tests=true -Duse_openmp=true -Duse_stdthreads=true -Db_sanitize=address,undefined -Dfatal_sanitizers=true  -Dasan_ci_dont_validate=true -Db_lundef=false --warnlevel 0 --buildtype release builddir
         cd builddir
         ninja
 
@@ -202,7 +202,7 @@ jobs:
         CXX: clang++-18
       run: |
         make clean
-        meson setup -Dbuild_tests=true -Duse_openmp=true -Db_sanitize=address,undefined -Dfatal_sanitizers=true  -Dasan_ci_dont_validate=true -Db_lundef=false --warnlevel 0 --buildtype release builddir
+        meson setup -Dbuild_tests=true -Duse_openmp=true -Duse_stdthreads=true -Db_sanitize=address,undefined -Dfatal_sanitizers=true  -Dasan_ci_dont_validate=true -Db_lundef=false --warnlevel 0 --buildtype release builddir
         cd builddir
         ninja
 
