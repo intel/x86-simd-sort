@@ -1,9 +1,5 @@
 libtests = []
 
-if get_option('use_openmp')
-  openmpflags = ['-DXSS_USE_OPENMP=true']
-endif
-
 # Add compile flags when needed for the ASAN CI run
 testargs = []
 if get_option('asan_ci_dont_validate')
@@ -16,21 +12,21 @@ endif
 
 libtests += static_library('tests_qsort',
   files('test-qsort.cpp', ),
-  dependencies: gtest_dep,
+  dependencies: [gtest_dep, omp],
   include_directories : [src, lib, utils],
-  cpp_args : [testargs, openmpflags],
+  cpp_args : [testargs, stdthreadsflag],
   )
 
 libtests += static_library('tests_kvsort',
   files('test-keyvalue.cpp', ),
-  dependencies: gtest_dep,
+  dependencies: [gtest_dep, omp],
   include_directories : [src, lib, utils],
-  cpp_args : [testargs, openmpflags],
+  cpp_args : [testargs, stdthreadsflag],
   )
 
 libtests += static_library('tests_objsort',
   files('test-objqsort.cpp', ),
-  dependencies: gtest_dep,
+  dependencies: [gtest_dep, omp],
   include_directories : [src, lib, utils],
-  cpp_args : [testargs, openmpflags],
+  cpp_args : [testargs, stdthreadsflag],
   )
