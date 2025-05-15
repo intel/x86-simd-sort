@@ -552,9 +552,7 @@ avx512_qsort_fp16_helper(uint16_t *arr, arrsize_t arrsize)
     bool use_parallel = arrsize > 100000;
 
     if (use_parallel) {
-        // This thread limit was determined experimentally; it may be better for it to be the number of physical cores on the system
-        constexpr int thread_limit = 8;
-        int thread_count = std::min(thread_limit, omp_get_max_threads());
+        int thread_count = xss_get_num_threads();
         arrsize_t task_threshold = std::max((arrsize_t)100000, arrsize / 100);
 
         // We use omp parallel and then omp single to setup the threads that will run the omp task calls in qsort_
