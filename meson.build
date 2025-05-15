@@ -1,5 +1,5 @@
 project('x86-simd-sort', 'cpp',
-        version : '6.0.x',
+        version : '7.0.x',
         license : 'BSD 3-clause',
         default_options : ['cpp_std=c++17'])
 fs = import('fs')
@@ -71,7 +71,7 @@ endif
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libraries : libsimdsort,
-                 version : '4.0',
+                 version : '7.0',
                  name : 'libx86simdsortcpp',
                  filebase : 'x86simdsortcpp',
                  description : 'C++ template library for high performance SIMD based sorting routines.')
