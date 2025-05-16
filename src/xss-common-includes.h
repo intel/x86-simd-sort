@@ -85,6 +85,13 @@
 #if defined(XSS_USE_OPENMP) && defined(_OPENMP)
 #define XSS_COMPILE_OPENMP
 #include <omp.h>
+
+// Limit the number of threads to 16: emperically determined, can be probably
+// better tuned at a later stage
+X86_SIMD_SORT_INLINE int xss_get_num_threads()
+{
+    return std::min(16, (int)omp_get_max_threads());
+}
 #endif
 
 template <class... T>

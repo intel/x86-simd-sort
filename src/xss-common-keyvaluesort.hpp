@@ -610,9 +610,7 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
         bool use_parallel = arrsize > 10000;
 
         if (use_parallel) {
-            // This thread limit was determined experimentally; it may be better for it to be the number of physical cores on the system
-            constexpr int thread_limit = 8;
-            int thread_count = std::min(thread_limit, omp_get_max_threads());
+            int thread_count = xss_get_num_threads();
             arrsize_t task_threshold
                     = std::max((arrsize_t)10000, arrsize / 100);
 
