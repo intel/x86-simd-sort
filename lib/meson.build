@@ -1,19 +1,14 @@
 libtargets = []
 
-# Add compile flags for OpenMP if enabled
-openmpflags = []
-if get_option('use_openmp')
-  openmpflags = ['-DXSS_USE_OPENMP=true', '-fopenmp']
-endif
-
 if cpp.has_argument('-march=haswell')
   libtargets += static_library('libavx',
     files(
       'x86simdsort-avx2.cpp',
       ),
     include_directories : [src],
-    cpp_args : ['-march=haswell', openmpflags],
+    cpp_args : ['-march=haswell'],
     gnu_symbol_visibility : 'inlineshidden',
+    dependencies: [omp_dep],
     )
 endif
 
@@ -23,8 +18,9 @@ if cpp.has_argument('-march=skylake-avx512')
       'x86simdsort-skx.cpp',
       ),
     include_directories : [src],
-    cpp_args : ['-march=skylake-avx512', openmpflags],
+    cpp_args : ['-march=skylake-avx512'],
     gnu_symbol_visibility : 'inlineshidden',
+    dependencies: [omp_dep],
     )
 endif
 
@@ -34,8 +30,9 @@ if cpp.has_argument('-march=icelake-client')
       'x86simdsort-icl.cpp',
       ),
     include_directories : [src],
-    cpp_args : ['-march=icelake-client', openmpflags],
+    cpp_args : ['-march=icelake-client'],
     gnu_symbol_visibility : 'inlineshidden',
+    dependencies: [omp_dep],
     )
 endif
 
@@ -45,8 +42,9 @@ if cancompilefp16
       'x86simdsort-spr.cpp',
       ),
     include_directories : [src],
-    cpp_args : ['-march=sapphirerapids', openmpflags],
+    cpp_args : ['-march=sapphirerapids'],
     gnu_symbol_visibility : 'inlineshidden',
+    dependencies: [omp_dep],
     )
 endif
 
