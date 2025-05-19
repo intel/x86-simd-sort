@@ -81,6 +81,20 @@ benchmark](https://github.com/google/benchmark) frameworks respectively. You
 can configure meson to build them both by using `-Dbuild_tests=true` and
 `-Dbuild_benchmarks=true`.
 
+## Build using OpenMP
+
+`qsort`, `argsort`, and `keyvalue_qsort` can achieve even greater performance
+(up-to 3x speedup) through parallelization with
+[OpenMP](https://www.openmp.org/). By default, OpenMP support is disabled; to
+enable it, set the `-Duse_openmp=true` flag when configuring Meson. If you are
+using only the static SIMD implementations, compile with `-fopenmp
+-DXSS_USE_OPENMP`.
+
+OpenMP-based parallel sorting routines are used for arrays larger than a
+specific threshold where threading makes sense. The number of threads is
+limited to a maximum of 16.  You can control the number of threads by setting
+the `OMP_NUM_THREADS` environment variable.
+
 ## Using x86-simd-sort as a Meson subproject
 
 If you would like to use this as a Meson subproject, then create `subprojects`
