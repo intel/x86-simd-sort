@@ -11,25 +11,26 @@ under `src/` directory. The following routines are currently supported:
 
 ## Sort an array of custom defined class objects (uses `O(N)` space)
 ``` cpp
-template <typename T, typename Func>
-void x86simdsort::object_qsort(T *arr, uint32_t arrsize, Func key_func)
+template <typename T, typename U, typename Func>
+void x86simdsort::object_qsort(T *arr, U arrsize, Func key_func)
 ```
 `T` is any user defined struct or class and `arr` is a pointer to the first
-element in the array of objects of type `T`. `Func` is a lambda function that
-computes the `key` value for each object which is the metric used to sort the
-objects. `Func` needs to have the following signature:
+element in the array of objects of type `T`. The `arrsize` parameter can be any
+32-bit or 64-bit integer type. `Func` is a lambda function that computes the
+`key` value for each object which is the metric used to sort the objects.
+`Func` needs to have the following signature:
 
 ```cpp
 [] (T obj) -> key_t { key_t key; /* compute key for obj */ return key; }
 ```
 
-Note that the return type of the key `key_t` needs to be one of the following
-: `[float, uint32_t, int32_t, double, uint64_t, int64_t]`. `object_qsort` has a
-space complexity of `O(N)`. Specifically, it requires `arrsize *
-sizeof(key_t)` bytes to store a vector with all the keys and an additional
-`arrsize * sizeof(uint32_t)` bytes to store the indexes of the object array.
-For performance reasons, we support `object_qsort` only when the array size is
-less than or equal to `UINT32_MAX`.  An example usage of `object_qsort` is
+Note that the return type of the key `key_t` needs to be one of the following :
+`[float, uint32_t, int32_t, double, uint64_t, int64_t]`. `object_qsort` has a
+space complexity of `O(N)`. Specifically, it requires `arrsize * sizeof(key_t)`
+bytes to store a vector with all the keys and an additional `arrsize *
+sizeof(uint32_t)` bytes to store the indexes of the object array.  For
+performance reasons, we recommend using `object_qsort` when the array size
+is less than or equal to `UINT32_MAX`. An example usage of `object_qsort` is
 provided in the [examples](#Sort-an-array-of-Points-using-object_qsort)
 section.  Refer to [section](#Performance-of-object_qsort) to get a sense of
 how fast this is relative to `std::sort`.
