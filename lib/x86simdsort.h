@@ -6,7 +6,11 @@
 #include <functional>
 #include <numeric>
 
-#define XSS_EXPORT_SYMBOL __attribute__((visibility("default")))
+#ifndef C_API_ONLY
+#   define XSS_EXPORT_SYMBOL __attribute__((visibility("default")))
+#else
+#   define XSS_EXPORT_SYMBOL __attribute__((visibility("hidden")))
+#endif
 #define XSS_HIDE_SYMBOL __attribute__((visibility("hidden")))
 #define UNUSED(x) (void)(x)
 

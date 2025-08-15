@@ -109,6 +109,35 @@ xss_dep = xss.get_variable('x86simdsortcpp_dep')
 For more detailed instructions please refer to Meson
 [documentation](https://mesonbuild.com/Subprojects.html#using-a-subproject).
 
+## Build with C-only API, targeting Windows and MSVC
+
+The folder `make-c-api` contains a `Makefile` to build a shared library exporting only C-symbols.
+This avoid potential conflicts of inconsistent mangling and calling convention across compilers.
+
+Only a reduced set of functions are exported (`qselect`, `qsort`, `partial_qsort`, `keyvalue_qsort`, `keyvalue_partial_qsort`, `keyvalue_qselect`)
+and only for a reduces set of types (`int32`, `uint32`, `int64`, `uint64`, `float`, `double`).
+
+In the subfolder `make-c-api` a `Makefile` is provided which supports the following combinations of operating systems, compilers and targets:
+
++--------------+------------------+------------+----------------------+---------------------+
+| Compilation  | Compiler         | Target     | Files Generated      | Build Command line  |
+| Platform     |                  | Platform   |                      |                     |
++--------------+------------------+------------+----------------------+---------------------+
+| LINUX        | g++              | LINUX      | libx86simdsort.so    | make                |
++--------------+------------------+------------+----------------------+---------------------+
+| CYGWIN       | clang++          | CYGWIN     | libx86simdsort.so    | make                |
++--------------+------------------+------------+----------------------+---------------------+
+| ANY          | mingw32 clang++  | Windows    | x86simdsort.dll      | make TARGET=WINDOWS |
+|              |                  |            | x86simdsort.dll.lib  |                     |
++--------------+------------------+------------+----------------------+---------------------+
+
+In all cases, exceptions and memory allocations never cross the shared library boundary.
+In particular, the DLL is self-contained, i.e. it does not depend on any other DLL.
+
+This is tested with clang 20 and gcc 15.
+
+An include header `x86simdsort-c-api.h` and a `smoke.exe` executable test are also generated.
+
 ## Example usage
 
 #### Sort an array of floats
