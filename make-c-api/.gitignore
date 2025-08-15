@@ -1,0 +1,5 @@
+smoke.sln
+smoke.vcxproj.*
+smoke/
+x64/
+x86simdsort-c-api.
