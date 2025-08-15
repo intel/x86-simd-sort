@@ -296,6 +296,9 @@ DISPATCH_KEYVALUE_SORT_FORTYPE(float)
 //
 
 extern "C" {
+
+#ifndef C_API_ONLY
+
 XSS_EXPORT_SYMBOL
 void keyvalue_qsort_float_uint32(float *key, uint32_t *val, size_t size)
 {
@@ -336,4 +339,12 @@ void keyvalue_qsort_uint32_uint64(uint32_t *key, uint64_t *val, size_t size)
 {
     x86simdsort::keyvalue_qsort(key, val, size, true);
 }
-}
+
+#else // C_API_ONLY is defined
+
+#define XSS_EXPORTING
+#include "c-api-export.h"
+
+#endif  // C_API_ONLY
+
+} // extern "C"
