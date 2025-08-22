@@ -1,7 +1,7 @@
 project('x86-simd-sort', 'cpp',
         version : '7.0.x',
         license : 'BSD 3-clause',
-        default_options : ['cpp_std=c++17'])
+        default_options : ['cpp_std=c++20'])
 fs = import('fs')
 cpp = meson.get_compiler('cpp')
 src = include_directories('src')

@@ -595,7 +595,7 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
     if (minarrsize) {
         arrsize_t index_last_elem = arrsize - 1;
         if constexpr (xss::fp::is_floating_point_v<T1>) {
-            if (UNLIKELY(hasnan)) {
+            if (hasnan) [[unlikely]] {
                 index_last_elem
                         = move_nans_to_end_of_array<T1, T2, full_vector<T1>>(
                                 keys, indexes, arrsize);
@@ -692,7 +692,7 @@ X86_SIMD_SORT_INLINE void xss_select_kv(T1 *keys,
 
         arrsize_t index_last_elem = arrsize - 1;
         if constexpr (xss::fp::is_floating_point_v<T1>) {
-            if (UNLIKELY(hasnan)) {
+            if (hasnan) [[unlikely]] {
                 index_last_elem
                         = move_nans_to_end_of_array<T1, T2, full_vector<T1>>(
                                 keys, indexes, arrsize);
