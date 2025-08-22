@@ -590,7 +590,7 @@ avx512_qsort_fp16(uint16_t *arr,
 
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
-        if (UNLIKELY(hasnan)) {
+        if (hasnan) [[unlikely]] {
             nan_count = replace_nan_with_inf<vtype, uint16_t>(arr, arrsize);
         }
         if (descending) {
@@ -623,7 +623,7 @@ avx512_qselect_fp16(uint16_t *arr,
     arrsize_t index_first_elem = 0;
     arrsize_t index_last_elem = arrsize - 1;
 
-    if (UNLIKELY(hasnan)) {
+    if (hasnan) [[unlikely]] {
         if (descending) {
             index_first_elem = move_nans_to_start_of_array(arr, arrsize);
         }

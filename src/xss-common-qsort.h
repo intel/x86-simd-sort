@@ -660,7 +660,7 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
         if constexpr (xss::fp::is_floating_point_v<T>) {
-            if (UNLIKELY(hasnan)) {
+            if (hasnan) [[unlikely]] {
                 nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
             }
         }
@@ -726,7 +726,7 @@ xss_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
     arrsize_t index_last_elem = arrsize - 1;
 
     if constexpr (xss::fp::is_floating_point_v<T>) {
-        if (UNLIKELY(hasnan)) {
+        if (hasnan) [[unlikely]] {
             if constexpr (descending) {
                 index_first_elem = move_nans_to_start_of_array(arr, arrsize);
             }

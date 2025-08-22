@@ -42,20 +42,14 @@
 #define X86_SIMD_SORT_INLINE_ONLY inline
 #define X86_SIMD_SORT_INLINE static inline
 #define X86_SIMD_SORT_FINLINE static __forceinline
-#define LIKELY(x) (x)
-#define UNLIKELY(x) (x)
 #elif defined(__GNUC__)
 #define X86_SIMD_SORT_INLINE_ONLY inline
 #define X86_SIMD_SORT_INLINE static inline
 #define X86_SIMD_SORT_FINLINE static inline __attribute__((always_inline))
-#define LIKELY(x) __builtin_expect((x), 1)
-#define UNLIKELY(x) __builtin_expect((x), 0)
 #else
 #define X86_SIMD_SORT_INLINE_ONLY
 #define X86_SIMD_SORT_INLINE static
 #define X86_SIMD_SORT_FINLINE static
-#define LIKELY(x) (x)
-#define UNLIKELY(x) (x)
 #endif
 
 #if defined(__INTEL_COMPILER) and !defined(__SANITIZE_ADDRESS__)
