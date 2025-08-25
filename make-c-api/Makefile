@@ -28,9 +28,16 @@ ifeq ($(TARGET),DLL)
     # There ia a bug in gcc when the target is the Windows ABI and a function call another function passing by value avx registers, hence we use clang
     # https://github.com/mingw-w64/mingw-w64/issues/115
 #   CXX := x86_64-w64-mingw32-g++
-    CXX := x86_64-w64-mingw32-clang++
+    ifeq ($(CYGWIN),1)
+       # There ia a bug in gcc when the target is the Windows ABI and a function call another function passing by value avx registers, hence we use clang
+       # https://github.com/mingw-w64/mingw-w64/issues/115
+       CXX := x86_64-w64-mingw32-clang++
+       $(info Using: clang on Cygwin)
+    else
+       CXX := clang++ -target x86_64-w64-mingw32
+    endif
     SHARED_EXT := dll
-    LIBNAME := $(NAME)
+    LIBNAME := $(NAME)-c-api
     DLLLINK := $(LIBNAME).$(SHARED_EXT).lib
     STATIC := -static-libstdc++ -static -lpthread -static -pthread
     LDFLAGS := -shared -static-libgcc $(STATIC) -Wl,--out-implib,$(DLLLINK)
@@ -46,7 +53,7 @@ else
        CXX := g++
     endif
     SHARED_EXT := so
-    LIBNAME := lib$(NAME)
+    LIBNAME := lib$(NAME)-c-api
     CXXLIBFLAGS += -fPIC
     VERDEP := $(LIBNAME).ver
     LDFLAGS := -Wl,--as-needed -Wl,--no-undefined -Wl,-O1 -shared -fPIC \
@@ -54,6 +61,8 @@ else
     SONAME_FLAG := -Wl,-soname,$(LIBNAME).so
     DLLLINK := $(LIBNAME).$(SHARED_EXT)
 endif
+
+$(info Compiler: $(shell $(CXX) --version | head -n1))
 
 # Check if configuration changed, if so, clean
 CONFIGFILE := config.cfg
@@ -65,8 +74,8 @@ UTIL_HEADERS := $(wildcard ../utils/*.h) $(wildcard ../utils/*.hpp)
 LIB_HEADERS := $(wildcard ../lib/*.h) $(wildcard ../lib/*.hpp)
 ALL_HEADERS := $(UTIL_HEADERS) $(SRC_HEADERS) $(LIB_HEADERS)
 
-LIB_SOURCES := $(wildcard ../lib/x86simdsort-*.cpp)
-LIB_OBJECTS := $(LIB_SOURCES:../lib/x86simdsort-%.cpp=x86simdsort-%.cpp.o)
+LIB_SOURCES := $(wildcard ../lib/$(NAME)-*.cpp)
+LIB_OBJECTS := $(LIB_SOURCES:../lib/$(NAME)-%.cpp=$(NAME)-%.cpp.o)
 
 
 EXTRADEPS := Makefile $(CONFIGFILE)
@@ -82,11 +91,11 @@ smoke : smoke.exe
 all: lib smoke
 
 # Specializations of object file compilation for various architectures
-x86simdsort.cpp.o:      CXXFLAGS += $(CXXLIBFLAGS) -DC_API_ONLY
-x86simdsort-avx2.cpp.o: CXXFLAGS += $(CXXLIBFLAGS) -march=haswell
-x86simdsort-skx.cpp.o:  CXXFLAGS += $(CXXLIBFLAGS) -march=skylake-avx512
-x86simdsort-icl.cpp.o:  CXXFLAGS += $(CXXLIBFLAGS) -march=icelake-client
-x86simdsort-spr.cpp.o:  CXXFLAGS += $(CXXLIBFLAGS) -march=sapphirerapids
+$(NAME).cpp.o:      CXXFLAGS += $(CXXLIBFLAGS) -DC_API_ONLY
+$(NAME)-avx2.cpp.o: CXXFLAGS += $(CXXLIBFLAGS) -march=haswell
+$(NAME)-skx.cpp.o:  CXXFLAGS += $(CXXLIBFLAGS) -march=skylake-avx512
+$(NAME)-icl.cpp.o:  CXXFLAGS += $(CXXLIBFLAGS) -march=icelake-client
+$(NAME)-spr.cpp.o:  CXXFLAGS += $(CXXLIBFLAGS) -march=sapphirerapids
 smoke.cpp.o:            CXXFLAGS += -I.
 
 ifdef BOOST_ROOT
@@ -107,21 +116,21 @@ $(CONFIGFILE):
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 # smoke link
-smoke.exe: smoke.cpp.o $(LIBNAME).$(SHARED_EXT) x86simdsort-c-api.h $(EXTRADEPS)
+smoke.exe: smoke.cpp.o $(LIBNAME).$(SHARED_EXT) $(NAME)-c-api.h $(EXTRADEPS)
 	$(CXX) $< -o $@ $(DLLLINK)
 
 # Auto generated header
-$(NAME)-c-api.h: ../lib/x86simdsort-gen-c-api.h ../lib/mk-c-api.sed $(EXTRADEPS)
-	cpp -P $< | sed -f ../lib/mk-c-api.sed > $@
+$(NAME)-c-api.h: ../lib/c-api-header-gen.h ../lib/c-api.sed $(EXTRADEPS)
+	cpp -P $< | sed -f ../lib/c-api.sed > $@
 
 # SO shared library export file
 $(LIBNAME).ver: ../lib/c-api-ver.h $(CONFIGFILE)
 	cpp -P $< | sed "/^$$/d; s/^c_xss/    c_xss/" > $@
 
 # Shared library (SO or DLL) link
-$(LIBNAME).$(SHARED_EXT): x86simdsort.cpp.o $(LIB_OBJECTS) $(VERDEP) $(EXTRADEPS)
-	$(CXX) -o $@ x86simdsort.cpp.o $(LIB_OBJECTS) $(LDFLAGS)
+$(LIBNAME).$(SHARED_EXT): $(NAME).cpp.o $(LIB_OBJECTS) $(VERDEP) $(EXTRADEPS)
+	$(CXX) -o $@ $(NAME).cpp.o $(LIB_OBJECTS) $(LDFLAGS)
 
 
 clean:
-	rm -f *.o *.so *.dll *.lib $(NAME)-c-api.h $(LIBNAME).ver *.exe *.cfg
+	rm -f *.o *.so *.dll *.lib *.h *.ver *.exe *.cfg
