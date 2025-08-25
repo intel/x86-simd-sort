@@ -32,7 +32,7 @@ type_t next_value(type_t value)
 }
 
 template <typename vtype, typename mm_t>
-X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b);
+X86_SIMD_SORT_FINLINE void COEX(mm_t &a, mm_t &b);
 
 template <typename vtype, bool descend>
 struct Comparator {

@@ -4,7 +4,7 @@
 #include "xss-common-includes.h"
 
 template <typename vtype, typename maskType>
-typename vtype::opmask_t convert_int_to_mask(maskType mask)
+X86_SIMD_SORT_FORCE_INLINE typename vtype::opmask_t convert_int_to_mask(maskType mask)
 {
     if constexpr (vtype::vec_type == simd_type::AVX512) { return mask; }
     else if constexpr (vtype::vec_type == simd_type::AVX2) {
@@ -17,7 +17,7 @@ typename vtype::opmask_t convert_int_to_mask(maskType mask)
 }
 
 template <typename keyType, typename valueType>
-typename valueType::opmask_t resize_mask(typename keyType::opmask_t mask)
+X86_SIMD_SORT_FORCE_INLINE typename valueType::opmask_t resize_mask(typename keyType::opmask_t mask)
 {
     using inT = typename keyType::opmask_t;
     using outT = typename valueType::opmask_t;
@@ -42,7 +42,7 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE void
+X86_SIMD_SORT_FINLINE void
 COEX(reg_t1 &key1, reg_t1 &key2, reg_t2 &index1, reg_t2 &index2)
 {
     reg_t1 key_t1 = vtype1::min(key1, key2);
@@ -64,7 +64,7 @@ template <typename vtype1,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t,
           typename opmask_t = typename vtype1::opmask_t>
-X86_SIMD_SORT_INLINE reg_t1 cmp_merge(reg_t1 in1,
+X86_SIMD_SORT_FINLINE reg_t1 cmp_merge(reg_t1 in1,
                                       reg_t1 in2,
                                       reg_t2 &indexes1,
                                       reg_t2 indexes2,
@@ -79,7 +79,7 @@ X86_SIMD_SORT_INLINE reg_t1 cmp_merge(reg_t1 in1,
 }
 
 template <typename keyType, typename valueType>
-X86_SIMD_SORT_INLINE void
+X86_SIMD_SORT_FINLINE void
 bitonic_merge_dispatch(typename keyType::reg_t &key,
                        typename valueType::reg_t &value)
 {
@@ -102,7 +102,7 @@ bitonic_merge_dispatch(typename keyType::reg_t &key,
 }
 
 template <typename keyType, typename valueType>
-X86_SIMD_SORT_INLINE void sort_vec_dispatch(typename keyType::reg_t &key,
+X86_SIMD_SORT_FINLINE void sort_vec_dispatch(typename keyType::reg_t &key,
                                             typename valueType::reg_t &value)
 {
     constexpr int numlanes = keyType::numlanes;
