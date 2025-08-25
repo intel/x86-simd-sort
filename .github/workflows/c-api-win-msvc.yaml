@@ -1,0 +1,71 @@
+name: MSYS2 DLL + MSVC EXE
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-windows-mingw:
+    runs-on: windows-latest
+    env:
+       NAME: x86simdsort
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Define variables
+        run: |
+          echo "LIBNAME=${NAME}-c-api" >> $GITHUB_ENV
+          echo "FOLDER=${NAME}-${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+      # Build DLL with MSYS2
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+           msystem: MINGW64
+           install: >-
+               mingw-w64-x86_64-toolchain
+               mingw-w64-x86_64-clang
+               make
+               zip
+
+      - name: Build DLL (MinGW/Clang)
+        shell: msys2 {0}
+        run: |
+          cd make-c-api
+          make all -j2 TARGET=DLL
+
+      - name: Package (Windows)
+        shell: msys2 {0}
+        run: |
+          mkdir -p artifacts/${NAME}
+          cp make-c-api/*.{lib,dll,h} artifacts/${NAME}/
+          cd artifacts
+          zip -r ${NAME}-${GITHUB_SHA::8}.zip ${NAME}
+
+       # --- Build EXE test with MSVC ---
+      - name: Configure MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+           arch: x64 # Or other architectures like x86, amd64_x86, etc.
+      
+      - name: Build EXE with MSVC
+        run: |
+           cd make-c-api
+           cl /EHsc /O2 /arch:AVX2 /std:c++20 /GL /Gy /MD /nologo /DNDEBUG smoke.cpp x86simdsort-c-api.dll.lib /Fe:smoke.exe
+
+      # --- Run test ---
+      - name: Run EXE
+        shell: cmd
+        run: |
+          cd make-c-api
+          .\smoke.exe
+
+      - name: Upload artifacts (Windows)
+        uses: actions/upload-artifact@v4
+        with:
+          name: c-api-windows-build
+          path: artifacts/*.zip

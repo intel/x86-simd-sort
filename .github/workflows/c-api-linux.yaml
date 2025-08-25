@@ -1,0 +1,51 @@
+name: Build C-API shared library with g++ for Linux
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    env:
+       NAME: x86simdsort
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Define variables
+        run: |
+          echo "LIBNAME=${NAME}-c-api" >> $GITHUB_ENV
+          echo "FOLDER=${NAME}-${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+      - name: Install g++
+        run: |
+             sudo apt-get update
+             sudo apt-get install -y g++
+
+      - name: Build (Linux)
+        run: |
+          cd make-c-api
+          make all -j2
+
+      - name: Run executable (Linux sanity check)
+        run: |
+          cd make-c-api
+          LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./ ./smoke.exe
+
+      - name: Package (Linux)
+        run: |
+          mkdir -p artifacts/${NAME}
+          cp make-c-api/*.{so,h} artifacts/${NAME}/
+          cd artifacts
+          tar -czvf ${NAME}-${GITHUB_SHA::8}.tgz ${NAME}
+
+      - name: Upload artifacts (Linux)
+        uses: actions/upload-artifact@v4
+        with:
+          name: c-api-linux-build
+          path: artifacts/*.tgz
+
+
