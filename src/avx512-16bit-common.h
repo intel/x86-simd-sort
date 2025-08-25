@@ -9,7 +9,7 @@
 
 struct avx512_16bit_swizzle_ops {
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg)
+    static X86_SIMD_SORT_FORCE_INLINE typename vtype::reg_t swap_n(typename vtype::reg_t reg)
     {
         __m512i v = vtype::cast_to(reg);
 
@@ -41,7 +41,7 @@ struct avx512_16bit_swizzle_ops {
     }
 
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    static X86_SIMD_SORT_FORCE_INLINE typename vtype::reg_t
     reverse_n(typename vtype::reg_t reg)
     {
         __m512i v = vtype::cast_to(reg);
@@ -82,7 +82,7 @@ struct avx512_16bit_swizzle_ops {
     }
 
     template <typename vtype, int scale>
-    X86_SIMD_SORT_INLINE typename vtype::reg_t
+    static X86_SIMD_SORT_FORCE_INLINE typename vtype::reg_t
     merge_n(typename vtype::reg_t reg, typename vtype::reg_t other)
     {
         __m512i v1 = vtype::cast_to(reg);

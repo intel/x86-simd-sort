@@ -143,40 +143,40 @@ constexpr auto avx2_compressstore_lut64_perm
 constexpr auto avx2_compressstore_lut64_left
         = avx2_compressstore_lut64_gen.second;
 
-X86_SIMD_SORT_INLINE
+X86_SIMD_SORT_FORCE_INLINE
 __m256i convert_int_to_avx2_mask(int32_t m)
 {
     return _mm256_loadu_si256(
             (const __m256i *)avx2_mask_helper_lut32[m].data());
 }
 
-X86_SIMD_SORT_INLINE
+X86_SIMD_SORT_FORCE_INLINE
 int32_t convert_avx2_mask_to_int(__m256i m)
 {
     return _mm256_movemask_ps(_mm256_castsi256_ps(m));
 }
 
-X86_SIMD_SORT_INLINE
+X86_SIMD_SORT_FORCE_INLINE
 __m256i convert_int_to_avx2_mask_64bit(int32_t m)
 {
     return _mm256_loadu_si256(
             (const __m256i *)avx2_mask_helper_lut64[m].data());
 }
 
-X86_SIMD_SORT_INLINE
+X86_SIMD_SORT_FORCE_INLINE
 int32_t convert_avx2_mask_to_int_64bit(__m256i m)
 {
     return _mm256_movemask_pd(_mm256_castsi256_pd(m));
 }
 
-X86_SIMD_SORT_INLINE
+X86_SIMD_SORT_FORCE_INLINE
 __m128i convert_int_to_avx2_mask_half(int32_t m)
 {
     return _mm_loadu_si128(
             (const __m128i *)avx2_mask_helper_lut32_half[m].data());
 }
 
-X86_SIMD_SORT_INLINE
+X86_SIMD_SORT_FORCE_INLINE
 int32_t convert_avx2_mask_to_int_half(__m128i m)
 {
     return _mm_movemask_ps(_mm_castsi128_ps(m));
@@ -184,7 +184,7 @@ int32_t convert_avx2_mask_to_int_half(__m128i m)
 
 // Emulators for intrinsics missing from AVX2 compared to AVX512
 template <typename T>
-T avx2_emu_reduce_max32(typename avx2_vector<T>::reg_t x)
+X86_SIMD_SORT_FORCE_INLINE T avx2_emu_reduce_max32(typename avx2_vector<T>::reg_t x)
 {
     using vtype = avx2_vector<T>;
     using reg_t = typename vtype::reg_t;
@@ -199,7 +199,7 @@ T avx2_emu_reduce_max32(typename avx2_vector<T>::reg_t x)
 }
 
 template <typename T>
-T avx2_emu_reduce_max32_half(typename avx2_half_vector<T>::reg_t x)
+X86_SIMD_SORT_FORCE_INLINE T avx2_emu_reduce_max32_half(typename avx2_half_vector<T>::reg_t x)
 {
     using vtype = avx2_half_vector<T>;
     using reg_t = typename vtype::reg_t;
@@ -212,7 +212,7 @@ T avx2_emu_reduce_max32_half(typename avx2_half_vector<T>::reg_t x)
 }
 
 template <typename T>
-T avx2_emu_reduce_min32(typename avx2_vector<T>::reg_t x)
+X86_SIMD_SORT_FORCE_INLINE T avx2_emu_reduce_min32(typename avx2_vector<T>::reg_t x)
 {
     using vtype = avx2_vector<T>;
     using reg_t = typename vtype::reg_t;
@@ -227,7 +227,7 @@ T avx2_emu_reduce_min32(typename avx2_vector<T>::reg_t x)
 }
 
 template <typename T>
-T avx2_emu_reduce_min32_half(typename avx2_half_vector<T>::reg_t x)
+X86_SIMD_SORT_FORCE_INLINE T avx2_emu_reduce_min32_half(typename avx2_half_vector<T>::reg_t x)
 {
     using vtype = avx2_half_vector<T>;
     using reg_t = typename vtype::reg_t;
@@ -240,7 +240,7 @@ T avx2_emu_reduce_min32_half(typename avx2_half_vector<T>::reg_t x)
 }
 
 template <typename T>
-T avx2_emu_reduce_max64(typename avx2_vector<T>::reg_t x)
+X86_SIMD_SORT_FORCE_INLINE T avx2_emu_reduce_max64(typename avx2_vector<T>::reg_t x)
 {
     using vtype = avx2_vector<T>;
     typename vtype::reg_t inter1 = vtype::max(
@@ -251,7 +251,7 @@ T avx2_emu_reduce_max64(typename avx2_vector<T>::reg_t x)
 }
 
 template <typename T>
-T avx2_emu_reduce_min64(typename avx2_vector<T>::reg_t x)
+X86_SIMD_SORT_FORCE_INLINE T avx2_emu_reduce_min64(typename avx2_vector<T>::reg_t x)
 {
     using vtype = avx2_vector<T>;
     typename vtype::reg_t inter1 = vtype::min(
@@ -262,7 +262,7 @@ T avx2_emu_reduce_min64(typename avx2_vector<T>::reg_t x)
 }
 
 template <typename T>
-void avx2_emu_mask_compressstoreu32(void *base_addr,
+X86_SIMD_SORT_FORCE_INLINE void avx2_emu_mask_compressstoreu32(void *base_addr,
                                     typename avx2_vector<T>::opmask_t k,
                                     typename avx2_vector<T>::reg_t reg)
 {
@@ -282,7 +282,7 @@ void avx2_emu_mask_compressstoreu32(void *base_addr,
 }
 
 template <typename T>
-void avx2_emu_mask_compressstoreu32_half(
+X86_SIMD_SORT_FORCE_INLINE void avx2_emu_mask_compressstoreu32_half(
         void *base_addr,
         typename avx2_half_vector<T>::opmask_t k,
         typename avx2_half_vector<T>::reg_t reg)
@@ -305,7 +305,7 @@ void avx2_emu_mask_compressstoreu32_half(
 }
 
 template <typename T>
-void avx2_emu_mask_compressstoreu64(void *base_addr,
+X86_SIMD_SORT_FORCE_INLINE void avx2_emu_mask_compressstoreu64(void *base_addr,
                                     typename avx2_vector<T>::opmask_t k,
                                     typename avx2_vector<T>::reg_t reg)
 {
@@ -326,7 +326,7 @@ void avx2_emu_mask_compressstoreu64(void *base_addr,
 }
 
 template <typename T>
-int avx2_double_compressstore32(void *left_addr,
+X86_SIMD_SORT_FORCE_INLINE int avx2_double_compressstore32(void *left_addr,
                                 void *right_addr,
                                 typename avx2_vector<T>::opmask_t k,
                                 typename avx2_vector<T>::reg_t reg)
@@ -349,7 +349,7 @@ int avx2_double_compressstore32(void *left_addr,
 }
 
 template <typename T>
-int avx2_double_compressstore32_half(void *left_addr,
+X86_SIMD_SORT_FORCE_INLINE int avx2_double_compressstore32_half(void *left_addr,
                                      void *right_addr,
                                      typename avx2_half_vector<T>::opmask_t k,
                                      typename avx2_half_vector<T>::reg_t reg)
@@ -373,7 +373,7 @@ int avx2_double_compressstore32_half(void *left_addr,
 }
 
 template <typename T>
-int32_t avx2_double_compressstore64(void *left_addr,
+X86_SIMD_SORT_FORCE_INLINE int32_t avx2_double_compressstore64(void *left_addr,
                                     void *right_addr,
                                     typename avx2_vector<T>::opmask_t k,
                                     typename avx2_vector<T>::reg_t reg)
@@ -397,7 +397,7 @@ int32_t avx2_double_compressstore64(void *left_addr,
 }
 
 template <typename T>
-typename avx2_vector<T>::reg_t avx2_emu_max(typename avx2_vector<T>::reg_t x,
+X86_SIMD_SORT_FORCE_INLINE typename avx2_vector<T>::reg_t avx2_emu_max(typename avx2_vector<T>::reg_t x,
                                             typename avx2_vector<T>::reg_t y)
 {
     using vtype = avx2_vector<T>;
@@ -408,7 +408,7 @@ typename avx2_vector<T>::reg_t avx2_emu_max(typename avx2_vector<T>::reg_t x,
 }
 
 template <typename T>
-typename avx2_vector<T>::reg_t avx2_emu_min(typename avx2_vector<T>::reg_t x,
+X86_SIMD_SORT_FORCE_INLINE typename avx2_vector<T>::reg_t avx2_emu_min(typename avx2_vector<T>::reg_t x,
                                             typename avx2_vector<T>::reg_t y)
 {
     using vtype = avx2_vector<T>;

@@ -45,7 +45,8 @@
 #elif defined(__GNUC__)
 #define X86_SIMD_SORT_INLINE_ONLY inline
 #define X86_SIMD_SORT_INLINE static inline
-#define X86_SIMD_SORT_FINLINE static inline __attribute__((always_inline))
+#define X86_SIMD_SORT_FORCE_INLINE inline __attribute__((always_inline))
+#define X86_SIMD_SORT_FINLINE static X86_SIMD_SORT_FORCE_INLINE
 #else
 #define X86_SIMD_SORT_INLINE_ONLY
 #define X86_SIMD_SORT_INLINE static
@@ -100,7 +101,7 @@ struct avx2_half_vector;
 enum class simd_type : int { AVX2, AVX512 };
 
 template <typename vtype, typename T = typename vtype::type_t>
-X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b);
+X86_SIMD_SORT_FINLINE bool comparison_func(const T &a, const T &b);
 
 struct float16 {
     uint16_t val;
