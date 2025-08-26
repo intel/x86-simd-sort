@@ -109,7 +109,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>x86simdsort.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>x86simdsort-c-api.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -127,7 +127,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>x86simdsort.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>x86simdsort-c-api.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
