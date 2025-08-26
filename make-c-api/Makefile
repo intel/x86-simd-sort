@@ -4,11 +4,12 @@
 
 TARGET ?= LINUX
 
+LDFLAGS :=
 CXXFLAGS := -Wall -std=c++20 -fdiagnostics-color=always
 
 # Debug/release selection
 ifeq ($(DEBUG),1)
-    CXXFLAGS += -DDEBUG -D_GLIBCXX_ASSERTIONS=1 -g -O0
+    CXXFLAGS += -g -O0 -DDEBUG -D_GLIBCXX_ASSERTIONS=1 -D_GLIBCXX_DEBUG
 else
     CXXFLAGS += -O3
 endif
@@ -17,38 +18,49 @@ CXXLIBFLAGS := -I../lib -I../src -I../utils -fvisibility=hidden -fvisibility-inl
 
 NAME := x86simdsort
 
-ifeq ($(findstring CYGWIN,$(shell uname)),CYGWIN)
+UNAME := $(shell uname)
+$(info UNAME: $(UNAME))
+CYGWIN := 0
+MINGW := 0
+LINUX := 0
+
+ifneq (,$(filter CYGWIN%,$(UNAME)))
    CYGWIN := 1
-else
-   CYGWIN := 0
+   $(info Host OS: Cygwin)
+else ifneq (,$(filter MINGW64%,$(UNAME)))
+   MINGW := 1
+   $(info Host OS: Mingw)
+else ifneq (,$(filter Linux%,$(UNAME)))
+   $(info Host OS: Linux)
+   LINUX := 1
 endif
-$(info IsCygwin: $(CYGWIN))
 
 ifeq ($(TARGET),DLL)
-    # There ia a bug in gcc when the target is the Windows ABI and a function call another function passing by value avx registers, hence we use clang
+    # We prefer CLANG, because there ia a bug in gcc when the target is the Windows ABI
+    # A function call passing by value AVX registers segfaults
     # https://github.com/mingw-w64/mingw-w64/issues/115
-#   CXX := x86_64-w64-mingw32-g++
     ifeq ($(CYGWIN),1)
-       # There ia a bug in gcc when the target is the Windows ABI and a function call another function passing by value avx registers, hence we use clang
-       # https://github.com/mingw-w64/mingw-w64/issues/115
        CXX := x86_64-w64-mingw32-clang++
-       $(info Using: clang on Cygwin)
+    else ifeq ($(MINGW),1)
+       CXX := clang++
+    else ifeq ($(LINUX),1)
+       CXX := clang++ --target=x86_64-w64-mingw32  # --gcc-toolchain=/usr/x86_64-w64-mingw32
+       LDFLAGS += --gcc-toolchain=/usr/x86_64-w64-mingw32
     else
-       CXX := clang++ -target x86_64-w64-mingw32
+        $(error DLL cross compilation supported on CYGWIN (with x86_64-w64-mingw32-clang++), MINGW64 (with clang++ and mingw) and Linux (with clang++ and mingw))
     endif
     SHARED_EXT := dll
     LIBNAME := $(NAME)-c-api
     DLLLINK := $(LIBNAME).$(SHARED_EXT).lib
     STATIC := -static-libstdc++ -static -lpthread -static -pthread
-    LDFLAGS := -shared -static-libgcc $(STATIC) -Wl,--out-implib,$(DLLLINK)
-#    LDFLAGS += -fsanitize=address,undefined
+    LDFLAGS += -shared -static-libgcc $(STATIC) -Wl,--out-implib,$(DLLLINK)
     SONAME_FLAG :=
 else
     ifeq ($(CYGWIN),1)
-       # There ia a bug in gcc when the target is the Windows ABI and a function call another function passing by value avx registers, hence we use clang
+       # We prefer CLANG, because there ia a bug in gcc when the target is the Windows ABI
+       # A function call passing by value AVX registers segfaults
        # https://github.com/mingw-w64/mingw-w64/issues/115
        CXX := clang++
-       $(info Using: clang on Cygwin)
     else
        CXX := g++
     endif
@@ -56,17 +68,22 @@ else
     LIBNAME := lib$(NAME)-c-api
     CXXLIBFLAGS += -fPIC
     VERDEP := $(LIBNAME).ver
-    LDFLAGS := -Wl,--as-needed -Wl,--no-undefined -Wl,-O1 -shared -fPIC \
+    LDFLAGS += -Wl,--as-needed -Wl,--no-undefined -Wl,-O1 -shared -fPIC \
                -Wl,-soname,$(LIBNAME).so -Wl,--version-script=$(LIBNAME).ver
     SONAME_FLAG := -Wl,-soname,$(LIBNAME).so
     DLLLINK := $(LIBNAME).$(SHARED_EXT)
 endif
 
+$(info CXX: $(CXX))
 $(info Compiler: $(shell $(CXX) --version | head -n1))
 
 # Check if configuration changed, if so, clean
 CONFIGFILE := config.cfg
 CONFIG := $(CXX)-$(TARGET)-$(if $(DEBUG),DEBUG,RELEASE)
+$(info CONFIG: $(CONFIG))
+# Configuration file generation
+$(shell echo "$(CONFIG)" | cmp -s - $(CONFIGFILE) 2>/dev/null || echo "$(CONFIG)" > $(CONFIGFILE))
+
 
 # Source and header files
 SRC_HEADERS := $(wildcard ../src/*.h) $(wildcard ../src/*.hpp)
@@ -76,7 +93,6 @@ ALL_HEADERS := $(UTIL_HEADERS) $(SRC_HEADERS) $(LIB_HEADERS)
 
 LIB_SOURCES := $(wildcard ../lib/$(NAME)-*.cpp)
 LIB_OBJECTS := $(LIB_SOURCES:../lib/$(NAME)-%.cpp=$(NAME)-%.cpp.o)
-
 
 EXTRADEPS := Makefile $(CONFIGFILE)
 
@@ -107,10 +123,6 @@ smoke.cpp.o : $(NAME)-c-api.h
 
 VPATH=../lib:.
 
-# Configuration file generation
-$(CONFIGFILE):
-	@echo "$(CONFIG)" | cmp -s - $@ 2>/dev/null || echo "$(CONFIG)" > $@
-
 # Object files (note that CXXFLAGS set above is customized for each target)
 %.cpp.o: %.cpp $(ALL_HEADERS) $(EXTRADEPS)
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
@@ -133,4 +145,4 @@ $(LIBNAME).$(SHARED_EXT): $(NAME).cpp.o $(LIB_OBJECTS) $(VERDEP) $(EXTRADEPS)
 
 
 clean:
-	rm -f *.o *.so *.dll *.lib *.h *.ver *.exe *.cfg
+	rm -rf *.o *.so *.dll *.lib *.h *.ver *.exe *.cfg
