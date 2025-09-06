@@ -197,10 +197,7 @@ void x86simdsortStatic::partial_qsort<_Float16>(
 }
 #endif
 
-#elif defined(__AVX512F__)
-#error "x86simdsort requires AVX512DQ and AVX512VL to be enabled in addition to AVX512F to use AVX512"
-
-#elif defined(__AVX2__) && !defined(__AVX512F__)
+#elif defined(__AVX2__)
 /* 32-bit and 64-bit dtypes vector definitions on AVX2 */
 #include "avx2-32bit-half.hpp"
 #include "avx2-32bit-qsort.hpp"
