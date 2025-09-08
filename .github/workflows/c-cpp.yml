@@ -336,4 +336,4 @@ jobs:
     - name: Run test suite on SPR
       run: |
         source /opt/intel/oneapi/setvars.sh
-        sde -spr -- ./builddir/testexe
+        ./builddir/testexe
