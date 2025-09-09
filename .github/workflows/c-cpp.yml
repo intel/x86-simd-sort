@@ -307,8 +307,9 @@ jobs:
 
     - name: Install Intel SDE
       run: |
-        INTEL_SDE_URL=$(curl -s https://www.intel.com/content/www/us/en/download/684897/813591/intel-software-development-emulator.html | grep -Po 'https://downloadmirror.intel.com/.*lin.tar.xz(?=")')
-        curl -o /tmp/sde.tar.xz $INTEL_SDE_URL
+        #INTEL_SDE_URL=$(curl -s https://www.intel.com/content/www/us/en/download/684897/813591/intel-software-development-emulator.html | grep -Po 'https://downloadmirror.intel.com/.*lin.tar.xz(?=")')
+        #curl -o /tmp/sde.tar.xz $INTEL_SDE_URL
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/859732/sde-external-9.58.0-2025-06-16-lin.tar.xz
         mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
 
