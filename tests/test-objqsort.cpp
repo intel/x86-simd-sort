@@ -52,7 +52,11 @@ TYPED_TEST_P(simdobjsort, test_objsort)
                 arr[ii].x = x[ii];
                 arr[ii].y = y[ii];
             }
-            std::vector<P<TypeParam>> arr_bckp = arr;
+            std::vector<P<TypeParam>> arr_bckp;
+            for (size_t ii = 0; ii < size; ++ii) {
+                arr_bckp.push_back(arr[ii]);
+            }
+
             x86simdsort::object_qsort(arr.data(), size, [](P<TypeParam> p) {
                 return p.metric();
             });
