@@ -78,9 +78,9 @@ Once installed, you can use `pkg-config --cflags --libs x86simdsortcpp` to
 populate the right cflags and ldflags to compile and link your C++ program.
 This repository also contains a test suite and benchmarking suite which are
 written using [googletest](https://github.com/google/googletest) and [google
-benchmark](https://github.com/google/benchmark) frameworks respectively. You
-can configure meson to build them both by using `-Dbuild_tests=true` and
-`-Dbuild_benchmarks=true`.
+benchmark](https://github.com/google/benchmark) (>= v1.9.2) frameworks
+respectively. You can configure meson to build them both by using
+`-Dbuild_tests=true` and `-Dbuild_benchmarks=true`.
 
 ## Build using OpenMP
 
