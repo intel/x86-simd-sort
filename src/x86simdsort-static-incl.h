@@ -190,6 +190,7 @@ void x86simdsortStatic::qselect<_Float16>(
     avx512_qselect_fp16((uint16_t *)arr, k, size, hasnan, descending);
 }
 template <>
+[[maybe_unused]]
 void x86simdsortStatic::partial_qsort<_Float16>(
         _Float16 *arr, size_t k, size_t size, bool hasnan, bool descending)
 {
