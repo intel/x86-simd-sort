@@ -176,6 +176,7 @@ XSS_METHODS(avx512)
 #if defined(__FLT16_MAX__) && defined(__AVX512BW__) \
         && defined(__AVX512VBMI2__) && !defined(__AVX512FP16__)
 template <>
+[[maybe_unused]]
 void x86simdsortStatic::qsort<_Float16>(_Float16 *arr,
                                         size_t size,
                                         bool hasnan,
@@ -184,6 +185,7 @@ void x86simdsortStatic::qsort<_Float16>(_Float16 *arr,
     avx512_qsort_fp16((uint16_t *)arr, size, hasnan, descending);
 }
 template <>
+[[maybe_unused]]
 void x86simdsortStatic::qselect<_Float16>(
         _Float16 *arr, size_t k, size_t size, bool hasnan, bool descending)
 {
