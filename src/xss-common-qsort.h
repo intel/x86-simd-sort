@@ -180,7 +180,7 @@ X86_SIMD_SORT_INLINE arrsize_t move_nans_to_start_of_array(T *arr,
 }
 
 template <typename vtype, typename T>
-X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b)
+X86_SIMD_SORT_FINLINE bool comparison_func(const T &a, const T &b)
 {
     return a < b;
 }
@@ -189,7 +189,7 @@ X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b)
  * COEX == Compare and Exchange two registers by swapping min and max values
  */
 template <typename vtype, typename mm_t>
-X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b)
+X86_SIMD_SORT_FINLINE void COEX(mm_t &a, mm_t &b)
 {
     mm_t temp = a;
     a = vtype::min(a, b);
@@ -199,7 +199,7 @@ X86_SIMD_SORT_INLINE void COEX(mm_t &a, mm_t &b)
 template <typename vtype,
           typename reg_t = typename vtype::reg_t,
           typename opmask_t = typename vtype::opmask_t>
-X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
+X86_SIMD_SORT_FINLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
 {
     reg_t min = vtype::min(in2, in1);
     reg_t max = vtype::max(in2, in1);
@@ -207,7 +207,7 @@ X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask)
 }
 
 template <typename vtype, typename type_t, typename reg_t>
-int avx512_double_compressstore(type_t *left_addr,
+X86_SIMD_SORT_FINLINE int avx512_double_compressstore(type_t *left_addr,
                                 type_t *right_addr,
                                 typename vtype::opmask_t k,
                                 reg_t reg)
@@ -226,7 +226,7 @@ template <typename vtype,
           typename comparator,
           typename type_t,
           typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE arrsize_t partition_vec(type_t *l_store,
+X86_SIMD_SORT_FINLINE arrsize_t partition_vec(type_t *l_store,
                                              type_t *r_store,
                                              const reg_t curr_vec,
                                              const reg_t pivot_vec,
@@ -660,7 +660,7 @@ X86_SIMD_SORT_INLINE void xss_qsort(T *arr, arrsize_t arrsize, bool hasnan)
     if (arrsize > 1) {
         arrsize_t nan_count = 0;
         if constexpr (xss::fp::is_floating_point_v<T>) {
-            if (UNLIKELY(hasnan)) {
+            if (hasnan) [[unlikely]] {
                 nan_count = replace_nan_with_inf<vtype>(arr, arrsize);
             }
         }
@@ -726,7 +726,7 @@ xss_qselect(T *arr, arrsize_t k, arrsize_t arrsize, bool hasnan)
     arrsize_t index_last_elem = arrsize - 1;
 
     if constexpr (xss::fp::is_floating_point_v<T>) {
-        if (UNLIKELY(hasnan)) {
+        if (hasnan) [[unlikely]] {
             if constexpr (descending) {
                 index_first_elem = move_nans_to_start_of_array(arr, arrsize);
             }

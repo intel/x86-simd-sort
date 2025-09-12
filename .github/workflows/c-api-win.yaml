@@ -1,0 +1,45 @@
+name: Build C-API shared library with mingw-64-clang++ for Windows
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-windows-mingw:
+    runs-on: ubuntu-latest
+    env:
+       NAME: x86simdsort
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Define variables
+        run: |
+          echo "LIBNAME=${NAME}-c-api" >> $GITHUB_ENV
+          echo "FOLDER=${NAME}-${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+      - name: Install MinGW-w64
+        run: |
+          sudo apt-get update
+          sudo apt install -y mingw-w64
+          sudo apt install -y clang
+
+      - name: Build (Windows cross-compile DLL)
+        run: |
+          cd make-c-api
+          make all -j2 TARGET=DLL
+
+      - name: Package (Windows)
+        run: |
+          mkdir -p artifacts/${NAME}
+          cp make-c-api/*.{lib,dll,h} artifacts/${NAME}/
+          cd artifacts
+          zip -r ${NAME}-${GITHUB_SHA::8}.zip ${NAME}
+
+      - name: Upload artifacts (Windows)
+        uses: actions/upload-artifact@v4
+        with:
+          name: c-api-windows-build
+          path: artifacts/*.zip

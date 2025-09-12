@@ -42,28 +42,15 @@
 #define X86_SIMD_SORT_INLINE_ONLY inline
 #define X86_SIMD_SORT_INLINE static inline
 #define X86_SIMD_SORT_FINLINE static __forceinline
-#define LIKELY(x) (x)
-#define UNLIKELY(x) (x)
-#elif defined(__CYGWIN__)
-/*
- * Force inline in cygwin to work around a compiler bug. See
- * https://github.com/numpy/numpy/pull/22315#issuecomment-1267757584
- */
-#define X86_SIMD_SORT_INLINE_ONLY inline
-#define X86_SIMD_SORT_INLINE static __attribute__((always_inline))
-#define X86_SIMD_SORT_FINLINE static __attribute__((always_inline))
 #elif defined(__GNUC__)
 #define X86_SIMD_SORT_INLINE_ONLY inline
 #define X86_SIMD_SORT_INLINE static inline
-#define X86_SIMD_SORT_FINLINE static inline __attribute__((always_inline))
-#define LIKELY(x) __builtin_expect((x), 1)
-#define UNLIKELY(x) __builtin_expect((x), 0)
+#define X86_SIMD_SORT_FORCE_INLINE inline __attribute__((always_inline))
+#define X86_SIMD_SORT_FINLINE static X86_SIMD_SORT_FORCE_INLINE
 #else
 #define X86_SIMD_SORT_INLINE_ONLY
 #define X86_SIMD_SORT_INLINE static
 #define X86_SIMD_SORT_FINLINE static
-#define LIKELY(x) (x)
-#define UNLIKELY(x) (x)
 #endif
 
 #if defined(__INTEL_COMPILER) and !defined(__SANITIZE_ADDRESS__)
@@ -114,7 +101,7 @@ struct avx2_half_vector;
 enum class simd_type : int { AVX2, AVX512 };
 
 template <typename vtype, typename T = typename vtype::type_t>
-X86_SIMD_SORT_INLINE bool comparison_func(const T &a, const T &b);
+X86_SIMD_SORT_FINLINE bool comparison_func(const T &a, const T &b);
 
 struct float16 {
     uint16_t val;

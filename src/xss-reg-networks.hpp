@@ -7,14 +7,14 @@ template <typename vtype, typename maskType>
 typename vtype::opmask_t convert_int_to_mask(maskType mask);
 
 template <typename vtype, typename reg_t, typename opmask_t>
-X86_SIMD_SORT_INLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask);
+X86_SIMD_SORT_FINLINE reg_t cmp_merge(reg_t in1, reg_t in2, opmask_t mask);
 
 template <typename vtype1,
           typename vtype2,
           typename reg_t1,
           typename reg_t2,
           typename opmask_t>
-X86_SIMD_SORT_INLINE reg_t1 cmp_merge(reg_t1 in1,
+X86_SIMD_SORT_FINLINE reg_t1 cmp_merge(reg_t1 in1,
                                       reg_t1 in2,
                                       reg_t2 &indexes1,
                                       reg_t2 indexes2,
@@ -27,7 +27,7 @@ X86_SIMD_SORT_INLINE reg_t1 cmp_merge(reg_t1 in1,
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 template <typename vtype, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_reg_4lanes(reg_t reg)
+static X86_SIMD_SORT_FORCE_INLINE reg_t sort_reg_4lanes(reg_t reg)
 {
     using swizzle = typename vtype::swizzle_ops;
 
@@ -47,7 +47,7 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_4lanes(reg_t reg)
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 template <typename vtype, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_reg_8lanes(reg_t reg)
+static X86_SIMD_SORT_FORCE_INLINE reg_t sort_reg_8lanes(reg_t reg)
 {
     using swizzle = typename vtype::swizzle_ops;
 
@@ -72,7 +72,7 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_8lanes(reg_t reg)
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 template <typename vtype, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_reg_16lanes(reg_t reg)
+static X86_SIMD_SORT_FORCE_INLINE reg_t sort_reg_16lanes(reg_t reg)
 {
     using swizzle = typename vtype::swizzle_ops;
 
@@ -109,7 +109,7 @@ X86_SIMD_SORT_INLINE reg_t sort_reg_16lanes(reg_t reg)
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 template <typename vtype, typename reg_t = typename vtype::reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_reg_32lanes(reg_t reg)
+static X86_SIMD_SORT_FORCE_INLINE reg_t sort_reg_32lanes(reg_t reg)
 {
     using swizzle = typename vtype::swizzle_ops;
 
@@ -168,7 +168,7 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
           typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_reg_4lanes(reg_t key_reg, index_type &index_reg)
+static X86_SIMD_SORT_FORCE_INLINE reg_t sort_reg_4lanes(reg_t key_reg, index_type &index_reg)
 {
     using key_swizzle = typename vtype1::swizzle_ops;
     using index_swizzle = typename vtype2::swizzle_ops;
@@ -201,7 +201,7 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
           typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_reg_8lanes(reg_t key_reg, index_type &index_reg)
+static X86_SIMD_SORT_FORCE_INLINE reg_t sort_reg_8lanes(reg_t key_reg, index_type &index_reg)
 {
     using key_swizzle = typename vtype1::swizzle_ops;
     using index_swizzle = typename vtype2::swizzle_ops;
@@ -253,7 +253,7 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
           typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE reg_t sort_reg_16lanes(reg_t key_reg,
+static X86_SIMD_SORT_FORCE_INLINE reg_t sort_reg_16lanes(reg_t key_reg,
                                             index_type &index_reg)
 {
     using key_swizzle = typename vtype1::swizzle_ops;
@@ -332,7 +332,7 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
           typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE reg_t bitonic_merge_reg_4lanes(reg_t key_reg,
+static X86_SIMD_SORT_FORCE_INLINE reg_t bitonic_merge_reg_4lanes(reg_t key_reg,
                                                     index_type &index_reg)
 {
     using key_swizzle = typename vtype1::swizzle_ops;
@@ -363,7 +363,7 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
           typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE reg_t bitonic_merge_reg_8lanes(reg_t key_reg,
+static X86_SIMD_SORT_FORCE_INLINE reg_t bitonic_merge_reg_8lanes(reg_t key_reg,
                                                     index_type &index_reg)
 {
     using key_swizzle = typename vtype1::swizzle_ops;
@@ -402,7 +402,7 @@ template <typename vtype1,
           typename vtype2,
           typename reg_t = typename vtype1::reg_t,
           typename index_type = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE reg_t bitonic_merge_reg_16lanes(reg_t key_reg,
+static X86_SIMD_SORT_FORCE_INLINE reg_t bitonic_merge_reg_16lanes(reg_t key_reg,
                                                      index_type &index_reg)
 {
     using key_swizzle = typename vtype1::swizzle_ops;

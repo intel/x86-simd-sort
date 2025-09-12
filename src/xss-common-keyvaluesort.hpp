@@ -78,7 +78,7 @@ template <typename vtype1,
           typename type_t2 = typename vtype2::type_t,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE int32_t partition_vec(type_t1 *keys,
+X86_SIMD_SORT_FINLINE int32_t partition_vec(type_t1 *keys,
                                            type_t2 *indexes,
                                            arrsize_t left,
                                            arrsize_t right,
@@ -112,7 +112,7 @@ template <typename vtype1,
           typename type_t2 = typename vtype2::type_t,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE arrsize_t kvpartition(type_t1 *keys,
+X86_SIMD_SORT_FINLINE arrsize_t kvpartition(type_t1 *keys,
                                            type_t2 *indexes,
                                            arrsize_t left,
                                            arrsize_t right,
@@ -244,7 +244,7 @@ template <typename vtype1,
           typename type_t2 = typename vtype2::type_t,
           typename reg_t1 = typename vtype1::reg_t,
           typename reg_t2 = typename vtype2::reg_t>
-X86_SIMD_SORT_INLINE arrsize_t kvpartition_unrolled(type_t1 *keys,
+X86_SIMD_SORT_FINLINE arrsize_t kvpartition_unrolled(type_t1 *keys,
                                                     type_t2 *indexes,
                                                     arrsize_t left,
                                                     arrsize_t right,
@@ -595,7 +595,7 @@ X86_SIMD_SORT_INLINE void xss_qsort_kv(
     if (minarrsize) {
         arrsize_t index_last_elem = arrsize - 1;
         if constexpr (xss::fp::is_floating_point_v<T1>) {
-            if (UNLIKELY(hasnan)) {
+            if (hasnan) [[unlikely]] {
                 index_last_elem
                         = move_nans_to_end_of_array<T1, T2, full_vector<T1>>(
                                 keys, indexes, arrsize);
@@ -692,7 +692,7 @@ X86_SIMD_SORT_INLINE void xss_select_kv(T1 *keys,
 
         arrsize_t index_last_elem = arrsize - 1;
         if constexpr (xss::fp::is_floating_point_v<T1>) {
-            if (UNLIKELY(hasnan)) {
+            if (hasnan) [[unlikely]] {
                 index_last_elem
                         = move_nans_to_end_of_array<T1, T2, full_vector<T1>>(
                                 keys, indexes, arrsize);
